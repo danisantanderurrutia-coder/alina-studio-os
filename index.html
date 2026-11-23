@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alina Studio OS v1.0 — Virtual Production Suite | LMNJDRS</title>
+  <title>Alina Studio OS v1.0 — 3D Architecture & Virtual Production | LMNJDRS</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="description" content="Suite de producción audiovisual y visualizador 3D para Alina Van Dijk (Manejadores / LMNJDRS).">
+  <meta name="description" content="Espacio 3D arquitectónico continuo y orquestador Higgsfield para Alina Van Dijk (Manejadores / LMNJDRS).">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -31,9 +31,10 @@
     }
   </script>
 
-  <!-- Three.js + OrbitControls for Real-Time 3D WebGL Viewport -->
+  <!-- Three.js + OrbitControls + GLTFLoader -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
   <style>
     :root {
@@ -73,16 +74,15 @@
   <!-- TOP BAR: HEADER & ZERO-WASTE SHIELD -->
   <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <!-- App Favicon / Icon -->
       <a href="#" class="group relative flex items-center justify-center">
         <img src="favicon.svg" alt="Alina Van Dijk Crest" class="w-10 h-10 rounded-xl group-hover:scale-105 transition-transform drop-shadow-[0_0_12px_rgba(200,100,70,0.4)]">
       </a>
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-sm font-bold tracking-wide text-white">ALINA STUDIO OS</h1>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">3D WEBGL LIVE</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">3D SPATIAL ENGINE</span>
         </div>
-        <p class="text-xs text-slate-400">Manejadores (LMNJDRS) • Visualizador Espacial & Pipeline Zero-Waste</p>
+        <p class="text-xs text-slate-400">Edificio Arquitectónico Coherente • Avatar 3D de Alina & Exportador Higgsfield</p>
       </div>
     </div>
 
@@ -90,13 +90,13 @@
     <div class="flex items-center flex-wrap gap-4 md:gap-6 text-xs">
       <div class="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-400">LoRA Identidad:</span>
-        <span class="font-mono text-emerald-400 font-semibold">ALINA-FLUX-4K</span>
+        <span class="text-slate-400">Avatar 3D:</span>
+        <span class="font-mono text-emerald-400 font-semibold">Alina Presente (Piso 2)</span>
       </div>
       <div class="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
         <span class="text-slate-400">Créditos Higgsfield:</span>
         <span class="font-mono text-amber-300 font-bold">940 / 1.000</span>
-        <span class="text-[10px] text-slate-500">(25 tomas restantes)</span>
+        <span class="text-[10px] text-slate-500">(25 tomas)</span>
       </div>
       <div class="hidden xl:flex items-center gap-2 text-slate-400">
         <span>Arco:</span>
@@ -106,9 +106,9 @@
   </header>
 
   <!-- MAIN WORKSPACE: 3 PANELS -->
-  <main class="grid grid-cols-12 gap-5 p-4 md:p-6 max-w-[1880px] mx-auto min-h-[calc(100vh-68px)]">
+  <main class="grid grid-cols-12 gap-5 p-4 md:p-6 max-w-[1920px] mx-auto min-h-[calc(100vh-68px)]">
 
-    <!-- COL 1: THE ALINA SANCTUARY (ISOMETRIC / FLOOR NAVIGATOR) -->
+    <!-- COL 1: EDIFICIO ARQUITECTÓNICO Y NAVEGACIÓN -->
     <aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div>
@@ -117,11 +117,11 @@
               <svg class="w-4 h-4 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">The Alina Sanctuary</h2>
             </div>
-            <span class="text-[10px] text-slate-500 font-mono">5 NIVELES</span>
+            <span class="text-[10px] text-emerald-400 font-mono">ARQUITECTURA VIVA</span>
           </div>
 
           <p class="text-xs text-slate-400 mb-3 leading-relaxed">
-            Haz clic en cualquier piso: la cámara 3D viajará al nivel y cargará los spots de rodaje en el viewport central.
+            El edificio existe como un <b>espacio 3D unificado</b>. Alina vive en el Piso 2 y se desplaza entre sus habitaciones con memoria espacial continua.
           </p>
 
           <!-- Floor Stack -->
@@ -143,18 +143,18 @@
                 <span class="text-xs font-bold text-purple-400 font-mono">PISO 3</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">The Mind Sanctuary</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Estudio Clínico & Laboratorio</h3>
-              <p class="text-[11px] text-slate-400">Podcast Shure SM7B, boudoir psicológico & audio 3Dio.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">Estudio Clínico & Podcast Loft</h3>
+              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca clínica y boudoir SSC.</p>
             </div>
 
             <!-- PISO 2: RESIDENCIA PRIVADA (DEFAULT) -->
             <div onclick="selectFloor(2)" id="floor-card-2" class="floor-card cursor-pointer p-3 rounded-xl border border-[#c86446]/60 bg-[#c86446]/10 copper-glow transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-[#f29979] font-mono">PISO 2 ★</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-semibold">Donde Nace Todo</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-semibold">Residencia Alina</span>
               </div>
-              <h3 class="text-sm font-bold text-white mt-1">Residencia Privada de Alina</h3>
-              <p class="text-[11px] text-slate-300">Tina de piedra, tocador vanity, cocina gourmet & suite.</p>
+              <h3 class="text-sm font-bold text-white mt-1">Hogar Privado de Alina</h3>
+              <p class="text-[11px] text-slate-300">Tocador vanity, tina spa de piedra, cocina de autor & suite.</p>
             </div>
 
             <!-- PISO 1: CAFETERÍA -->
@@ -164,7 +164,7 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Lifestyle Diurno</span>
               </div>
               <h3 class="text-sm font-semibold text-white mt-1">Le Velvet Café & Lounge</h3>
-              <p class="text-[11px] text-slate-400">Cafetería especialidad, terraza Eixample, street walking.</p>
+              <p class="text-[11px] text-slate-400">Cafetería de autor, terraza callejera y ventanales.</p>
             </div>
 
             <!-- PLANTA BAJA: CABARET -->
@@ -174,46 +174,51 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Exterior & Noche</span>
               </div>
               <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy & Calle</h3>
-              <p class="text-[11px] text-slate-400">Entrada clandestina, piano bar, street fashion exterior.</p>
+              <p class="text-[11px] text-slate-400">Entrada clandestina, piano de cola y fachada Eixample.</p>
             </div>
 
           </div>
         </div>
 
-        <!-- 3D Global Camera Shortcuts -->
-        <div class="mt-4 pt-3 border-t border-white/5 space-y-2">
-          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Cámaras 3D del Edificio:</span>
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <button onclick="viewFullBuilding3D()" class="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-medium border border-white/5 transition-all text-center">
-              🏛️ Vista Edificio
-            </button>
-            <button onclick="reset3DCamera()" class="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-medium border border-white/5 transition-all text-center">
-              🔄 Centrar Set
-            </button>
+        <!-- Coordenadas Espaciales de Alina -->
+        <div class="mt-4 pt-3 border-t border-white/5 space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400 font-medium">Posición 3D de Alina:</span>
+            <span id="alinaPosBadge" class="font-mono text-[#f29979]">X:0.0 Y:1.4 Z:-3.5</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-slate-400 space-y-1">
+            <div class="flex justify-between">
+              <span>Pose actual:</span>
+              <span id="alinaPoseText" class="text-white font-medium">Sentada en Tocador Vanity</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Gaze Tracking:</span>
+              <span class="text-emerald-400 font-medium">Mirada fijada a Cámara 85mm</span>
+            </div>
           </div>
         </div>
 
       </div>
     </aside>
 
-    <!-- COL 2: REAL 3D WEBGL VIEWPORT & SPOT INSPECTOR -->
+    <!-- COL 2: VIEWPORT 3D EXPANSIVO CON ALINA + EXPORTADOR HIGGSFIELD -->
     <section class="col-span-12 lg:col-span-5 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
         
-        <!-- Spot Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-white/5 mb-3">
+        <!-- Header & Modos de Visualización -->
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-white/5 mb-3 gap-2">
           <div>
             <span id="currentFloorTag" class="text-[11px] font-mono text-[#f29979] uppercase font-bold tracking-wider">PISO 2 • RESIDENCIA PRIVADA</span>
             <h2 id="currentSpotTitle" class="text-lg font-bold text-white mt-0.5">El Tocador Vanity & Espejo</h2>
           </div>
           
-          <!-- Mode Switcher: Three.js WebGL vs Unity Connector -->
-          <div class="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 text-xs">
-            <button onclick="switch3DMode('threejs')" id="tab-threejs" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow">
-              WebGL 3D
+          <!-- Botones de Pases Cinemáticos: Beauty vs Depth Map -->
+          <div class="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 text-xs">
+            <button onclick="toggleDepthPass(false)" id="btn-beauty-pass" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">
+              PBR Beauty
             </button>
-            <button onclick="switch3DMode('unity')" id="tab-unity" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-colors">
-              Unity Bridge
+            <button onclick="toggleDepthPass(true)" id="btn-depth-pass" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors flex items-center gap-1">
+              <span>Depth Pass (Z-Buffer)</span>
             </button>
           </div>
         </div>
@@ -223,80 +228,80 @@
           <!-- Injected via JavaScript -->
         </div>
 
-        <!-- REAL 3D VIEWPORT CONTAINER -->
-        <div class="relative w-full h-[360px] rounded-xl bg-black/95 border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
+        <!-- 3D VIEWPORT CANVAS REAL (AMPLIADO A 440px) -->
+        <div class="relative w-full h-[420px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
           
           <!-- THREE.JS CANVAS CONTAINER -->
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative">
             <!-- Three.js Canvas appends here -->
           </div>
 
-          <!-- UNITY BRIDGE OVERLAY (Hidden by default, shown when Unity tab active) -->
-          <div id="unity-bridge-overlay" class="hidden absolute inset-0 bg-[#0d0e12]/95 backdrop-blur-md p-6 flex flex-col justify-between text-center z-20">
-            <div class="my-auto space-y-3 max-w-md mx-auto">
-              <div class="w-14 h-14 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl shadow">
-                🎮
-              </div>
-              <h3 class="text-base font-bold text-white">Unity WebGL Indexer (Bridge)</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                Si exportas tu escena desde Unity como <code class="text-amber-400 bg-white/5 px-1 py-0.5 rounded">WebGL Build</code> (carpeta <code class="text-slate-300">Build/</code>), se indexa directamente aquí usando el wrapper oficial de <span class="text-emerald-400">react-unity-webgl</span>.
-              </p>
-              <div class="p-3 bg-black/60 rounded-xl border border-white/5 text-[11px] font-mono text-slate-400 text-left space-y-1">
-                <div class="text-slate-300 font-semibold">• Loader: Build/AlinaSanctuary.loader.js</div>
-                <div class="text-slate-300 font-semibold">• Data: Build/AlinaSanctuary.data</div>
-                <div class="text-slate-300 font-semibold">• Framework: Build/AlinaSanctuary.framework.js</div>
-                <div class="text-slate-300 font-semibold">• Code: Build/AlinaSanctuary.wasm</div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-500 font-mono">
-              Para uso rápido y ligero sin cargar 500MB de Unity, usa el motor <b>WebGL 3D integrado</b>.
-            </div>
-          </div>
-
-          <!-- 3D HUD Controls Overlay -->
-          <div class="absolute top-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
+          <!-- Top HUD: Coordenadas de Cámara y Estado 3D -->
+          <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [3D ACTIVO]</span>
+            <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [Alina Presente]</span>
           </div>
 
-          <!-- Bottom Camera Preset Tools -->
-          <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-auto">
-            <div class="bg-black/80 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10 text-[10px] text-slate-400 flex items-center gap-2">
-              <span>🖱️ Arrastra para orbitar 360° • Rueda para Zoom</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button onclick="setCameraAngle('85mm')" class="bg-black/80 hover:bg-[#c86446] px-2 py-1 rounded-md text-[10px] font-mono text-white border border-white/10 transition-colors">
+          <!-- Top Right: Botón Corte Arquitectónico Completo -->
+          <div class="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-auto">
+            <button onclick="toggleBuildingCutaway()" id="btn-cutaway" class="bg-black/80 hover:bg-white/10 text-slate-300 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
+              <span>🏛️ Corte Edificio</span>
+            </button>
+          </div>
+
+          <!-- Bottom Bar: Controles de Cámara y EXPORTACIÓN DIRECTA HIGGSFIELD -->
+          <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
+            
+            <!-- Quick Camera Angles -->
+            <div class="flex items-center gap-1 bg-black/85 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
+              <button onclick="setCameraAngle('85mm')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
                 Cam 85mm
               </button>
-              <button onclick="setCameraAngle('macro')" class="bg-black/80 hover:bg-[#c86446] px-2 py-1 rounded-md text-[10px] font-mono text-white border border-white/10 transition-colors">
+              <button onclick="setCameraAngle('macro')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
                 Macro
               </button>
-              <button onclick="setCameraAngle('top')" class="bg-black/80 hover:bg-[#c86446] px-2 py-1 rounded-md text-[10px] font-mono text-white border border-white/10 transition-colors">
+              <button onclick="setCameraAngle('top')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
                 Cenital
               </button>
+              <button onclick="reset3DCamera()" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
+                Centrar
+              </button>
             </div>
+
+            <!-- HIGGSFIELD EXPORT ACTIONS -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="exportFramePNG()" title="Exportar Render Viewport para Higgsfield I2V" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Exportar Frame (PNG)</span>
+              </button>
+              <button onclick="exportHiggsfieldJSON()" title="Descargar Trayectoria de Cámara para Higgsfield" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Exportar JSON Higgsfield</span>
+              </button>
+            </div>
+
           </div>
 
         </div>
 
-        <!-- Flux Prompt Output Box -->
+        <!-- Prompt Sincronizado Box -->
         <div class="space-y-1.5 mt-auto">
           <div class="flex items-center justify-between">
             <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              Prompt Flux.1 Dev 4K (Sincronizado con Set 3D):
+              Prompt Flux.1 Dev 4K (Sincronizado con Posición 3D de Alina):
             </label>
             <button onclick="copyPrompt()" id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono transition-colors">Copiar</button>
           </div>
-          <div id="fluxPromptBox" class="p-3 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-20 overflow-y-auto custom-scrollbar select-all">
-            Intimate cinematic shot of Alina Van Dijk seated at luxury dark wood vanity, copper red hair pinned loosely, emerald eyes looking through mirror reflection, black silk robe, warm chiaroscuro, 85mm f/1.4 --ar 9:16
+          <div id="fluxPromptBox" class="p-3 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-16 overflow-y-auto custom-scrollbar select-all">
+            Cinematic 85mm medium close-up of Alina Van Dijk seated at dark wood vanity in Piso 2 suite, copper red hair cascading, emerald green eyes looking at camera, black silk robe, warm mirror light reflection --ar 9:16
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- COL 3: ZERO-WASTE PRODUCTION PIPELINE -->
+    <!-- COL 3: PIPELINE DE PRODUCCIÓN & EXPORTADOR HIGGSFIELD -->
     <aside class="col-span-12 lg:col-span-4 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col justify-between">
         
@@ -304,7 +309,7 @@
           <div class="flex items-center justify-between pb-3 border-b border-white/5">
             <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 flex items-center gap-2">
               <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Orquestador de Producción
+              Orquestador Higgsfield & Voice
             </h2>
             <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">READY</span>
           </div>
@@ -320,7 +325,7 @@
 
           <!-- 2. Motion Engine Selection -->
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-300 block">Motor de Movimiento (Zero-Waste Shield):</label>
+            <label class="text-xs font-medium text-slate-300 block">Motor de Animación sobre el Render 3D:</label>
             <div class="grid grid-cols-3 gap-2 text-xs">
               
               <button onclick="setMotionEngine('liveportrait')" id="btn-engine-liveportrait" class="p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left transition-all">
@@ -341,25 +346,28 @@
             </div>
           </div>
 
-          <!-- 3. Formula 1:2 B-Roll Packer -->
-          <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1.5">
-            <div class="flex items-center justify-between text-xs">
-              <span class="font-semibold text-slate-300 flex items-center gap-1.5 text-[11px]">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                Pack Automático B-Roll (Fórmula 1:2):
-              </span>
-              <span class="text-[10px] text-emerald-400 font-mono font-bold">0% Deformación</span>
-            </div>
-            <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5">
-              <div>• <b>B-Roll 1:</b> Macro slider sobre labial carmesí y frasco ámbar.</div>
-              <div>• <b>B-Roll 2:</b> Tina de piedra negra con agua humeante y velas encendidas.</div>
+          <!-- 3. Parámetros de Cámara 3D Exportables para Higgsfield -->
+          <div class="p-3 bg-black/50 border border-white/5 rounded-xl space-y-2 text-xs">
+            <span class="font-semibold text-slate-300 flex items-center justify-between text-[11px]">
+              <span>Parámetros de Cámara Higgsfield:</span>
+              <span class="text-amber-400 font-mono">CALIBRADO</span>
+            </span>
+            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400">
+              <div class="bg-black/60 p-2 rounded border border-white/5">
+                <span class="text-slate-500">Camera Action:</span><br>
+                <span class="text-white">Slow Push-In (Dolly)</span>
+              </div>
+              <div class="bg-black/60 p-2 rounded border border-white/5">
+                <span class="text-slate-500">Lens Framing:</span><br>
+                <span class="text-white">85mm Prime (f/1.4)</span>
+              </div>
             </div>
           </div>
 
-          <!-- Motion Strength Slider (if Higgsfield) -->
-          <div id="sliderBox" class="space-y-1 opacity-60 pointer-events-none transition-opacity">
+          <!-- Motion Strength Slider (Higgsfield) -->
+          <div class="space-y-1">
             <div class="flex justify-between text-xs">
-              <span class="text-slate-400">Motion Strength (Higgsfield):</span>
+              <span class="text-slate-400">Motion Strength (Higgsfield Zero-Waste):</span>
               <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
             </div>
             <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" oninput="document.getElementById('motionVal').innerText = this.value" class="w-full accent-[#c86446]">
@@ -384,7 +392,7 @@
 
   </main>
 
-  <!-- DATA & THREE.JS 3D ENGINE -->
+  <!-- DATA & THREE.JS UNIFIED SPATIAL ARCHITECTURE ENGINE -->
   <script>
     // --- LORE & DATA STRUCTURE ---
     const sanctuaryData = {
@@ -396,17 +404,19 @@
             id: "pool",
             name: "Plunge Pool de Piedra Volcánica",
             icon: "🏊‍♀️",
-            prompt: "Alina Van Dijk relaxing by volcanic stone plunge pool on luxury rooftop deck, copper red hair wet in slicked-back elegance, emerald eyes, golden hour sunset light over skyline, 85mm f/1.8 --ar 9:16",
-            script: "Cuando estás arriba, el ruido de abajo se disuelve. Aquí solo entra quien comprende que liderar también exige saber rendirse. [pausa de 2.0s] Bienvenido al círculo íntimo.",
-            brolls: ["• B-Roll 1: Detalle de copa de champán con microburbujas reflejando el atardecer.", "• B-Roll 2: Paneo de agua cristalina moviéndose suavemente sobre el borde de piedra volcánica."]
+            alinaPose: "Al borde de la piscina infinita",
+            alinaPos: { x: 0, y: 8.6, z: -1.2 },
+            prompt: "Cinematic shot of Alina Van Dijk relaxing by volcanic stone plunge pool on luxury rooftop deck, copper red hair wet in slicked-back elegance, emerald eyes, golden hour sunset light over skyline, 85mm f/1.8 --ar 9:16",
+            script: "Cuando estás arriba, el ruido de abajo se disuelve. Aquí solo entra quien comprende que liderar también exige saber rendirse. [pausa de 2.0s] Bienvenido al círculo íntimo."
           },
           {
             id: "bar",
             name: "Bar de Cócteles Botánicos & Skyline",
             icon: "🍸",
+            alinaPose: "De pie junto a la barra de cobre",
+            alinaPos: { x: 1.5, y: 8.6, z: -3.8 },
             prompt: "Alina Van Dijk standing by polished copper rooftop cocktail bar, holding crystal martini glass, wearing emerald backless silk slip, skyline bokeh, 85mm f/1.4 --ar 9:16",
-            script: "La mente necesita un antídoto contra el exceso de control. Este es el mío. [pausa de 1.5s] Salud por los que no le temen a su propia vulnerabilidad.",
-            brolls: ["• B-Roll 1: Macro de rodaja de higo y romero dentro de copa de cristal tallado.", "• B-Roll 2: Luces de la ciudad difuminadas en bokeh anamórfico."]
+            script: "La mente necesita un antídoto contra el exceso de control. Este es el mío. [pausa de 1.5s] Salud por los que no le temen a su propia vulnerabilidad."
           }
         ]
       },
@@ -418,17 +428,19 @@
             id: "podcast",
             name: "The Mind Sanctuary (Podcast Loft)",
             icon: "🎙️",
+            alinaPose: "Sentada en el sillón frente al micrófono Shure",
+            alinaPos: { x: 0, y: 6.4, z: -2.8 },
             prompt: "Medium close-up of Alina Van Dijk in SET-01 dark loft studio, black over-ear headphones, Shure SM7B microphone, charcoal silk blouse, exposed brick background, 85mm f/1.8 --ar 9:16",
-            script: "Llevas diez horas decidiendo por los demás... ¿cuándo fue la última vez que alguien tomó el mando por ti? [pausa de 2.0s] Entra. Cierra la puerta. Esta noche decido yo.",
-            brolls: ["• B-Roll 1: Humo de café espresso sobre mesa de nogal y cuaderno de sexología clínica.", "• B-Roll 2: Estantería con lomos antiguos de Bataille y Foucault con vaso ámbar."]
+            script: "Llevas diez horas decidiendo por los demás... ¿cuándo fue la última vez que alguien tomó el mando por ti? [pausa de 2.0s] Entra. Cierra la puerta. Esta noche decido yo."
           },
           {
             id: "boudoir",
             name: "Boudoir Velvet & Chiaroscuro",
             icon: "🗝️",
+            alinaPose: "De pie junto al cabecero esmeralda",
+            alinaPos: { x: -2.0, y: 6.4, z: -3.5 },
             prompt: "Alina Van Dijk in luxury boudoir, emerald velvet headboard, dramatic chiaroscuro candlelight, holding silk rope lightly in hands, intense hypnotic gaze, 85mm prime lens --ar 9:16",
-            script: "El poder real nunca se impone a la fuerza. Se entrega voluntariamente a quien sabe sostenerlo sin juicio. [pausa de 2.0s] ¿Estás listo?",
-            brolls: ["• B-Roll 1: Paneo macro por cuerda de seda lila reposando sobre satén negro.", "• B-Roll 2: Llama de vela parpadeando en espejo antiguo."]
+            script: "El poder real nunca se impone a la fuerza. Se entrega voluntariamente a quien sabe sostenerlo sin juicio. [pausa de 2.0s] ¿Estás listo?"
           }
         ]
       },
@@ -440,33 +452,37 @@
             id: "vanity",
             name: "El Tocador Vanity & Espejo",
             icon: "💄",
+            alinaPose: "Sentada frente al tocador mirándose al espejo",
+            alinaPos: { x: 0.0, y: 4.2, z: -3.4 },
             prompt: "Intimate cinematic shot of Alina Van Dijk seated at luxury dark wood vanity, copper red hair pinned loosely, emerald eyes looking through mirror reflection, black silk robe, warm chiaroscuro, 85mm f/1.4 --ar 9:16",
-            script: "Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando.",
-            brolls: ["• B-Roll 1: Macro slider sobre labial carmesí y frasco ámbar reflejando luz cálida.", "• B-Roll 2: Tina de piedra negra con agua humeante y velas encendidas."]
+            script: "Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando."
           },
           {
             id: "bath",
             name: "El Baño Spa & Tina de Piedra Negra",
             icon: "🛁",
+            alinaPose: "Dentro de la tina de piedra con agua humeante",
+            alinaPos: { x: -2.8, y: 4.2, z: -2.2 },
             prompt: "Alina Van Dijk in freestanding black stone bathtub filled with warm steaming water, shoulders bare, relaxed serene gaze, surrounded by luxury candles, moody dark spa bathroom, 85mm f/1.8 --ar 9:16",
-            script: "El cuerpo guarda todo lo que la mente reprime. Cierra los ojos... siente el peso soltarse en el agua. [pausa de 2.0s] Yo me encargo del resto.",
-            brolls: ["• B-Roll 1: Gotas de vapor resbalando por la mampara de vidrio negro.", "• B-Roll 2: Flor flotando en agua humeante entre reflejos dorados."]
+            script: "El cuerpo guarda todo lo que la mente reprime. Cierra los ojos... siente el peso soltarse en el agua. [pausa de 2.0s] Yo me encargo del resto."
           },
           {
             id: "kitchen",
             name: "Cocina de Autor & Isla de Mármol",
             icon: "☕",
+            alinaPose: "Apoyada en la isla de mármol con café matutino",
+            alinaPos: { x: 2.2, y: 4.2, z: -1.8 },
             prompt: "Alina Van Dijk leaning against black marble kitchen island in oversized silk shirt, holding ceramic cup of morning espresso, gentle sunrise backlight, authentic relaxed morning look, 85mm f/1.8 --ar 9:16",
-            script: "Antes de que empiece el caos de tu agenda... regálate tres minutos de silencio absoluto. [pausa de 1.5s] Respira conmigo.",
-            brolls: ["• B-Roll 1: Goteo perfecto de espresso doble cayendo en taza de cerámica artesanal.", "• B-Roll 2: Luz matutina cortando la isla de mármol negro."]
+            script: "Antes de que empiece el caos de tu agenda... regálate tres minutos de silencio absoluto. [pausa de 1.5s] Respira conmigo."
           },
           {
             id: "suite",
             name: "La Suite Principal (Lino Carbón)",
             icon: "🛏️",
+            alinaPose: "Recostada en la cama de lino carbón",
+            alinaPos: { x: 0.0, y: 4.2, z: -1.0 },
             prompt: "Alina Van Dijk resting back against charcoal linen pillows on king bed, copper hair loose across shoulders, calm hypnotic eye contact, soft bedside warm reading lamp, 85mm f/1.4 --ar 9:16",
-            script: "Apaga la pantalla. Deja de repasar mentalmente tus pendientes de mañana. [pausa de 2.0s] Tu mente necesita rendirse para poder renacer.",
-            brolls: ["• B-Roll 1: Detalle de lino arrugado con reloj de lujo reposando en la mesilla.", "• B-Roll 2: Luz tenue filtrándose a través de cortinas pesadas de terciopelo."]
+            script: "Apaga la pantalla. Deja de repasar mentalmente tus pendientes de mañana. [pausa de 2.0s] Tu mente necesita rendirse para poder renacer."
           }
         ]
       },
@@ -478,9 +494,10 @@
             id: "cafe",
             name: "Le Velvet Café & Terraza Street",
             icon: "🥐",
+            alinaPose: "Sentada en mesa de mármol exterior leyendo",
+            alinaPos: { x: 0.0, y: 2.1, z: -2.0 },
             prompt: "Alina Van Dijk sitting at outdoor marble café table in Barcelona Eixample, stylish tailored beige blazer over black top, reading leather notebook, soft daytime sunlight, 85mm f/2.0 --ar 9:16",
-            script: "La productividad sin introspección es solo ansiedad disfrazada de éxito. [pausa de 1.5s] ¿Tú qué buscas hoy?",
-            brolls: ["• B-Roll 1: Croissant artesanal y libro abierto en mesa de bistró.", "• B-Roll 2: Transeúntes desenfocados pasando bajo árboles del Eixample."]
+            script: "La productividad sin introspección es solo ansiedad disfrazada de éxito. [pausa de 1.5s] ¿Tú qué buscas hoy?"
           }
         ]
       },
@@ -492,9 +509,10 @@
             id: "cabaret",
             name: "Nocturne Speakeasy Bar",
             icon: "🎷",
+            alinaPose: "De pie junto al piano de cola",
+            alinaPos: { x: -1.2, y: 0.0, z: -2.5 },
             prompt: "Alina Van Dijk in dark sultry speakeasy bar, red velvet curtain background, vintage neon amber rim light, holding antique cocktail glass, mysterious commanding expression, 85mm f/1.4 --ar 9:16",
-            script: "Las mejores conversaciones ocurren cuando la ciudad se va a dormir y caen todas las máscaras. [pausa de 2.0s] ¿Entras?",
-            brolls: ["• B-Roll 1: Lápiz labial manchando el borde de una copa tallada.", "• B-Roll 2: Teclas de piano antiguo con reflejo de luz carmesí."]
+            script: "Las mejores conversaciones ocurren cuando la ciudad se va a dormir y caen todas las máscaras. [pausa de 2.0s] ¿Entras?"
           }
         ]
       }
@@ -503,76 +521,72 @@
     let activeFloor = 2;
     let activeSpot = sanctuaryData[2].spots[0];
     let selectedEngine = 'liveportrait';
+    let isCutawayActive = false;
+    let isDepthPass = false;
 
-    // --- THREE.JS REAL-TIME 3D VIEWPORT ENGINE ---
+    // --- THREE.JS ENGINE ---
     let scene, camera, renderer, controls;
-    let roomGroup, buildingGroup;
-    let isBuildingView = false;
-    let targetCameraPos = new THREE.Vector3(7, 6, 8);
-    let targetLookAt = new THREE.Vector3(0, 1, 0);
+    let buildingUnifiedGroup, alinaCharacterGroup;
+    let targetCameraPos = new THREE.Vector3(2.5, 5.2, 0.2);
+    let targetLookAt = new THREE.Vector3(0, 4.6, -3.4);
 
     function initThreeJS() {
       const container = document.getElementById('three-canvas-container');
-      const width = container.clientWidth || 600;
-      const height = container.clientHeight || 360;
+      const width = container.clientWidth || 700;
+      const height = container.clientHeight || 420;
 
-      // 1. Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0b0e);
-      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.035);
+      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.025);
 
-      // 2. Camera
-      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-      camera.position.set(7, 6, 8);
+      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      camera.position.set(2.5, 5.2, 0.2);
 
-      // 3. Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // 4. Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't clip through floor
-      controls.minDistance = 3;
-      controls.maxDistance = 25;
-      controls.target.set(0, 1, 0);
+      controls.maxPolarAngle = Math.PI / 2 - 0.01;
+      controls.minDistance = 1.0;
+      controls.maxDistance = 35;
+      controls.target.set(0, 4.6, -3.4);
 
-      // 5. Lighting Setup (Cinematic Chiaroscuro)
-      const ambientLight = new THREE.AmbientLight(0x221a16, 1.2);
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0x2d2420, 1.4);
       scene.add(ambientLight);
 
-      const warmKeyLight = new THREE.SpotLight(0xf29979, 3.5, 30, Math.PI / 4, 0.5, 1);
-      warmKeyLight.position.set(4, 8, 5);
-      warmKeyLight.castShadow = true;
-      scene.add(warmKeyLight);
+      const warmSunLight = new THREE.SpotLight(0xf29979, 3.2, 45, Math.PI / 3, 0.4, 1);
+      warmSunLight.position.set(8, 16, 12);
+      warmSunLight.castShadow = true;
+      scene.add(warmSunLight);
 
-      const emeraldRimLight = new THREE.PointLight(0x10b981, 2.0, 18);
-      emeraldRimLight.position.set(-5, 4, -4);
+      const emeraldRimLight = new THREE.PointLight(0x10b981, 1.8, 25);
+      emeraldRimLight.position.set(-6, 8, -6);
       scene.add(emeraldRimLight);
 
-      const floorBounceLight = new THREE.PointLight(0xc86446, 1.0, 10);
-      floorBounceLight.position.set(0, 0.5, 2);
-      scene.add(floorBounceLight);
+      // Groups
+      buildingUnifiedGroup = new THREE.Group();
+      scene.add(buildingUnifiedGroup);
 
-      // 6. Groups
-      roomGroup = new THREE.Group();
-      scene.add(roomGroup);
+      alinaCharacterGroup = new THREE.Group();
+      scene.add(alinaCharacterGroup);
 
-      buildingGroup = new THREE.Group();
-      scene.add(buildingGroup);
+      // 1. Build Coherent Multi-Story Architectural Building
+      buildUnifiedSanctuaryBuilding();
 
-      // Build initial 3D Set
-      render3DSet(activeFloor, activeSpot.id);
+      // 2. Build Alina 3D Avatar (Present in Space)
+      buildAlinaAvatar();
 
-      // Animation Loop
+      // Set initial spot
+      updateAlinaPlacement(activeSpot);
+
       animate();
-
-      // Handle Resize
       window.addEventListener('resize', onWindowResize);
     }
 
@@ -589,287 +603,331 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Camera smooth lerp
-      camera.position.lerp(targetCameraPos, 0.05);
-      controls.target.lerp(targetLookAt, 0.05);
+      camera.position.lerp(targetCameraPos, 0.06);
+      controls.target.lerp(targetLookAt, 0.06);
       controls.update();
 
-      // Gentle floating animation for particles/accent elements
-      const time = performance.now() * 0.001;
-      if (roomGroup) {
-        roomGroup.traverse(child => {
-          if (child.userData && child.userData.animateFloat) {
-            child.position.y += Math.sin(time * 2) * 0.001;
-          }
-        });
+      // Subtle breathing / eye contact tracking on Alina
+      if (alinaCharacterGroup) {
+        const time = performance.now() * 0.0015;
+        const chest = alinaCharacterGroup.getObjectByName("alinaChest");
+        if (chest) {
+          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.02;
+        }
       }
 
       renderer.render(scene, camera);
     }
 
-    // --- 3D PROCEDURAL ROOM & SPOT GENERATION ---
-    function render3DSet(floor, spotId) {
-      isBuildingView = false;
-      buildingGroup.visible = false;
-      roomGroup.visible = true;
+    // --- 1. BUILD UNIFIED COHERENT BUILDING (5 FLOORS CONTINUOUS) ---
+    function buildUnifiedSanctuaryBuilding() {
+      const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x161210, roughness: 0.7, metalness: 0.1 });
+      const blackMarbleMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.25, metalness: 0.5 });
+      const copperMetalMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.35, metalness: 0.8 });
+      const emeraldVelvetMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.85, metalness: 0.1 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.25 });
+      const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0x1f232b, roughness: 0.9, metalness: 0.1 });
+      const goldGlowMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
 
-      // Clear previous room geometry
-      while (roomGroup.children.length > 0) {
-        const obj = roomGroup.children[0];
-        roomGroup.remove(obj);
-      }
+      const floorHeight = 2.15;
+      const floorWidth = 9.0;
+      const floorDepth = 8.0;
 
-      // Materials Palette
-      const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x181412, roughness: 0.8, metalness: 0.1 });
-      const blackMarbleMat = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.2, metalness: 0.6 });
-      const copperGoldMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.3, metalness: 0.85 });
-      const emeraldVelvetMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9, metalness: 0.1 });
-      const mirrorMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.98 });
-      const glowingBulbMat = new THREE.MeshBasicMaterial({ color: 0xfed7aa });
-      const waterMat = new THREE.MeshStandardMaterial({ color: 0x0f2d2e, roughness: 0.1, metalness: 0.7, transparent: true, opacity: 0.85 });
+      // Vertical Elevator / Staircase Core (Spatial Continuity)
+      const coreGeo = new THREE.BoxGeometry(2.0, 11.5, 2.0);
+      const coreMesh = new THREE.Mesh(coreGeo, concreteWallMat);
+      coreMesh.position.set(3.8, 5.5, 0);
+      buildingUnifiedGroup.add(coreMesh);
 
-      // 1. Room Floor & Corner Walls (The Architectural Container)
-      const floorGeo = new THREE.BoxGeometry(10, 0.3, 10);
-      const floorMesh = new THREE.Mesh(floorGeo, blackMarbleMat);
-      floorMesh.position.y = -0.15;
-      floorMesh.receiveShadow = true;
-      roomGroup.add(floorMesh);
+      // Build each of the 5 architectural floors
+      for (let i = 0; i < 5; i++) {
+        const yBase = i * floorHeight;
 
-      // Back Wall
-      const backWallGeo = new THREE.BoxGeometry(10, 5, 0.3);
-      const backWallMesh = new THREE.Mesh(backWallGeo, darkWoodMat);
-      backWallMesh.position.set(0, 2.5, -5);
-      backWallMesh.receiveShadow = true;
-      roomGroup.add(backWallMesh);
+        // Floor slab
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.2, floorDepth), (i === 2 ? darkWoodMat : blackMarbleMat));
+        slab.position.set(0, yBase, -1.5);
+        slab.receiveShadow = true;
+        buildingUnifiedGroup.add(slab);
 
-      // Left Wall
-      const leftWallGeo = new THREE.BoxGeometry(0.3, 5, 10);
-      const leftWallMesh = new THREE.Mesh(leftWallGeo, darkWoodMat);
-      leftWallMesh.position.set(-5, 2.5, 0);
-      leftWallMesh.receiveShadow = true;
-      roomGroup.add(leftWallMesh);
+        // Back Wall
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, floorHeight, 0.2), concreteWallMat);
+        backWall.position.set(0, yBase + floorHeight / 2, -1.5 - floorDepth / 2);
+        buildingUnifiedGroup.add(backWall);
 
-      // Set-Specific 3D Assets
-      if (floor === 2) {
-        // PISO 2: LA RESIDENCIA PRIVADA
-        if (spotId === 'vanity') {
-          // Tocador de caoba + Espejo Circular con Luz Vanity
-          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.4, 1.6), darkWoodMat);
-          vanityTable.position.set(0, 0.7, -3.8);
-          roomGroup.add(vanityTable);
+        // Left Wall
+        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, floorHeight, floorDepth), concreteWallMat);
+        leftWall.position.set(-floorWidth / 2, yBase + floorHeight / 2, -1.5);
+        buildingUnifiedGroup.add(leftWall);
 
-          // Espejo Redondo con marco de cobre
-          const mirrorGeo = new THREE.CylinderGeometry(1.2, 1.2, 0.08, 32);
-          mirrorGeo.rotateX(Math.PI / 2);
-          const mirror = new THREE.Mesh(mirrorGeo, mirrorMat);
-          mirror.position.set(0, 2.6, -4.6);
-          roomGroup.add(mirror);
+        // Ceiling / Glass front balcony
+        const glassRailing = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.8, 0.1), glassMat);
+        glassRailing.position.set(0, yBase + 0.4, -1.5 + floorDepth / 2);
+        buildingUnifiedGroup.add(glassRailing);
 
-          // Aro de luz difusa cálida (Vanity Ring)
-          const ringGeo = new THREE.TorusGeometry(1.25, 0.06, 16, 64);
-          const ring = new THREE.Mesh(ringGeo, glowingBulbMat);
-          ring.position.set(0, 2.6, -4.56);
-          roomGroup.add(ring);
+        // --- SPECIFIC ROOM FURNITURE PER FLOOR ---
+        if (i === 2) {
+          // PISO 2: HOGAR PRIVADO DE ALINA
 
-          // Silla de tocador aterciopelada
-          const chair = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.8, 24), emeraldVelvetMat);
-          chair.position.set(0, 0.4, -2.4);
-          roomGroup.add(chair);
+          // 1. Zona Tocador Vanity (Centro)
+          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.9, 1.2), darkWoodMat);
+          vanityTable.position.set(0, yBase + 0.45, -4.5);
+          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.95 }));
+          mirror.rotation.x = Math.PI / 2;
+          mirror.position.set(0, yBase + 1.5, -5.0);
+          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.04, 16, 48), goldGlowMat);
+          mirrorRing.position.set(0, yBase + 1.5, -4.96);
+          buildingUnifiedGroup.add(vanityTable, mirror, mirrorRing);
 
-          // Frascos de perfume ámbar sobre la mesa
-          const bottleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.28, 16);
-          const amberBottleMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.1, transparent: true, opacity: 0.85 });
-          const bottle1 = new THREE.Mesh(bottleGeo, amberBottleMat);
-          bottle1.position.set(0.9, 1.54, -3.8);
-          const bottle2 = new THREE.Mesh(bottleGeo, copperGoldMat);
-          bottle2.position.set(1.1, 1.54, -3.7);
-          roomGroup.add(bottle1, bottle2);
+          // 2. Zona Baño Spa (Izquierda) - Tina de Piedra Negra
+          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.0, 0.8, 24), blackMarbleMat);
+          tub.scale.set(1.4, 1.0, 0.8);
+          tub.position.set(-2.8, yBase + 0.4, -3.2);
+          const water = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x0e3b43, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }));
+          water.scale.set(1.35, 1.0, 0.75);
+          water.position.set(-2.8, yBase + 0.75, -3.2);
+          buildingUnifiedGroup.add(tub, water);
 
-        } else if (spotId === 'bath') {
-          // Tina de piedra negra monolítica
-          const tubOuter = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.4, 1.1, 32), blackMarbleMat);
-          tubOuter.position.set(0, 0.55, -2);
-          tubOuter.scale.set(1.3, 1, 0.85);
-          roomGroup.add(tubOuter);
+          // 3. Zona Cocina / Comedor (Derecha) - Isla de Mármol
+          const island = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.1, 1.2), blackMarbleMat);
+          island.position.set(2.4, yBase + 0.55, -2.5);
+          buildingUnifiedGroup.add(island);
 
-          // Agua humeante con reflejo
-          const water = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.05, 32), waterMat);
-          water.position.set(0, 0.95, -2);
-          water.scale.set(1.25, 1, 0.8);
-          roomGroup.add(water);
+          // 4. Zona Suite (Dormitorio) - Cama King
+          const bed = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.6, 2.8), darkWoodMat);
+          bed.position.set(0, yBase + 0.3, -1.0);
+          const headboard = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, 0.2), emeraldVelvetMat);
+          headboard.position.set(0, yBase + 0.8, -2.4);
+          buildingUnifiedGroup.add(bed, headboard);
 
-          // Velas flotantes y en el borde
-          for (let i = 0; i < 5; i++) {
-            const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.2, 16), glowingBulbMat);
-            const angle = (i / 5) * Math.PI * 2;
-            candle.position.set(Math.cos(angle) * 2.2, 0.3, -2 + Math.sin(angle) * 1.5);
-            roomGroup.add(candle);
-          }
+        } else if (i === 3) {
+          // PISO 3: PODCAST LOFT & CLÍNICA
+          const podcastDesk = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.0, 1.4), darkWoodMat);
+          podcastDesk.position.set(0, yBase + 0.5, -3.4);
+          const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), copperMetalMat);
+          micArm.position.set(0.4, yBase + 1.3, -3.0);
+          buildingUnifiedGroup.add(podcastDesk, micArm);
 
-        } else if (spotId === 'kitchen') {
-          // Isla de mármol negro
-          const island = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.6, 2.0), blackMarbleMat);
-          island.position.set(0, 0.8, -2);
-          roomGroup.add(island);
-
-          // Taburetes de roble y cobre
-          for (let x = -1.2; x <= 1.2; x += 1.2) {
-            const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.0, 16), darkWoodMat);
-            stool.position.set(x, 0.5, -0.4);
-            roomGroup.add(stool);
-          }
-
-          // Lámparas colgantes de cobre
-          for (let x = -1; x <= 1; x += 1) {
-            const pendant = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.4, 16), copperGoldMat);
-            pendant.position.set(x, 3.6, -2);
-            roomGroup.add(pendant);
-          }
-
-        } else if (spotId === 'suite') {
-          // Cama King de lino carbón
-          const bedBase = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.8, 4.4), darkWoodMat);
-          bedBase.position.set(0, 0.4, -2.5);
-          roomGroup.add(bedBase);
-
-          // Cabecero tapizado esmeralda/carbón
-          const headboard = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.2, 0.4), emeraldVelvetMat);
-          headboard.position.set(0, 1.5, -4.7);
-          roomGroup.add(headboard);
-
-          // Almohadas
-          const pillowMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.9 });
-          const p1 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.7), pillowMat);
-          p1.position.set(-1.1, 0.9, -4.2);
-          const p2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.7), pillowMat);
-          p2.position.set(1.1, 0.9, -4.2);
-          roomGroup.add(p1, p2);
+        } else if (i === 4) {
+          // PISO 4: ROOFTOP & PLUNGE POOL
+          const pool = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.8, 3.2), blackMarbleMat);
+          pool.position.set(0, yBase + 0.4, -2.2);
+          const poolWater = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.05, 2.9), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.8 }));
+          poolWater.position.set(0, yBase + 0.75, -2.2);
+          const rooftopBar = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 0.8), copperMetalMat);
+          rooftopBar.position.set(1.5, yBase + 0.6, -4.5);
+          buildingUnifiedGroup.add(pool, poolWater, rooftopBar);
         }
-
-      } else if (floor === 3) {
-        // PISO 3: PODCAST LOFT & CLINICAL STUDIO
-        const desk = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.4, 2), darkWoodMat);
-        desk.position.set(0, 0.7, -3);
-        roomGroup.add(desk);
-
-        // Micrófono Shure SM7B en brazo articulado
-        const micBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 16), copperGoldMat);
-        micBase.position.set(0.6, 1.7, -2.4);
-        const micBody = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.4, 16), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 }));
-        micBody.rotation.z = Math.PI / 4;
-        micBody.position.set(0.6, 2.3, -2.4);
-        roomGroup.add(micBase, micBody);
-
-        // Estantería con libros de psicología
-        const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.6, 4.0, 3.5), darkWoodMat);
-        shelf.position.set(-4.6, 2.0, -1);
-        roomGroup.add(shelf);
-
-      } else if (floor === 4) {
-        // PISO 4: ROOFTOP & PLUNGE POOL
-        const pool = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.0, 4.0), blackMarbleMat);
-        pool.position.set(0, 0.5, -2);
-        const poolWater = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.1, 3.6), waterMat);
-        poolWater.position.set(0, 0.9, -2);
-        roomGroup.add(pool, poolWater);
-
-        // Barra de cócteles
-        const bar = new THREE.Mesh(new THREE.BoxGeometry(4.0, 1.6, 1.0), copperGoldMat);
-        bar.position.set(0, 0.8, -4.4);
-        roomGroup.add(bar);
-
-      } else {
-        // PISOS 0 & 1 (Café / Cabaret)
-        const table = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.1, 32), blackMarbleMat);
-        table.position.set(0, 1.2, -2.5);
-        const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.2, 16), copperGoldMat);
-        tableLeg.position.set(0, 0.6, -2.5);
-        roomGroup.add(table, tableLeg);
       }
-
-      // 3. Simulated Camera Rig Indicator (Showing 85mm Frame)
-      const camMarker = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 4), new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true }));
-      camMarker.rotation.x = -Math.PI / 2;
-      camMarker.position.set(0, 2.0, 2.5);
-      roomGroup.add(camMarker);
-
-      // Target Camera
-      targetCameraPos.set(6, 4.5, 6.5);
-      targetLookAt.set(0, 1.2, -1.5);
-      
-      document.getElementById('three-status-hud').innerText = `${sanctuaryData[floor].floorName.split('•')[0].trim()}: ${activeSpot.name} [3D ACTIVO]`;
     }
 
-    // --- WHOLE BUILDING 3D DOLLHOUSE VIEW ---
-    function viewFullBuilding3D() {
-      isBuildingView = true;
-      roomGroup.visible = false;
-      buildingGroup.visible = true;
+    // --- 2. BUILD ALINA 3D AVATAR (HUMANOID AVATAR WITH TOKEN TRAITS) ---
+    function buildAlinaAvatar() {
+      // Materials representing Alina's physical consistency tokens
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfc2, roughness: 0.6, metalness: 0.05 });
+      const copperHairMat = new THREE.MeshStandardMaterial({ color: 0xbe4628, roughness: 0.4, metalness: 0.25 });
+      const silkRobeMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.35, metalness: 0.65 }); // Black silk robe
+      const emeraldEyeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.1, metalness: 0.8 });
+      const lipMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 });
 
-      while (buildingGroup.children.length > 0) {
-        buildingGroup.remove(buildingGroup.children[0]);
+      // Torso / Dress
+      const torsoGeo = new THREE.CylinderGeometry(0.24, 0.20, 0.7, 16);
+      const torso = new THREE.Mesh(torsoGeo, silkRobeMat);
+      torso.name = "alinaChest";
+      torso.position.y = 0.85;
+
+      // Neck
+      const neckGeo = new THREE.CylinderGeometry(0.09, 0.10, 0.18, 16);
+      const neck = new THREE.Mesh(neckGeo, skinMat);
+      neck.position.y = 1.24;
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.18, 24, 24);
+      headGeo.scale(0.9, 1.1, 0.95);
+      const head = new THREE.Mesh(headGeo, skinMat);
+      head.position.y = 1.42;
+
+      // Vivid Emerald Eyes
+      const eyeGeo = new THREE.SphereGeometry(0.035, 16, 16);
+      const leftEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
+      leftEye.position.set(-0.065, 1.44, 0.15);
+      const rightEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
+      rightEye.position.set(0.065, 1.44, 0.15);
+
+      // Crimson Lips
+      const lipGeo = new THREE.BoxGeometry(0.07, 0.025, 0.03);
+      const lips = new THREE.Mesh(lipGeo, lipMat);
+      lips.position.set(0, 1.34, 0.16);
+
+      // Vivid Copper Red Hair (Wavy cascading silhouette)
+      const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 24), copperHairMat);
+      hairCrown.position.set(0, 1.45, -0.02);
+      hairCrown.scale.set(1.02, 1.05, 1.05);
+
+      const hairStrandLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.65, 12), copperHairMat);
+      hairStrandLeft.position.set(-0.16, 1.2, 0.05);
+      hairStrandLeft.rotation.z = 0.15;
+
+      const hairStrandRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.65, 12), copperHairMat);
+      hairStrandRight.position.set(0.16, 1.2, 0.05);
+      hairStrandRight.rotation.z = -0.15;
+
+      const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.65, 0.15), copperHairMat);
+      hairBack.position.set(0, 1.18, -0.12);
+
+      // Arms / Shoulders (Seated / Relaxed Pose)
+      const armGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.55, 12);
+      const leftArm = new THREE.Mesh(armGeo, silkRobeMat);
+      leftArm.position.set(-0.28, 0.85, 0.05);
+      leftArm.rotation.x = 0.3;
+      leftArm.rotation.z = 0.2;
+
+      const rightArm = new THREE.Mesh(armGeo, silkRobeMat);
+      rightArm.position.set(0.28, 0.85, 0.05);
+      rightArm.rotation.x = 0.3;
+      rightArm.rotation.z = -0.2;
+
+      // Legs / Skirt
+      const legsGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.7, 16);
+      const legs = new THREE.Mesh(legsGeo, silkRobeMat);
+      legs.position.set(0, 0.35, 0.15);
+      legs.rotation.x = 0.4; // Seated posture
+
+      // Assemble Character
+      alinaCharacterGroup.add(
+        torso, neck, head, leftEye, rightEye, lips,
+        hairCrown, hairStrandLeft, hairStrandRight, hairBack,
+        leftArm, rightArm, legs
+      );
+
+      alinaCharacterGroup.scale.set(1.15, 1.15, 1.15);
+    }
+
+    // Move Alina dynamically to spot coordinates
+    function updateAlinaPlacement(spot) {
+      if (!alinaCharacterGroup) return;
+      alinaCharacterGroup.position.set(spot.alinaPos.x, spot.alinaPos.y, spot.alinaPos.z);
+      
+      // Face towards camera angle
+      alinaCharacterGroup.rotation.y = Math.PI;
+
+      document.getElementById('alinaPosBadge').innerText = `X:${spot.alinaPos.x.toFixed(1)} Y:${spot.alinaPos.y.toFixed(1)} Z:${spot.alinaPos.z.toFixed(1)}`;
+      document.getElementById('alinaPoseText').innerText = spot.alinaPose;
+    }
+
+    // --- 3. CINEMATIC PASSES: BEAUTY PASS VS DEPTH MAP PASS ---
+    function toggleDepthPass(enableDepth) {
+      isDepthPass = enableDepth;
+      const btnBeauty = document.getElementById('btn-beauty-pass');
+      const btnDepth = document.getElementById('btn-depth-pass');
+
+      if (enableDepth) {
+        scene.overrideMaterial = new THREE.MeshDepthMaterial();
+        scene.fog = null;
+        btnDepth.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow";
+        btnBeauty.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
+        document.getElementById('three-status-hud').innerText = `DEPTH MAP PASS (Z-Buffer) • Listo para ControlNet`;
+      } else {
+        scene.overrideMaterial = null;
+        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.025);
+        btnBeauty.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow";
+        btnDepth.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
+        document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
       }
+    }
 
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.35 });
-      const steelMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5, metalness: 0.8 });
-      const floorColors = [0xbe123c, 0x059669, 0xc86446, 0x7c3aed, 0xd97706];
+    // --- 4. EXPORT DIRECTO PARA HIGGSFIELD / KLING ---
+    function exportFramePNG() {
+      // Hide HUD briefly, render, capture PNG
+      renderer.render(scene, camera);
+      const dataURL = renderer.domElement.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `alina_3d_viewport_piso${activeFloor}_${activeSpot.id}_${isDepthPass ? 'depth' : 'beauty'}.png`;
+      link.href = dataURL;
+      link.click();
+      
+      const status = document.getElementById('renderStatus');
+      status.innerHTML = `✅ <span class="text-emerald-400 font-bold">¡Frame 3D Exportado!</span> Listo para subir como imagen base en Higgsfield I2V.`;
+    }
 
-      for (let i = 0; i < 5; i++) {
-        const floorSlab = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.25, 5.2), new THREE.MeshStandardMaterial({ color: floorColors[i], roughness: 0.4, metalness: 0.6 }));
-        floorSlab.position.y = i * 2.2;
-        buildingGroup.add(floorSlab);
+    function exportHiggsfieldJSON() {
+      const payload = {
+        alina_character: {
+          token_lock: "28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair, vivid emerald green eyes, light freckles, crimson lips",
+          location_floor: activeFloor,
+          room_spot: activeSpot.name,
+          spatial_coordinates: activeSpot.alinaPos,
+          current_pose: activeSpot.alinaPose
+        },
+        higgsfield_i2v_parameters: {
+          mode: "Image-to-Video",
+          camera_motion: "Slow Push-In / Dolly",
+          motion_strength: parseFloat(document.getElementById('motionSlider').value),
+          lens_focal_length: "85mm Prime f/1.4",
+          suggested_duration_seconds: 3.5,
+          zero_waste_checklist: {
+            motion_slider_lock: "2.0 - 3.5",
+            lipsync_engine: selectedEngine,
+            broll_ratio: "1:2 non-facial Bodegón"
+          }
+        },
+        flux_prompt: activeSpot.prompt,
+        voice_script: document.getElementById('scriptInput').value
+      };
 
-        const glassWalls = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.9, 5.0), glassMat);
-        glassWalls.position.y = i * 2.2 + 1.0;
-        buildingGroup.add(glassWalls);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const link = document.createElement('a');
+      link.download = `alina_higgsfield_config_piso${activeFloor}.json`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+
+      const status = document.getElementById('renderStatus');
+      status.innerHTML = `✅ <span class="text-amber-400 font-bold">¡JSON de Cámara Higgsfield Descargado!</span>`;
+    }
+
+    // Toggle Building Cutaway View
+    function toggleBuildingCutaway() {
+      isCutawayActive = !isCutawayActive;
+      const btn = document.getElementById('btn-cutaway');
+
+      if (isCutawayActive) {
+        targetCameraPos.set(16, 11, 14);
+        targetLookAt.set(0, 5.0, 0);
+        btn.className = "bg-[#c86446] text-white px-2.5 py-1.5 rounded-lg border border-white/20 text-[11px] font-mono shadow";
+        document.getElementById('three-status-hud').innerText = `CORTE ARQUITECTÓNICO TOTAL: The Alina Sanctuary (5 Pisos)`;
+      } else {
+        setCameraToActiveFloor(activeFloor);
+        btn.className = "bg-black/80 hover:bg-white/10 text-slate-300 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors";
       }
+    }
 
-      targetCameraPos.set(14, 12, 14);
-      targetLookAt.set(0, 5, 0);
-
-      document.getElementById('three-status-hud').innerText = `MAQUETA EDIFICIO: The Alina Sanctuary (5 Pisos)`;
+    function setCameraToActiveFloor(floor) {
+      isCutawayActive = false;
+      const yFloor = floor * 2.15;
+      targetCameraPos.set(2.4, yFloor + 1.2, 0.4);
+      targetLookAt.set(activeSpot.alinaPos.x, activeSpot.alinaPos.y + 0.4, activeSpot.alinaPos.z);
+      document.getElementById('three-status-hud').innerText = `${sanctuaryData[floor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
     }
 
     function reset3DCamera() {
-      if (isBuildingView) {
-        viewFullBuilding3D();
-      } else {
-        targetCameraPos.set(6, 4.5, 6.5);
-        targetLookAt.set(0, 1.2, -1.5);
-      }
+      setCameraToActiveFloor(activeFloor);
     }
 
     function setCameraAngle(type) {
-      if (isBuildingView) return;
+      isCutawayActive = false;
+      const pos = activeSpot.alinaPos;
       if (type === '85mm') {
-        targetCameraPos.set(0.2, 2.0, 1.8);
-        targetLookAt.set(0, 1.8, -3.8);
+        targetCameraPos.set(pos.x + 0.1, pos.y + 0.45, pos.z + 1.8);
+        targetLookAt.set(pos.x, pos.y + 0.45, pos.z);
       } else if (type === 'macro') {
-        targetCameraPos.set(1.4, 1.8, -2.8);
-        targetLookAt.set(1.0, 1.5, -3.8);
+        targetCameraPos.set(pos.x + 0.7, pos.y + 0.3, pos.z + 0.8);
+        targetLookAt.set(pos.x + 0.2, pos.y + 0.1, pos.z);
       } else if (type === 'top') {
-        targetCameraPos.set(0, 9.5, -2.0);
-        targetLookAt.set(0, 0, -2.0);
+        targetCameraPos.set(pos.x, pos.y + 3.8, pos.z);
+        targetLookAt.set(pos.x, pos.y, pos.z);
       }
     }
 
-    function switch3DMode(mode) {
-      const tabThree = document.getElementById('tab-threejs');
-      const tabUnity = document.getElementById('tab-unity');
-      const unityOverlay = document.getElementById('unity-bridge-overlay');
-
-      if (mode === 'threejs') {
-        tabThree.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow";
-        tabUnity.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-colors";
-        unityOverlay.classList.add('hidden');
-      } else {
-        tabUnity.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow";
-        tabThree.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-colors";
-        unityOverlay.classList.remove('hidden');
-      }
-    }
-
-    // --- DASHBOARD UI & LOGIC ---
+    // --- SELECTION LOGIC ---
     function selectFloor(floorNum) {
       activeFloor = floorNum;
       
@@ -917,14 +975,9 @@
       document.getElementById('fluxPromptBox').innerText = spot.prompt;
       document.getElementById('scriptInput').value = spot.script;
 
-      const brollBox = document.getElementById('brollPackage');
-      brollBox.innerHTML = `
-        <div>${spot.brolls[0]}</div>
-        <div>${spot.brolls[1]}</div>
-      `;
-
-      // Update 3D Scene in real time
-      render3DSet(activeFloor, spot.id);
+      // Update Alina's 3D position in the continuous building
+      updateAlinaPlacement(spot);
+      setCameraToActiveFloor(activeFloor);
     }
 
     function setMotionEngine(engine) {
@@ -940,13 +993,6 @@
           btn.querySelector('.font-bold').className = "font-bold text-white text-[11px]";
         }
       });
-
-      const sliderBox = document.getElementById('sliderBox');
-      if (engine === 'higgsfield') {
-        sliderBox.className = "space-y-1 opacity-100 pointer-events-auto transition-opacity";
-      } else {
-        sliderBox.className = "space-y-1 opacity-60 pointer-events-none transition-opacity";
-      }
     }
 
     function copyPrompt() {
@@ -968,11 +1014,11 @@
       status.innerText = "⏳ 1/4: Generando audio ElevenLabs con pausas binaurales...";
 
       setTimeout(() => {
-        status.innerText = "⏳ 2/4: Cargando latentes Flux.1 con LoRA ALINA-FLUX-4K...";
+        status.innerText = "⏳ 2/4: Cargando latentes Flux.1 con LoRA ALINA-FLUX-4K desde coordenadas 3D...";
       }, 1000);
 
       setTimeout(() => {
-        status.innerText = `⏳ 3/4: Ejecutando ${selectedEngine.toUpperCase()} (Sincronización facial & ojos)...`;
+        status.innerText = `⏳ 3/4: Ejecutando ${selectedEngine.toUpperCase()} con vector de cámara 3D...`;
       }, 2000);
 
       setTimeout(() => {
@@ -987,7 +1033,6 @@
       }, 4000);
     }
 
-    // Initialize on page load
     window.onload = () => {
       initThreeJS();
       selectFloor(2);

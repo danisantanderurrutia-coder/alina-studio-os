@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alina Studio OS v3.0 — Dual-Engine 3D Sanctuary | LMNJDRS</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon-Bpe_DC6P.svg">
+  <link rel="apple-touch-icon" href="./assets/favicon-Bpe_DC6P.svg">
+  <meta name="description" content="Plató Virtual 3D Dual-Engine (Three.js + Unity 6 URP WebGL) para Alina Van Dijk (Manejadores / LMNJDRS).">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --copper: #c86446;
+      --copper-glow: rgba(200, 100, 70, 0.35);
+      --emerald: #10b981;
+      --bg-dark: #0a0b0e;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 3px; }
+    .copper-glow { box-shadow: 0 0 24px var(--copper-glow); }
+    #three-canvas-container canvas,
+    #unity-canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-BhijqK11.js"></script>
+</head>
+<body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
+
+  <!-- TOP BAR -->
+  <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="#" class="shrink-0">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iYmdHbG93IiBjeD0iNTAlIiBjeT0iNTAlIiByPSI2NSUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMWMxNjE0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNjAlIiBzdG9wLWNvbG9yPSIjMTIxNDFhIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBhMGIwZSIvPgogICAgPC9yYWRpYWxHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY29wcGVyR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmMjk5NzkiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI0NSUiIHN0b3AtY29sb3I9IiNjODY0NDYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2MyZDEyIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJlbWVyYWxkR3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMzNGQzOTkiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI2MCUiIHN0b3AtY29sb3I9IiMxMGI5ODEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDY0ZTNiIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0iZ2xvdyIgeD0iLTIwJSIgeT0iLTIwJSIgd2lkdGg9IjE0MCUiIGhlaWdodD0iMTQwJSI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjgiIHJlc3VsdD0iYmx1ciIgLz4KICAgICAgPGZlQ29tcG9zaXRlIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9ImJsdXIiIG9wZXJhdG9yPSJvdmVyIiAvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgoKICA8IS0tIFNxdWlyY2xlIEJhc2UgQmFja2dyb3VuZCAtLT4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSI0ODAiIGhlaWdodD0iNDgwIiByeD0iMTEyIiBmaWxsPSJ1cmwoI2JnR2xvdykiIHN0cm9rZT0iI2M4NjQ0NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2Utb3BhY2l0eT0iMC4zNSIvPgoKICA8IS0tIElubmVyIFN1YnRsZSBSaW5nIC0tPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTk1IiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjY29wcGVyR3JhZCkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLW9wYWNpdHk9IjAuMjUiIHN0cm9rZS1kYXNoYXJyYXk9IjggNiIvPgoKICA8IS0tIERpYW1vbmQgLyBTYW5jdHVhcnkgR2VvbWV0cmljIEZyYW1lIC0tPgogIDxwb2x5Z29uIHBvaW50cz0iMjU2LDkyIDQwMCwyNTYgMjU2LDQyMCAxMTIsMjU2IiBmaWxsPSJub25lIiBzdHJva2U9InVybCgjY29wcGVyR3JhZCkiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgb3BhY2l0eT0iMC44IiBmaWx0ZXI9InVybCgjZ2xvdykiLz4KCiAgPCEtLSBJbnRlcmxvY2tpbmcgIkEiICYgIlYiIFN0eWxpemVkIENyZXN0IC0tPgogIDwhLS0gJ0EnIFN0cnVjdHVyZSAtLT4KICA8cGF0aCBkPSJNIDI1NiwxMjggTCAzNDAsMzU2IEwgMzAyLDM1NiBMIDI4NCwzMDYgTCAyMjgsMzA2IEwgMjEwLDM1NiBMIDE3MiwzNTYgWiBNIDI1NiwyMjAgTCAyMzgsMjcyIEwgMjc0LDI3MiBaIiBmaWxsPSJ1cmwoI2NvcHBlckdyYWQpIi8+CgogIDwhLS0gJ1YnIE92ZXJsYXkgKEludGVydHdpbmVkKSAtLT4KICA8cGF0aCBkPSJNIDE5OCwxODggTCAyMzgsMTg4IEwgMjU2LDMzNiBMIDI3NCwxODggTCAzMTQsMTg4IEwgMjc4LDM4NCBMIDIzNCwzODQgWiIgZmlsbD0idXJsKCNjb3BwZXJHcmFkKSIgb3BhY2l0eT0iMC45NSIvPgoKICA8IS0tIEVtZXJhbGQgRXllIC8gQ29yZSBKZXdlbCAoSHlwbm90aWMgQ2VudGVyKSAtLT4KICA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNTYiIHI9IjE2IiBmaWxsPSJ1cmwoI2VtZXJhbGRHcmFkKSIgZmlsdGVyPSJ1cmwoI2dsb3cpIi8+CiAgPGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSI2IiBmaWxsPSIjZWNmZGY1Ii8+Cjwvc3ZnPgo=" alt="Alina Van Dijk" class="w-9 h-9 rounded-xl drop-shadow-[0_0_12px_rgba(200,100,70,0.45)]">
+      </a>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-sm font-bold tracking-wide text-white">THE ALINA SANCTUARY 3D</h1>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">DUAL-ENGINE 1:1</span>
+          <span id="perf-badge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">FPS: -- | Carga: --</span>
+        </div>
+        <p class="text-[11px] text-slate-400 truncate">Comparativa en vivo: Motor A (Three.js GLB) vs Motor B (Unity 6 URP WebGL)</p>
+      </div>
+    </div>
+
+    <!-- Dual Engine Switcher + Lighting + Slice + Share -->
+    <div class="flex items-center flex-wrap gap-2 text-xs">
+      <!-- Dual Engine Toggle -->
+      <div class="flex items-center bg-black/70 p-1 rounded-xl border border-white/15">
+        <button id="btn-engine-a" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all">
+          ⚡ Motor A: Three.js WebGL
+        </button>
+        <button id="btn-engine-b" class="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
+          🎮 Motor B: Unity 6 URP
+        </button>
+      </div>
+
+      <!-- Day / Night Toggle -->
+      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10">
+        <button id="btn-mode-day" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all">
+          ☀️ Día (Golden Hour)
+        </button>
+        <button id="btn-mode-night" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all">
+          🌙 Noche (Chiaroscuro)
+        </button>
+      </div>
+
+      <button id="btn-slice" class="bg-white/5 hover:bg-white/10 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 font-mono transition-colors">
+        🔪 Corte Sliced: ACTIVO
+      </button>
+
+      <button id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
+        <span>Compartir Web</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN 3-COLUMN WORKSPACE -->
+  <main class="grid grid-cols-12 gap-4 p-4 md:p-5 max-w-[1920px] mx-auto min-h-[calc(100vh-64px)]">
+
+    <!-- COL 1: ARCHITECTURAL FLOOR NAVIGATOR -->
+    <aside class="col-span-12 lg:col-span-3 flex flex-col gap-3">
+      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-white/5">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 truncate">
+              🏛️ Niveles Arquitectónicos
+            </h2>
+            <span class="text-[10px] text-amber-400 font-mono shrink-0 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">28m × 22m</span>
+          </div>
+
+          <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">
+            Edificio continuo a escala métrica (techos 3.4m, Alina 1.72m). El corte sliced eleva los pisos superiores para inspeccionar sin obstrucciones.
+          </p>
+
+          <div class="flex flex-col gap-2" id="floorContainer">
+            <!-- Populated cleanly from SANCTUARY_FLOORS -->
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-white/5 space-y-1.5 text-[11px] font-mono">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Posición Alina:</span>
+            <span id="alinaPosBadge" class="text-[#f29979] font-bold">X: -0.4 Y: 6.8 Z: -10.8</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Pose / Animación:</span>
+            <span id="alinaPoseBadge" class="text-emerald-400 font-bold">Idle</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Escala / Techos:</span>
+            <span class="text-white">1.72m / 3.40m</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- COL 2: DUAL-ENGINE 3D VIEWPORT & HIGGSFIELD CONTROLS -->
+    <section class="col-span-12 lg:col-span-5 flex flex-col gap-3">
+      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col">
+
+        <!-- Spot Title + Passes + 9:16 Guide -->
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-white/5 mb-3 gap-2">
+          <div class="min-w-0">
+            <span id="currentFloorTag" class="text-[11px] font-mono text-[#f29979] uppercase font-bold tracking-wider">PISO 2 • RESIDENCIA PRIVADA</span>
+            <h2 id="currentSpotTitle" class="text-base font-bold text-white mt-0.5 truncate">El Tocador Vanity & Vestidor</h2>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button id="btn-guide-916" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors">
+              📱 Guía 9:16: OFF
+            </button>
+            <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10 text-[11px]">
+              <button id="btn-beauty-pass" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">
+                PBR Photoreal
+              </button>
+              <button id="btn-depth-pass" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors">
+                Depth Map
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Spot Pills -->
+        <div id="spotPillsContainer" class="flex flex-wrap gap-1.5 mb-3"></div>
+
+        <!-- 3D VIEWPORT -->
+        <div id="viewport-wrapper" class="relative w-full h-[460px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col mb-3 shadow-2xl">
+          <!-- Motor A: Three.js Container -->
+          <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative"></div>
+
+          <!-- Motor B: Unity 6 WebGL Container -->
+          <div id="unity-canvas-container" class="hidden w-full h-full relative bg-[#07080c]">
+            <canvas id="unity-canvas" tabindex="-1" class="w-full h-full"></canvas>
+            <div id="unity-loading-overlay" class="absolute inset-0 bg-[#0a0b0e]/95 flex flex-col items-center justify-center p-6 text-center z-20">
+              <div class="w-12 h-12 rounded-2xl bg-[#c86446]/20 border border-[#c86446]/40 flex items-center justify-center text-2xl mb-3">🎮</div>
+              <h3 class="text-sm font-bold text-white mb-1">Cargando Motor B: Unity 6 URP WebGL</h3>
+              <p id="unity-loading-text" class="text-xs text-slate-400 mb-3 font-mono">Inicializando runtime WebGL/WASM... 0%</p>
+              <div class="w-64 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div id="unity-progress-bar" class="h-full bg-gradient-to-r from-[#c86446] to-emerald-400 transition-all duration-200" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optional 9:16 Safe Crop Overlay -->
+          <div id="guide-916-overlay" class="hidden absolute inset-0 pointer-events-none z-10 flex justify-between">
+            <div class="h-full bg-black/65 border-r border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
+            <div class="h-full flex items-start justify-center pt-10">
+              <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40">ENCUADRE 9:16 (1080×1920)</span>
+            </div>
+            <div class="h-full bg-black/65 border-l border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
+          </div>
+
+          <!-- Top HUD -->
+          <div class="absolute top-2.5 left-2.5 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2 pointer-events-none z-20">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="viewport-status-hud" class="font-mono">Cargando Alina 3D GLB...</span>
+          </div>
+
+          <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
+            <button id="btn-overview" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors">
+              🏛️ Vista General Edificio
+            </button>
+          </div>
+
+          <!-- Bottom Camera & Quick Exports -->
+          <div class="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap items-center justify-between gap-2 z-20">
+            <div class="flex items-center gap-1 bg-black/90 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
+              <button data-cam="85mm" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cam 85mm</button>
+              <button data-cam="macro" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Macro</button>
+              <button data-cam="top" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cenital</button>
+              <button data-cam="reset" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Centrar</button>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button id="btn-export-png" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
+                📸 Frame 9:16 (PNG)
+              </button>
+              <button id="btn-export-json" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
+                📦 JSON Higgsfield
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Synchronized Prompt Box -->
+        <div class="space-y-1.5 mt-auto">
+          <div class="flex items-center justify-between">
+            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+              Prompt Flux.1 Dev 4K (Token Lock + Posición 3D):
+            </label>
+            <button id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono">Copiar</button>
+          </div>
+          <div id="fluxPromptBox" class="p-2.5 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-20 overflow-y-auto custom-scrollbar select-all"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COL 3: ANIMATIONS, VOICE & REAL HIGGSFIELD EXPORTER -->
+    <aside class="col-span-12 lg:col-span-4 flex flex-col gap-3">
+      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between pb-2.5 border-b border-white/5">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">
+              ⚡ Orquestador Alina & Higgsfield
+            </h2>
+            <span id="motor-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">THREE.JS ACTIVE</span>
+          </div>
+
+          <!-- Animation Selector for Alina -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-300 block">Animación / Pose de Alina (Mixamo Rig):</label>
+            <div class="grid grid-cols-5 gap-1.5 text-[11px]" id="animButtons">
+              <button data-anim="Idle" class="anim-btn py-1.5 px-1 rounded-lg border border-[#c86446] bg-[#c86446]/20 text-white font-semibold">Idle</button>
+              <button data-anim="Walk" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Walk</button>
+              <button data-anim="Rumba" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Rumba</button>
+              <button data-anim="Laying" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Laying</button>
+              <button data-anim="HipHop" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">HipHop</button>
+            </div>
+          </div>
+
+          <!-- Voice Script -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-300 font-medium">Guion ElevenLabs ("Alina-Hypno-v1"):</span>
+              <span class="text-[10px] text-slate-400 font-mono">Pitch 0.98 | Rate 0.95</span>
+            </div>
+            <textarea id="scriptInput" rows="3" class="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#c86446] leading-relaxed"></textarea>
+          </div>
+
+          <!-- Motion Engine Target -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-300 block">Motor de Síntesis Video (Zero-Waste Shield):</label>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <button data-motion="liveportrait" class="motion-btn p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left">
+                <div class="font-bold text-emerald-400 text-[11px]">LivePortrait</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Lipsync</div>
+              </button>
+              <button data-motion="mimicmotion" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
+                <div class="font-bold text-white text-[11px]">MimicMotion</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Dance</div>
+              </button>
+              <button data-motion="higgsfield" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
+                <div class="font-bold text-white text-[11px]">Higgsfield I2V</div>
+                <div class="text-[9px] text-amber-300 mt-0.5">1 Créd • Dolly</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- B-Roll Formula 1:2 -->
+          <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-semibold text-slate-300">B-Roll Accesorios (Fórmula 1:2):</span>
+              <span class="text-[10px] text-emerald-400 font-mono">0% Fallo Facial</span>
+            </div>
+            <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5"></div>
+          </div>
+
+          <!-- Motion Strength Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-400">Motion Strength (Zero-Waste 2.0–3.5):</span>
+              <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
+            </div>
+            <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" class="w-full accent-[#c86446]">
+          </div>
+        </div>
+
+        <!-- Real Package Exporter CTA -->
+        <div class="space-y-2 pt-3 border-t border-white/5">
+          <button id="btn-export-package" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-xs md:text-sm copper-glow">
+            <span>EXPORTAR PAQUETE HIGGSFIELD (BEAUTY + DEPTH + JSON)</span>
+          </button>
+          <div id="renderStatus" class="text-center text-[11px] font-mono text-slate-400">
+            Listo: Exportación real 1080×1920 PNG + Depth Map + JSON.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+</body>
+</html>

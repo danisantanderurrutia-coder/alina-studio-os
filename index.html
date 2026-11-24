@@ -3,38 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alina Studio OS v2.0 — Architectural 3D Sanctuary | LMNJDRS</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="description" content="Edificio arquitectónico 3D fotorrealista a escala métrica real para Alina Van Dijk (Manejadores / LMNJDRS).">
-  
-  <!-- Tailwind CSS CDN -->
+  <title>Alina Studio OS v3.0 — Dual-Engine 3D Sanctuary | LMNJDRS</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="apple-touch-icon" href="./favicon.svg">
+  <meta name="description" content="Plató Virtual 3D Dual-Engine (Three.js + Unity 6 URP WebGL) para Alina Van Dijk (Manejadores / LMNJDRS).">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            copper: {
-              DEFAULT: '#c86446',
-              light: '#f29979',
-              dark: '#7c2d12',
-            },
-            emerald: {
-              DEFAULT: '#10b981',
-              light: '#34d399',
-              dark: '#064e3b',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Three.js + OrbitControls -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
   <style>
     :root {
       --copper: #c86446;
@@ -47,21 +20,12 @@
       color: #e2e8f0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 3px;
-    }
-    .copper-glow {
-      box-shadow: 0 0 25px var(--copper-glow);
-    }
-    #three-canvas-container canvas {
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 3px; }
+    .copper-glow { box-shadow: 0 0 24px var(--copper-glow); }
+    #three-canvas-container canvas,
+    #unity-canvas {
       display: block;
       width: 100% !important;
       height: 100% !important;
@@ -70,1112 +34,279 @@
 </head>
 <body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
-  <!-- TOP BAR: HEADER & CONTROLS -->
-  <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <a href="#" class="group relative flex items-center justify-center">
-        <img src="favicon.svg" alt="Alina Van Dijk Crest" class="w-10 h-10 rounded-xl group-hover:scale-105 transition-transform drop-shadow-[0_0_12px_rgba(200,100,70,0.4)]">
+  <!-- TOP BAR -->
+  <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="#" class="shrink-0">
+        <img src="./favicon.svg" alt="Alina Van Dijk" class="w-9 h-9 rounded-xl drop-shadow-[0_0_12px_rgba(200,100,70,0.45)]">
       </a>
-      <div>
-        <div class="flex items-center gap-2">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
           <h1 class="text-sm font-bold tracking-wide text-white">THE ALINA SANCTUARY 3D</h1>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">ESCALA MÉTRICA 1:1</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">DUAL-ENGINE 1:1</span>
+          <span id="perf-badge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">FPS: -- | Carga: --</span>
         </div>
-        <p class="text-xs text-slate-400">Diseño Arquitectónico Completo • Parking, Cabaret, Residencia, Clínica & Rooftop</p>
+        <p class="text-[11px] text-slate-400 truncate">Comparativa en vivo: Motor A (Three.js GLB) vs Motor B (Unity 6 URP WebGL)</p>
       </div>
     </div>
 
-    <!-- Live Controls: Day/Night Toggle & Sharing -->
-    <div class="flex items-center flex-wrap gap-3 md:gap-5 text-xs">
-      
-      <!-- Day / Night Mode Toggle -->
-      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10">
-        <button onclick="setLightingMode('day')" id="btn-mode-day" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all">
-          <span>☀️ Día (Golden Hour)</span>
+    <!-- Dual Engine Switcher + Lighting + Slice + Share -->
+    <div class="flex items-center flex-wrap gap-2 text-xs">
+      <!-- Dual Engine Toggle -->
+      <div class="flex items-center bg-black/70 p-1 rounded-xl border border-white/15">
+        <button id="btn-engine-a" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all">
+          ⚡ Motor A: Three.js WebGL
         </button>
-        <button onclick="setLightingMode('night')" id="btn-mode-night" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium flex items-center gap-1 shadow transition-all">
-          <span>🌙 Noche (Chiaroscuro)</span>
+        <button id="btn-engine-b" class="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
+          🎮 Motor B: Unity 6 URP
         </button>
       </div>
 
-      <!-- Sliced Dollhouse Toggle -->
-      <button onclick="toggleDollhouseSlice()" id="btn-slice" class="bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 font-mono transition-colors flex items-center gap-1.5">
-        <span>🔪 Corte Sliced: ACTIVO</span>
+      <!-- Day / Night Toggle -->
+      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10">
+        <button id="btn-mode-day" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all">
+          ☀️ Día (Golden Hour)
+        </button>
+        <button id="btn-mode-night" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all">
+          🌙 Noche (Chiaroscuro)
+        </button>
+      </div>
+
+      <button id="btn-slice" class="bg-white/5 hover:bg-white/10 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 font-mono transition-colors">
+        🔪 Corte Sliced: ACTIVO
       </button>
 
-      <button onclick="copyShareableLink()" id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+      <button id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
         <span>Compartir Web</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN WORKSPACE -->
-  <main class="grid grid-cols-12 gap-5 p-4 md:p-6 max-w-[1920px] mx-auto min-h-[calc(100vh-68px)]">
+  <!-- MAIN 3-COLUMN WORKSPACE -->
+  <main class="grid grid-cols-12 gap-4 p-4 md:p-5 max-w-[1920px] mx-auto min-h-[calc(100vh-64px)]">
 
-    <!-- COL 1: SELECTOR DE PISOS ARQUITECTÓNICOS -->
-    <aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
+    <!-- COL 1: ARCHITECTURAL FLOOR NAVIGATOR -->
+    <aside class="col-span-12 lg:col-span-3 flex flex-col gap-3">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
-            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 flex items-center gap-2">
-              <svg class="w-4 h-4 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-              Niveles Arquitectónicos
+          <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-white/5">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 truncate">
+              🏛️ Niveles Arquitectónicos
             </h2>
-            <span class="text-[10px] text-amber-400 font-mono">28m × 22m REAL</span>
+            <span class="text-[10px] text-amber-400 font-mono shrink-0 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">28m × 22m</span>
           </div>
 
-          <p class="text-xs text-slate-400 mb-3 leading-relaxed">
-            Cada piso está modelado a escala métrica real (techos a 3.2m). Selecciona un nivel para aislar sus habitaciones y ver a Alina en su entorno.
+          <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">
+            Edificio continuo a escala métrica (techos 3.4m, Alina 1.72m). El corte sliced eleva los pisos superiores para inspeccionar sin obstrucciones.
           </p>
 
-          <!-- Floor Stack -->
           <div class="flex flex-col gap-2" id="floorContainer">
-            
-            <!-- PISO 4: ROOFTOP -->
-            <div onclick="selectFloor(4)" id="floor-card-4" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-amber-400 font-mono">PISO 4</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">Penthouse & Rooftop</span>
-              </div>
-              <h3 class="text-sm font-semibold text-white mt-1">«The Inner Circle» Terrace</h3>
-              <p class="text-[11px] text-slate-400">Plunge pool basáltica, tumbonas teca, bar de cócteles & pérgola.</p>
-            </div>
-
-            <!-- PISO 3: TRABAJO & CLÍNICA -->
-            <div onclick="selectFloor(3)" id="floor-card-3" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-purple-400 font-mono">PISO 3</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">The Mind Sanctuary</span>
-              </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Estudio Clínico & Podcast Loft</h3>
-              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca clínica, diván & boudoir SSC.</p>
-            </div>
-
-            <!-- PISO 2: RESIDENCIA PRIVADA (DEFAULT) -->
-            <div onclick="selectFloor(2)" id="floor-card-2" class="floor-card cursor-pointer p-3 rounded-xl border border-[#c86446]/60 bg-[#c86446]/10 copper-glow transition-all">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-[#f29979] font-mono">PISO 2 ★</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-semibold">Residencia Alina</span>
-              </div>
-              <h3 class="text-sm font-bold text-white mt-1">Hogar Privado de Alina (4 Zonas)</h3>
-              <p class="text-[11px] text-slate-300">Tocador vanity con espejo cálido, tina spa monolítica, cocina de autor & suite.</p>
-            </div>
-
-            <!-- PISO 1: CAFETERÍA -->
-            <div onclick="selectFloor(1)" id="floor-card-1" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-emerald-400 font-mono">PISO 1</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Le Velvet Café</span>
-              </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Cafetería de Especialidad & Balcón</h3>
-              <p class="text-[11px] text-slate-400">Máquina La Marzocco, mesas de mármol de Carrara y terraza Eixample.</p>
-            </div>
-
-            <!-- PLANTA BAJA: CABARET & PARKING (PORTADO DE UNITY) -->
-            <div onclick="selectFloor(0)" id="floor-card-0" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-rose-400 font-mono">PLANTA BAJA</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Cabaret & Parking</span>
-              </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy & Coches</h3>
-              <p class="text-[11px] text-slate-400">Asfalto con plazas, farolas de forja, coches, alfombra roja, piano & pista de baile.</p>
-            </div>
-
+            <!-- Populated cleanly from SANCTUARY_FLOORS -->
           </div>
         </div>
 
-        <!-- Telemetría y Dimensiones Reales -->
-        <div class="mt-4 pt-3 border-t border-white/5 space-y-2 text-xs">
-          <div class="flex items-center justify-between font-mono text-[11px]">
-            <span class="text-slate-400">Huella Arquitectónica:</span>
-            <span class="text-white font-bold">28.0m × 22.0m</span>
+        <div class="mt-4 pt-3 border-t border-white/5 space-y-1.5 text-[11px] font-mono">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Posición Alina:</span>
+            <span id="alinaPosBadge" class="text-[#f29979] font-bold">X: -0.4 Y: 6.8 Z: -10.8</span>
           </div>
-          <div class="flex items-center justify-between font-mono text-[11px]">
-            <span class="text-slate-400">Altura de Techo:</span>
-            <span class="text-white font-bold">3.20m por planta</span>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Pose / Animación:</span>
+            <span id="alinaPoseBadge" class="text-emerald-400 font-bold">Idle</span>
           </div>
-          <div class="flex items-center justify-between font-mono text-[11px]">
-            <span class="text-slate-400">Alina 3D (Estatura):</span>
-            <span class="text-[#f29979] font-bold">1.72m (Escala Humana)</span>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Escala / Techos:</span>
+            <span class="text-white">1.72m / 3.40m</span>
           </div>
         </div>
-
       </div>
     </aside>
 
-    <!-- COL 2: PLATÓ VIRTUAL 3D FOTORREALISTA EN VIVO -->
-    <section class="col-span-12 lg:col-span-5 flex flex-col gap-4">
-      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
-        
-        <!-- Header & Modos de Visualización -->
+    <!-- COL 2: DUAL-ENGINE 3D VIEWPORT & HIGGSFIELD CONTROLS -->
+    <section class="col-span-12 lg:col-span-5 flex flex-col gap-3">
+      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col">
+
+        <!-- Spot Title + Passes + 9:16 Guide -->
         <div class="flex flex-wrap items-center justify-between pb-3 border-b border-white/5 mb-3 gap-2">
-          <div>
+          <div class="min-w-0">
             <span id="currentFloorTag" class="text-[11px] font-mono text-[#f29979] uppercase font-bold tracking-wider">PISO 2 • RESIDENCIA PRIVADA</span>
-            <h2 id="currentSpotTitle" class="text-lg font-bold text-white mt-0.5">El Tocador Vanity & Espejo</h2>
+            <h2 id="currentSpotTitle" class="text-base font-bold text-white mt-0.5 truncate">El Tocador Vanity & Vestidor</h2>
           </div>
-          
-          <!-- Passes: PBR Photoreal vs Depth Map Pass -->
-          <div class="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 text-xs">
-            <button onclick="toggleDepthPass(false)" id="btn-beauty-pass" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">
-              PBR Photoreal
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button id="btn-guide-916" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors">
+              📱 Guía 9:16: OFF
             </button>
-            <button onclick="toggleDepthPass(true)" id="btn-depth-pass" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors flex items-center gap-1">
-              <span>Depth Map (Z-Buffer)</span>
-            </button>
+            <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10 text-[11px]">
+              <button id="btn-beauty-pass" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">
+                PBR Photoreal
+              </button>
+              <button id="btn-depth-pass" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors">
+                Depth Map
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Interactive Spot Selector (Pills) -->
-        <div id="spotPillsContainer" class="flex flex-wrap gap-2 mb-3">
-          <!-- Injected via JavaScript -->
-        </div>
+        <!-- Spot Pills -->
+        <div id="spotPillsContainer" class="flex flex-wrap gap-1.5 mb-3"></div>
 
-        <!-- 3D VIEWPORT CANVAS REAL (470px) -->
-        <div class="relative w-full h-[470px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
-          
-          <!-- THREE.JS CANVAS CONTAINER -->
-          <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative">
-            <!-- Three.js Canvas appends here -->
+        <!-- 3D VIEWPORT -->
+        <div id="viewport-wrapper" class="relative w-full h-[460px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col mb-3 shadow-2xl">
+          <!-- Motor A: Three.js Container -->
+          <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative"></div>
+
+          <!-- Motor B: Unity 6 WebGL Container -->
+          <div id="unity-canvas-container" class="hidden w-full h-full relative bg-[#07080c]">
+            <canvas id="unity-canvas" tabindex="-1" class="w-full h-full"></canvas>
+            <div id="unity-loading-overlay" class="absolute inset-0 bg-[#0a0b0e]/95 flex flex-col items-center justify-center p-6 text-center z-20">
+              <div class="w-12 h-12 rounded-2xl bg-[#c86446]/20 border border-[#c86446]/40 flex items-center justify-center text-2xl mb-3">🎮</div>
+              <h3 class="text-sm font-bold text-white mb-1">Cargando Motor B: Unity 6 URP WebGL</h3>
+              <p id="unity-loading-text" class="text-xs text-slate-400 mb-3 font-mono">Inicializando runtime WebGL/WASM... 0%</p>
+              <div class="w-64 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div id="unity-progress-bar" class="h-full bg-gradient-to-r from-[#c86446] to-emerald-400 transition-all duration-200" style="width: 0%"></div>
+              </div>
+            </div>
           </div>
 
-          <!-- Top HUD: Coordenadas de Cámara y Estado 3D -->
-          <div class="absolute top-3 left-3 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
+          <!-- Optional 9:16 Safe Crop Overlay -->
+          <div id="guide-916-overlay" class="hidden absolute inset-0 pointer-events-none z-10 flex justify-between">
+            <div class="h-full bg-black/65 border-r border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
+            <div class="h-full flex items-start justify-center pt-10">
+              <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40">ENCUADRE 9:16 (1080×1920)</span>
+            </div>
+            <div class="h-full bg-black/65 border-l border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
+          </div>
+
+          <!-- Top HUD -->
+          <div class="absolute top-2.5 left-2.5 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2 pointer-events-none z-20">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [Escala Real]</span>
+            <span id="viewport-status-hud" class="font-mono">Cargando Alina 3D GLB...</span>
           </div>
 
-          <!-- Top Right: Botón Maqueta Completa sin Slicing -->
-          <div class="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-auto">
-            <button onclick="viewFullBuildingOverview()" id="btn-cutaway" class="bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
-              <span>🏛️ Vista General Edificio</span>
+          <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
+            <button id="btn-overview" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors">
+              🏛️ Vista General Edificio
             </button>
           </div>
 
-          <!-- Bottom Bar: Controles de Cámara y EXPORTACIÓN DIRECTA HIGGSFIELD -->
-          <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
-            
-            <!-- Quick Camera Angles -->
+          <!-- Bottom Camera & Quick Exports -->
+          <div class="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap items-center justify-between gap-2 z-20">
             <div class="flex items-center gap-1 bg-black/90 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
-              <button onclick="setCameraAngle('85mm')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Cam 85mm
-              </button>
-              <button onclick="setCameraAngle('macro')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Macro Bodegón
-              </button>
-              <button onclick="setCameraAngle('top')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Plano Cenital
-              </button>
-              <button onclick="reset3DCamera()" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Centrar Spot
-              </button>
+              <button data-cam="85mm" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cam 85mm</button>
+              <button data-cam="macro" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Macro</button>
+              <button data-cam="top" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cenital</button>
+              <button data-cam="reset" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Centrar</button>
             </div>
 
-            <!-- HIGGSFIELD EXPORT ACTIONS -->
             <div class="flex items-center gap-1.5">
-              <button onclick="exportFramePNG()" title="Exportar Render Viewport para Higgsfield I2V" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1.5 transition-all">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>Descargar Frame (PNG)</span>
+              <button id="btn-export-png" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
+                📸 Frame 9:16 (PNG)
               </button>
-              <button onclick="exportHiggsfieldJSON()" title="Descargar Trayectoria de Cámara para Higgsfield" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1.5 transition-all">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <span>JSON Higgsfield</span>
+              <button id="btn-export-json" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
+                📦 JSON Higgsfield
               </button>
             </div>
-
           </div>
-
         </div>
 
-        <!-- Prompt Sincronizado Box -->
+        <!-- Synchronized Prompt Box -->
         <div class="space-y-1.5 mt-auto">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              Prompt Flux.1 Dev 4K (Sincronizado con Dimensiones y Posición de Alina):
+            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+              Prompt Flux.1 Dev 4K (Token Lock + Posición 3D):
             </label>
-            <button onclick="copyPrompt()" id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono transition-colors">Copiar</button>
+            <button id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono">Copiar</button>
           </div>
-          <div id="fluxPromptBox" class="p-3 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-16 overflow-y-auto custom-scrollbar select-all">
-            Cinematic 85mm medium close-up of Alina Van Dijk seated at dark wood vanity in Piso 2 suite, copper red hair cascading, emerald green eyes looking at camera, black silk robe, warm mirror light reflection --ar 9:16
-          </div>
+          <div id="fluxPromptBox" class="p-2.5 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-20 overflow-y-auto custom-scrollbar select-all"></div>
         </div>
-
       </div>
     </section>
 
-    <!-- COL 3: ORQUESTADOR HIGGSFIELD & ELEVENLABS -->
-    <aside class="col-span-12 lg:col-span-4 flex flex-col gap-4">
-      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col justify-between">
-        
+    <!-- COL 3: ANIMATIONS, VOICE & REAL HIGGSFIELD EXPORTER -->
+    <aside class="col-span-12 lg:col-span-4 flex flex-col gap-3">
+      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div class="space-y-3.5">
-          <div class="flex items-center justify-between pb-3 border-b border-white/5">
-            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Orquestador Higgsfield & Voice
+          <div class="flex items-center justify-between pb-2.5 border-b border-white/5">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">
+              ⚡ Orquestador Alina & Higgsfield
             </h2>
-            <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">READY</span>
+            <span id="motor-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">THREE.JS ACTIVE</span>
           </div>
 
-          <!-- 1. Voice Script Box -->
+          <!-- Animation Selector for Alina -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-medium text-slate-300 block">Animación / Pose de Alina (Mixamo Rig):</label>
+            <div class="grid grid-cols-5 gap-1.5 text-[11px]" id="animButtons">
+              <button data-anim="Idle" class="anim-btn py-1.5 px-1 rounded-lg border border-[#c86446] bg-[#c86446]/20 text-white font-semibold">Idle</button>
+              <button data-anim="Walk" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Walk</button>
+              <button data-anim="Rumba" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Rumba</button>
+              <button data-anim="Laying" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Laying</button>
+              <button data-anim="HipHop" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">HipHop</button>
+            </div>
+          </div>
+
+          <!-- Voice Script -->
           <div class="space-y-1">
             <div class="flex items-center justify-between text-xs">
               <span class="text-slate-300 font-medium">Guion ElevenLabs ("Alina-Hypno-v1"):</span>
-              <span class="text-[10px] text-slate-400 font-mono">Pitch: 0.98 | Rate: 0.95</span>
+              <span class="text-[10px] text-slate-400 font-mono">Pitch 0.98 | Rate 0.95</span>
             </div>
-            <textarea id="scriptInput" rows="3" class="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#c86446] transition-colors leading-relaxed font-sans" placeholder="Escribe el guion con pausas [2.0s]...">Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando.</textarea>
+            <textarea id="scriptInput" rows="3" class="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#c86446] leading-relaxed"></textarea>
           </div>
 
-          <!-- 2. Motion Engine Selection -->
+          <!-- Motion Engine Target -->
           <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-300 block">Motor de Animación sobre el Render 3D:</label>
+            <label class="text-xs font-medium text-slate-300 block">Motor de Síntesis Video (Zero-Waste Shield):</label>
             <div class="grid grid-cols-3 gap-2 text-xs">
-              
-              <button onclick="setMotionEngine('liveportrait')" id="btn-engine-liveportrait" class="p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left transition-all">
+              <button data-motion="liveportrait" class="motion-btn p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left">
                 <div class="font-bold text-emerald-400 text-[11px]">LivePortrait</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">0 Créditos • Lipsync</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Lipsync</div>
               </button>
-
-              <button onclick="setMotionEngine('mimicmotion')" id="btn-engine-mimicmotion" class="p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5 transition-all">
+              <button data-motion="mimicmotion" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
                 <div class="font-bold text-white text-[11px]">MimicMotion</div>
-                <div class="text-[9px] text-slate-400 mt-0.5">0 Créditos • Pose</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Dance</div>
               </button>
-
-              <button onclick="setMotionEngine('higgsfield')" id="btn-engine-higgsfield" class="p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5 transition-all">
+              <button data-motion="higgsfield" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
                 <div class="font-bold text-white text-[11px]">Higgsfield I2V</div>
-                <div class="text-[9px] text-amber-300 mt-0.5">1 Crédito • Dolly</div>
+                <div class="text-[9px] text-amber-300 mt-0.5">1 Créd • Dolly</div>
               </button>
-
             </div>
           </div>
 
-          <!-- 3. Parámetros de Cámara 3D Exportables para Higgsfield -->
-          <div class="p-3 bg-black/50 border border-white/5 rounded-xl space-y-2 text-xs">
-            <span class="font-semibold text-slate-300 flex items-center justify-between text-[11px]">
-              <span>Parámetros de Cámara Higgsfield:</span>
-              <span class="text-amber-400 font-mono">CALIBRADO</span>
-            </span>
-            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-400">
-              <div class="bg-black/60 p-2 rounded border border-white/5">
-                <span class="text-slate-500">Camera Action:</span><br>
-                <span class="text-white">Slow Push-In (Dolly)</span>
-              </div>
-              <div class="bg-black/60 p-2 rounded border border-white/5">
-                <span class="text-slate-500">Lens Framing:</span><br>
-                <span class="text-white">85mm Prime (f/1.4)</span>
-              </div>
+          <!-- B-Roll Formula 1:2 -->
+          <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-semibold text-slate-300">B-Roll Accesorios (Fórmula 1:2):</span>
+              <span class="text-[10px] text-emerald-400 font-mono">0% Fallo Facial</span>
             </div>
+            <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5"></div>
           </div>
 
-          <!-- Motion Strength Slider (Higgsfield) -->
+          <!-- Motion Strength Slider -->
           <div class="space-y-1">
             <div class="flex justify-between text-xs">
-              <span class="text-slate-400">Motion Strength (Higgsfield Zero-Waste):</span>
+              <span class="text-slate-400">Motion Strength (Zero-Waste 2.0–3.5):</span>
               <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
             </div>
-            <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" oninput="document.getElementById('motionVal').innerText = this.value" class="w-full accent-[#c86446]">
+            <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" class="w-full accent-[#c86446]">
           </div>
-
         </div>
 
-        <!-- Action CTA Button & Status Log -->
-        <div class="space-y-2.5 pt-3 border-t border-white/5">
-          <button onclick="triggerRender()" id="renderBtn" class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-sm copper-glow">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            GENERAR TOMA ZERO-WASTE (11s)
+        <!-- Real Package Exporter CTA -->
+        <div class="space-y-2 pt-3 border-t border-white/5">
+          <button id="btn-export-package" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-xs md:text-sm copper-glow">
+            <span>EXPORTAR PAQUETE HIGGSFIELD (BEAUTY + DEPTH + JSON)</span>
           </button>
-          
-          <div id="renderStatus" class="text-center text-[11px] font-mono text-slate-500">
-            Estado: Esperando orden de rodaje...
+          <div id="renderStatus" class="text-center text-[11px] font-mono text-slate-400">
+            Listo: Exportación real 1080×1920 PNG + Depth Map + JSON.
           </div>
         </div>
-
       </div>
     </aside>
 
   </main>
 
-  <!-- DATA & ARCHITECTURAL 3D SPATIAL ENGINE -->
-  <script>
-    // --- LORE & SPATIAL DATA STRUCTURE (REAL METRIC COORDINATES) ---
-    const sanctuaryData = {
-      4: {
-        floorName: "PISO 4 • ROOFTOP & PENTHOUSE",
-        floorY: 12.8,
-        spots: [
-          {
-            id: "pool",
-            name: "Plunge Pool de Piedra Volcánica",
-            icon: "🏊‍♀️",
-            alinaPose: "Al borde de la piscina basáltica",
-            alinaPos: { x: 0, y: 13.0, z: -4.0 },
-            prompt: "Cinematic shot of Alina Van Dijk relaxing by volcanic stone plunge pool on luxury rooftop deck, copper red hair wet in slicked-back elegance, emerald eyes, golden hour sunset light over skyline, 85mm f/1.8 --ar 9:16",
-            script: "Cuando estás arriba, el ruido de abajo se disuelve. Aquí solo entra quien comprende que liderar también exige saber rendirse. [pausa de 2.0s] Bienvenido al círculo íntimo."
-          },
-          {
-            id: "bar",
-            name: "Bar de Cócteles Botánicos & Skyline",
-            icon: "🍸",
-            alinaPose: "De pie junto a la barra de cobre",
-            alinaPos: { x: 6.0, y: 13.0, z: -8.0 },
-            prompt: "Alina Van Dijk standing by polished copper rooftop cocktail bar, holding crystal martini glass, wearing emerald backless silk slip, skyline bokeh, 85mm f/1.4 --ar 9:16",
-            script: "La mente necesita un antídoto contra el exceso de control. Este es el mío. [pausa de 1.5s] Salud por los que no le temen a su propia vulnerabilidad."
-          }
-        ]
-      },
-      3: {
-        floorName: "PISO 3 • ESTUDIO CLÍNICO & LABORATORIO",
-        floorY: 9.6,
-        spots: [
-          {
-            id: "podcast",
-            name: "The Mind Sanctuary (Podcast Loft)",
-            icon: "🎙️",
-            alinaPose: "Sentada en el sillón frente al micrófono Shure",
-            alinaPos: { x: 0, y: 9.8, z: -5.0 },
-            prompt: "Medium close-up of Alina Van Dijk in SET-01 dark loft studio, black over-ear headphones, Shure SM7B microphone, charcoal silk blouse, exposed brick background, 85mm f/1.8 --ar 9:16",
-            script: "Llevas diez horas decidiendo por los demás... ¿cuándo fue la última vez que alguien tomó el mando por ti? [pausa de 2.0s] Entra. Cierra la puerta. Esta noche decido yo."
-          },
-          {
-            id: "boudoir",
-            name: "Boudoir Velvet & Chiaroscuro",
-            icon: "🗝️",
-            alinaPose: "De pie junto al cabecero esmeralda",
-            alinaPos: { x: -6.0, y: 9.8, z: -7.0 },
-            prompt: "Alina Van Dijk in luxury boudoir, emerald velvet headboard, dramatic chiaroscuro candlelight, holding silk rope lightly in hands, intense hypnotic gaze, 85mm prime lens --ar 9:16",
-            script: "El poder real nunca se impone a la fuerza. Se entrega voluntariamente a quien sabe sostenerlo sin juicio. [pausa de 2.0s] ¿Estás listo?"
-          }
-        ]
-      },
-      2: {
-        floorName: "PISO 2 • RESIDENCIA PRIVADA («DONDE NACE TODO»)",
-        floorY: 6.4,
-        spots: [
-          {
-            id: "vanity",
-            name: "El Tocador Vanity & Espejo",
-            icon: "💄",
-            alinaPose: "Sentada frente al tocador mirándose al espejo",
-            alinaPos: { x: 0.0, y: 6.6, z: -6.5 },
-            prompt: "Intimate cinematic shot of Alina Van Dijk seated at luxury dark wood vanity, copper red hair pinned loosely, emerald eyes looking through mirror reflection, black silk robe, warm chiaroscuro, 85mm f/1.4 --ar 9:16",
-            script: "Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando."
-          },
-          {
-            id: "bath",
-            name: "El Baño Spa & Tina de Piedra Negra",
-            icon: "🛁",
-            alinaPose: "Dentro de la tina de piedra con agua humeante",
-            alinaPos: { x: -7.5, y: 6.6, z: -4.5 },
-            prompt: "Alina Van Dijk in freestanding black stone bathtub filled with warm steaming water, shoulders bare, relaxed serene gaze, surrounded by luxury candles, moody dark spa bathroom, 85mm f/1.8 --ar 9:16",
-            script: "El cuerpo guarda todo lo que la mente reprime. Cierra los ojos... siente el peso soltarse en el agua. [pausa de 2.0s] Yo me encargo del resto."
-          },
-          {
-            id: "kitchen",
-            name: "Cocina de Autor & Isla de Mármol",
-            icon: "☕",
-            alinaPose: "Apoyada en la isla de mármol con café matutino",
-            alinaPos: { x: 7.0, y: 6.6, z: -3.5 },
-            prompt: "Alina Van Dijk leaning against black marble kitchen island in oversized silk shirt, holding ceramic cup of morning espresso, gentle sunrise backlight, authentic relaxed morning look, 85mm f/1.8 --ar 9:16",
-            script: "Antes de que empiece el caos de tu agenda... regálate tres minutos de silencio absoluto. [pausa de 1.5s] Respira conmigo."
-          },
-          {
-            id: "suite",
-            name: "La Suite Principal (Lino Carbón)",
-            icon: "🛏️",
-            alinaPose: "Recostada en la cama de lino carbón",
-            alinaPos: { x: 0.0, y: 6.6, z: -1.5 },
-            prompt: "Alina Van Dijk resting back against charcoal linen pillows on king bed, copper hair loose across shoulders, calm hypnotic eye contact, soft bedside warm reading lamp, 85mm f/1.4 --ar 9:16",
-            script: "Apaga la pantalla. Deja de repasar mentalmente tus pendientes de mañana. [pausa de 2.0s] Tu mente necesita rendirse para poder renacer."
-          }
-        ]
-      },
-      1: {
-        floorName: "PISO 1 • CAFETERÍA & LOUNGE",
-        floorY: 3.2,
-        spots: [
-          {
-            id: "cafe",
-            name: "Le Velvet Café & Terraza Street",
-            icon: "🥐",
-            alinaPose: "Sentada en mesa de mármol exterior leyendo",
-            alinaPos: { x: 0.0, y: 3.4, z: -2.5 },
-            prompt: "Alina Van Dijk sitting at outdoor marble café table in Barcelona Eixample, stylish tailored beige blazer over black top, reading leather notebook, soft daytime sunlight, 85mm f/2.0 --ar 9:16",
-            script: "La productividad sin introspección es solo ansiedad disfrazada de éxito. [pausa de 1.5s] ¿Tú qué buscas hoy?"
-          }
-        ]
-      },
-      0: {
-        floorName: "PLANTA BAJA • CABARET & PARKING (PORTADO DE UNITY)",
-        floorY: 0.0,
-        spots: [
-          {
-            id: "cabaret",
-            name: "Nocturne Speakeasy Bar",
-            icon: "🎷",
-            alinaPose: "De pie junto al piano de cola",
-            alinaPos: { x: -4.0, y: 0.2, z: -4.0 },
-            prompt: "Alina Van Dijk in dark sultry speakeasy bar, red velvet curtain background, vintage neon amber rim light, holding antique cocktail glass, mysterious commanding expression, 85mm f/1.4 --ar 9:16",
-            script: "Las mejores conversaciones ocurren cuando la ciudad se va a dormir y caen todas las máscaras. [pausa de 2.0s] ¿Entras?"
-          },
-          {
-            id: "parking",
-            name: "Parking Exterior & Marquesina VIP",
-            icon: "🚗",
-            alinaPose: "Caminando junto a los coches bajo las farolas",
-            alinaPos: { x: 0.0, y: 0.2, z: 8.5 },
-            prompt: "Full body street shot of Alina Van Dijk walking past sleek cars under glowing streetlamps in front of Nocturne VIP entrance, chic tailored trench coat, cobblestone sidewalk, 85mm f/1.8 --ar 9:16",
-            script: "La noche apenas comienza. Deja las llaves y entra conmigo."
-          }
-        ]
-      }
-    };
-
-    let activeFloor = 2;
-    let activeSpot = sanctuaryData[2].spots[0];
-    let selectedEngine = 'liveportrait';
-    let isDepthPass = false;
-    let isDollhouseSliced = true;
-    let currentLighting = 'night';
-
-    // --- THREE.JS ARCHITECTURAL ENGINE ---
-    let scene, camera, renderer, controls;
-    let floorMeshGroups = [];
-    let alinaCharacterGroup;
-    let sunLight, moonLight, ambientLight, streetlampLights = [];
-    let targetCameraPos = new THREE.Vector3(4.0, 7.8, -2.0);
-    let targetLookAt = new THREE.Vector3(0, 7.2, -6.5);
-
-    function initThreeJS() {
-      const container = document.getElementById('three-canvas-container');
-      const width = container.clientWidth || 700;
-      const height = container.clientHeight || 470;
-
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0b0e);
-      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.015);
-
-      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 200);
-      camera.position.set(4.0, 7.8, -2.0);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
-      renderer.setSize(width, height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      container.appendChild(renderer.domElement);
-
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.maxPolarAngle = Math.PI / 2 - 0.01;
-      controls.minDistance = 1.0;
-      controls.maxDistance = 65;
-      controls.target.set(0, 7.2, -6.5);
-
-      // Lights
-      setupLighting();
-
-      // Build Real-Scale 5 Floors (28m x 22m footprint, 3.2m height per floor)
-      buildRealScaleSanctuary();
-
-      // Build Alina Sculpted Avatar (1.72m human scale)
-      buildAlinaSculptedAvatar();
-
-      // Set initial spot
-      updateAlinaPlacement(activeSpot);
-      applyDollhouseSlicing();
-
-      animate();
-      window.addEventListener('resize', onWindowResize);
-    }
-
-    function setupLighting() {
-      ambientLight = new THREE.AmbientLight(0x2d2420, 1.2);
-      scene.add(ambientLight);
-
-      sunLight = new THREE.DirectionalLight(0xfde68a, 2.5);
-      sunLight.position.set(20, 30, 20);
-      sunLight.castShadow = true;
-      scene.add(sunLight);
-
-      moonLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
-      moonLight.position.set(-20, 25, -20);
-      scene.add(moonLight);
-
-      setLightingMode('night');
-    }
-
-    function setLightingMode(mode) {
-      currentLighting = mode;
-      const btnDay = document.getElementById('btn-mode-day');
-      const btnNight = document.getElementById('btn-mode-night');
-
-      if (mode === 'day') {
-        scene.background = new THREE.Color(0x3b82f6);
-        scene.fog = new THREE.FogExp2(0x93c5fd, 0.012);
-        ambientLight.color.setHex(0xffedd5);
-        ambientLight.intensity = 2.0;
-        sunLight.intensity = 3.5;
-        moonLight.intensity = 0.1;
-        btnDay.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow flex items-center gap-1 transition-all";
-        btnNight.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all";
-      } else {
-        scene.background = new THREE.Color(0x0a0b0e);
-        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.018);
-        ambientLight.color.setHex(0x1a120e);
-        ambientLight.intensity = 1.2;
-        sunLight.intensity = 0.4;
-        moonLight.intensity = 1.2;
-        btnNight.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow flex items-center gap-1 transition-all";
-        btnDay.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all";
-      }
-    }
-
-    // --- PROCEDURAL TEXTURES (PBR MATERIALS) ---
-    function createAsphaltTex() {
-      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#1e2124'; ctx.fillRect(0, 0, 512, 512);
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      for (let i = 0; i < 3000; i++) ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
-      return new THREE.CanvasTexture(c);
-    }
-
-    function createHerringboneTex() {
-      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#1c140e'; ctx.fillRect(0, 0, 512, 512);
-      ctx.strokeStyle = '#0d0805'; ctx.lineWidth = 3;
-      for (let y = 0; y < 512; y += 32) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
-      }
-      for (let x = 0; x < 512; x += 64) {
-        for (let y = 0; y < 512; y += 32) {
-          ctx.beginPath(); ctx.moveTo(x + (y % 64 === 0 ? 0 : 32), y); ctx.lineTo(x + (y % 64 === 0 ? 0 : 32), y + 32); ctx.stroke();
-        }
-      }
-      return new THREE.CanvasTexture(c);
-    }
-
-    // --- REAL ARCHITECTURAL SCALE (28m × 22m FOOTPRINT, 3.2m CEILINGS) ---
-    function buildRealScaleSanctuary() {
-      const asphaltMat = new THREE.MeshStandardMaterial({ map: createAsphaltTex(), roughness: 0.85, metalness: 0.05 });
-      const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.7, metalness: 0.05 });
-      const woodFloorMat = new THREE.MeshStandardMaterial({ map: createHerringboneTex(), roughness: 0.45, metalness: 0.1 });
-      const marbleFloorMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.25, metalness: 0.6 });
-      const brickWallMat = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.9, metalness: 0.1 });
-      const copperMetalMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.35, metalness: 0.85 });
-      const neonMagentaMat = new THREE.MeshBasicMaterial({ color: 0xff1493 });
-      const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.05, metalness: 0.95, transparent: true, opacity: 0.3 });
-      const warmLightMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
-
-      const floorW = 26.0;
-      const floorD = 16.0;
-      const floorH = 3.2;
-
-      // ==========================================
-      // PLANTA BAJA (NIVEL 0): PARKING & CABARET (DE UNITY)
-      // ==========================================
-      const groupPB = new THREE.Group();
-      scene.add(groupPB);
-      floorMeshGroups[0] = groupPB;
-
-      // 1. Asfalto Parking Exterior (28m x 18m)
-      const parkingLot = new THREE.Mesh(new THREE.BoxGeometry(28.0, 0.3, 18.0), asphaltMat);
-      parkingLot.position.set(0, -0.15, 12.0);
-      parkingLot.receiveShadow = true;
-      groupPB.add(parkingLot);
-
-      // 2. Acera de Hormigón con bordillo (28m x 3.5m)
-      const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(28.0, 0.2, 3.5), sidewalkMat);
-      sidewalk.position.set(0, 0.1, 3.0);
-      groupPB.add(sidewalk);
-
-      // 3. Coches aparcados reales (rojo, blanco, negro)
-      const carGeo = new THREE.BoxGeometry(1.9, 1.4, 4.3);
-      const carRed = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.85, roughness: 0.2 }));
-      carRed.position.set(-8.0, 0.7, 12.0);
-      const carBlack = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.15 }));
-      carBlack.position.set(-3.5, 0.7, 12.0);
-      const carWhite = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8, roughness: 0.25 }));
-      carWhite.position.set(3.5, 0.7, 12.0);
-      groupPB.add(carRed, carBlack, carWhite);
-
-      // 4. Farolas exteriores
-      for (let x = -10.0; x <= 10.0; x += 10.0) {
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 5.5, 12), copperMetalMat);
-        pole.position.set(x, 2.75, 5.0);
-        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), warmLightMat);
-        bulb.position.set(x, 5.5, 5.0);
-        groupPB.add(pole, bulb);
-      }
-
-      // 5. Marquesina VIP y Neón "NOCTURNE"
-      const canopy = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.3, 3.5), copperMetalMat);
-      canopy.position.set(0, 3.2, 2.8);
-      const neonSign = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.6, 0.2), neonMagentaMat);
-      neonSign.position.set(0, 3.7, 4.4);
-      groupPB.add(canopy, neonSign);
-
-      // 6. Interior Cabaret Speakeasy (26m x 16m)
-      const floorCabaret = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.3, floorD), marbleFloorMat);
-      floorCabaret.position.set(0, -0.15, -6.5);
-      groupPB.add(floorCabaret);
-
-      // Pista de baile central reflectante (10m x 8m)
-      const danceTiles = new THREE.Mesh(new THREE.BoxGeometry(10.0, 0.05, 8.0), new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.9 }));
-      danceTiles.position.set(0, 0.05, -6.5);
-      groupPB.add(danceTiles);
-
-      // Piano de Cola Negro Satinado
-      const pianoBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 2.2), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.05, metalness: 0.9 }));
-      pianoBody.position.set(-4.0, 0.6, -4.0);
-      groupPB.add(pianoBody);
-
-      // Paredes PB
-      buildWallsForFloor(groupPB, 0, floorW, floorD, floorH, brickWallMat);
-
-      // ==========================================
-      // PISOS 1, 2, 3, 4 (ESTRUCTURA VERTICAL REAL)
-      // ==========================================
-      for (let floor = 1; floor <= 4; floor++) {
-        const groupFloor = new THREE.Group();
-        groupFloor.position.y = floor * floorH;
-        scene.add(groupFloor);
-        floorMeshGroups[floor] = groupFloor;
-
-        // Losa de piso
-        const floorSlab = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.3, floorD), (floor === 2 ? woodFloorMat : marbleFloorMat));
-        floorSlab.position.set(0, -0.15, -6.5);
-        groupFloor.add(floorSlab);
-
-        // Paredes del piso (trasera y laterales, frontal cortada para visualización)
-        buildWallsForFloor(groupFloor, floor, floorW, floorD, floorH, brickWallMat);
-
-        // Barandilla Balcón Frontal
-        const railing = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.9, 0.1), glassMat);
-        railing.position.set(0, 0.45, 1.45);
-        groupFloor.add(railing);
-
-        // Contenido Específico por Planta
-        if (floor === 1) {
-          // PISO 1: LE VELVET CAFÉ
-          const coffeeBar = new THREE.Mesh(new THREE.BoxGeometry(6.0, 1.1, 1.4), woodFloorMat);
-          coffeeBar.position.set(0, 0.55, -8.0);
-          const espressoMachine = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 0.7), copperMetalMat);
-          espressoMachine.position.set(0, 1.4, -8.0);
-          groupFloor.add(coffeeBar, espressoMachine);
-
-          // Mesas Bistro
-          for (let x = -6.0; x <= 6.0; x += 4.0) {
-            const table = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.8, 24), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
-            table.position.set(x, 0.4, -3.0);
-            groupFloor.add(table);
-          }
-
-        } else if (floor === 2) {
-          // PISO 2: RESIDENCIA PRIVADA DE ALINA (4 ZONAS REALES)
-
-          // 1. ZONA TOCADOR VANITY (Centro Norte)
-          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.85, 1.2), woodFloorMat);
-          vanityTable.position.set(0, 0.45, -9.0);
-          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.98 }));
-          mirror.rotation.x = Math.PI / 2;
-          mirror.position.set(0, 1.7, -9.5);
-          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.04, 16, 48), warmLightMat);
-          mirrorRing.position.set(0, 1.7, -9.46);
-          const vanityStool = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.55, 24), new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9 }));
-          vanityStool.position.set(0, 0.28, -7.5);
-          groupFloor.add(vanityTable, mirror, mirrorRing, vanityStool);
-
-          // 2. ZONA BAÑO SPA (Oeste) - Tina Monolítica y Mampara
-          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.2, 0.9, 24), marbleFloorMat);
-          tub.scale.set(1.4, 1.0, 0.8);
-          tub.position.set(-7.5, 0.45, -5.5);
-          const tubWater = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.8 }));
-          tubWater.scale.set(1.35, 1.0, 0.75);
-          tubWater.position.set(-7.5, 0.85, -5.5);
-          const glassPartition = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 4.0), glassMat);
-          glassPartition.position.set(-5.2, 1.3, -5.5);
-          groupFloor.add(tub, tubWater, glassPartition);
-
-          // 3. ZONA COCINA & ISLA DE MÁRMOL (Este)
-          const kitchenIsland = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 4.5), marbleFloorMat);
-          kitchenIsland.position.set(7.5, 0.55, -4.5);
-          groupFloor.add(kitchenIsland);
-
-          // 4. ZONA SUITE DORMITORIO (Sur)
-          const kingBed = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.7, 3.2), woodFloorMat);
-          kingBed.position.set(0, 0.35, -2.5);
-          const headboard = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.6, 0.3), new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9 }));
-          headboard.position.set(0, 0.9, -4.2);
-          groupFloor.add(kingBed, headboard);
-
-        } else if (floor === 3) {
-          // PISO 3: ESTUDIO DE PODCAST & CLÍNICA
-          const desk = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.0, 1.6), woodFloorMat);
-          desk.position.set(0, 0.5, -6.0);
-          const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), copperMetalMat);
-          micArm.position.set(0.5, 1.4, -5.5);
-          const books = new THREE.Mesh(new THREE.BoxGeometry(0.6, 2.8, 5.0), woodFloorMat);
-          books.position.set(-12.5, 1.4, -6.0);
-          groupFloor.add(desk, micArm, books);
-
-        } else if (floor === 4) {
-          // PISO 4: ROOFTOP & PLUNGE POOL
-          const pool = new THREE.Mesh(new THREE.BoxGeometry(7.0, 1.0, 4.5), marbleFloorMat);
-          pool.position.set(0, 0.5, -5.0);
-          const poolWater = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.05, 4.1), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }));
-          poolWater.position.set(0, 0.9, -5.0);
-
-          const bar = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.2, 1.2), copperMetalMat);
-          bar.position.set(6.0, 0.6, -9.0);
-          groupFloor.add(pool, poolWater, bar);
-        }
-      }
-    }
-
-    function buildWallsForFloor(group, floorIndex, w, d, h, mat) {
-      // Pared trasera (Norte)
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.3), mat);
-      backWall.position.set(0, h / 2, -6.5 - d / 2);
-      group.add(backWall);
-
-      // Pared izquierda (Oeste)
-      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, h, d), mat);
-      leftWall.position.set(-w / 2, h / 2, -6.5);
-      group.add(leftWall);
-
-      // Pared derecha (Este)
-      const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, h, d), mat);
-      rightWall.position.set(w / 2, h / 2, -6.5);
-      group.add(rightWall);
-    }
-
-    // --- SLICED DOLLHOUSE ELEVATION LOGIC ---
-    function applyDollhouseSlicing() {
-      for (let floor = 0; floor <= 4; floor++) {
-        const group = floorMeshGroups[floor];
-        if (!group) continue;
-
-        if (isDollhouseSliced) {
-          if (floor > activeFloor) {
-            // Elevar pisos superiores fuera de la vista para inspección limpia
-            group.position.y = floor * 3.2 + 14.0;
-            group.visible = false;
-          } else {
-            group.position.y = floor * 3.2;
-            group.visible = true;
-          }
-        } else {
-          // Edificio completo
-          group.position.y = floor * 3.2;
-          group.visible = true;
-        }
-      }
-    }
-
-    function toggleDollhouseSlice() {
-      isDollhouseSliced = !isDollhouseSliced;
-      const btn = document.getElementById('btn-slice');
-      btn.innerText = isDollhouseSliced ? "🔪 Corte Sliced: ACTIVO" : "🏛️ Corte Sliced: OFF";
-      applyDollhouseSlicing();
-    }
-
-    function viewFullBuildingOverview() {
-      isDollhouseSliced = false;
-      applyDollhouseSlicing();
-      targetCameraPos.set(24.0, 22.0, 22.0);
-      targetLookAt.set(0, 7.0, 0);
-      document.getElementById('three-status-hud').innerText = `VISTA GENERAL ARQUITECTÓNICA (28m × 22m)`;
-    }
-
-    // --- ALINA 3D AVATAR (SCULPTED MESH AT 1.72m HUMAN SCALE) ---
-    function buildAlinaSculptedAvatar() {
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfc2, roughness: 0.6, metalness: 0.05 });
-      const copperHairMat = new THREE.MeshStandardMaterial({ color: 0xbf4527, roughness: 0.45, metalness: 0.2 });
-      const blackSilkMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.3, metalness: 0.6 });
-      const emeraldEyeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.1, metalness: 0.9 });
-
-      // Torso / Silk Robe
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.72, 20), blackSilkMat);
-      torso.name = "alinaChest";
-      torso.position.y = 0.85;
-
-      // Neck & Head
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.2, 16), skinMat);
-      neck.position.y = 1.26;
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 32, 32), skinMat);
-      head.scale.set(0.88, 1.12, 0.96);
-      head.position.y = 1.44;
-
-      // Emerald Eyes
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), emeraldEyeMat);
-      leftEye.position.set(-0.065, 1.46, 0.16);
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), emeraldEyeMat);
-      rightEye.position.set(0.065, 1.46, 0.16);
-
-      // Cascading Copper Hair
-      const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), copperHairMat);
-      hairCrown.position.set(0, 1.48, -0.03);
-      hairCrown.scale.set(1.04, 1.06, 1.06);
-
-      const hairWaveLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
-      hairWaveLeft.position.set(-0.16, 1.18, 0.07);
-      hairWaveLeft.rotation.z = 0.18;
-
-      const hairWaveRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
-      hairWaveRight.position.set(0.16, 1.18, 0.07);
-      hairWaveRight.rotation.z = -0.18;
-
-      // Arms & Lower Body
-      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12), blackSilkMat);
-      leftArm.position.set(-0.28, 0.85, 0.06);
-      leftArm.rotation.x = 0.35;
-
-      const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12), blackSilkMat);
-      rightArm.position.set(0.28, 0.85, 0.06);
-      rightArm.rotation.x = 0.35;
-
-      const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.34, 0.72, 20), blackSilkMat);
-      legs.position.set(0, 0.36, 0.16);
-      legs.rotation.x = 0.42;
-
-      alinaCharacterGroup = new THREE.Group();
-      alinaCharacterGroup.add(torso, neck, head, leftEye, rightEye, hairCrown, hairWaveLeft, hairWaveRight, leftArm, rightArm, legs);
-      scene.add(alinaCharacterGroup);
-    }
-
-    function updateAlinaPlacement(spot) {
-      if (!alinaCharacterGroup) return;
-      alinaCharacterGroup.position.set(spot.alinaPos.x, spot.alinaPos.y, spot.alinaPos.z);
-      alinaCharacterGroup.rotation.y = Math.PI;
-
-      document.getElementById('currentSpotTitle').innerText = spot.name;
-      document.getElementById('fluxPromptBox').innerText = spot.prompt;
-      document.getElementById('scriptInput').value = spot.script;
-    }
-
-    // --- SELECTION & CAMERA DIRECTING ---
-    function selectFloor(floorNum) {
-      activeFloor = floorNum;
-
-      for (let i = 0; i <= 4; i++) {
-        const el = document.getElementById(`floor-card-${i}`);
-        if (i === floorNum) {
-          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-[#c86446]/60 bg-[#c86446]/10 copper-glow transition-all";
-        } else {
-          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all";
-        }
-      }
-
-      const floorInfo = sanctuaryData[floorNum];
-      document.getElementById('currentFloorTag').innerText = floorInfo.floorName;
-
-      const container = document.getElementById('spotPillsContainer');
-      container.innerHTML = '';
-      floorInfo.spots.forEach((spot, idx) => {
-        const btn = document.createElement('button');
-        btn.onclick = () => selectSpot(spot);
-        btn.id = `pill-${spot.id}`;
-        btn.className = idx === 0 
-          ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
-          : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
-        btn.innerText = `${spot.icon} ${spot.name}`;
-        container.appendChild(btn);
-      });
-
-      applyDollhouseSlicing();
-      selectSpot(floorInfo.spots[0]);
-    }
-
-    function selectSpot(spot) {
-      activeSpot = spot;
-
-      sanctuaryData[activeFloor].spots.forEach(s => {
-        const p = document.getElementById(`pill-${s.id}`);
-        if (p) {
-          p.className = (s.id === spot.id)
-            ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
-            : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
-        }
-      });
-
-      updateAlinaPlacement(spot);
-      reset3DCamera();
-    }
-
-    function reset3DCamera() {
-      const pos = activeSpot.alinaPos;
-      targetCameraPos.set(pos.x + 2.5, pos.y + 1.2, pos.z + 4.2);
-      targetLookAt.set(pos.x, pos.y + 0.6, pos.z);
-      document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
-    }
-
-    function setCameraAngle(type) {
-      const pos = activeSpot.alinaPos;
-      if (type === '85mm') {
-        targetCameraPos.set(pos.x + 0.1, pos.y + 0.55, pos.z + 2.2);
-        targetLookAt.set(pos.x, pos.y + 0.55, pos.z);
-      } else if (type === 'macro') {
-        targetCameraPos.set(pos.x + 0.6, pos.y + 0.35, pos.z + 0.9);
-        targetLookAt.set(pos.x + 0.1, pos.y + 0.1, pos.z);
-      } else if (type === 'top') {
-        targetCameraPos.set(pos.x, pos.y + 5.0, pos.z);
-        targetLookAt.set(pos.x, pos.y, pos.z);
-      }
-    }
-
-    function toggleDepthPass(enableDepth) {
-      isDepthPass = enableDepth;
-      const btnBeauty = document.getElementById('btn-beauty-pass');
-      const btnDepth = document.getElementById('btn-depth-pass');
-
-      if (enableDepth) {
-        scene.overrideMaterial = new THREE.MeshDepthMaterial();
-        scene.fog = null;
-        btnDepth.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow";
-        btnBeauty.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
-        document.getElementById('three-status-hud').innerText = `DEPTH MAP PASS (Z-Buffer) • ControlNet Ready`;
-      } else {
-        scene.overrideMaterial = null;
-        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.018);
-        btnBeauty.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow";
-        btnDepth.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
-        document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name}`;
-      }
-    }
-
-    function exportFramePNG() {
-      renderer.render(scene, camera);
-      const dataURL = renderer.domElement.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `alina_3d_viewport_piso${activeFloor}_${activeSpot.id}_${isDepthPass ? 'depth' : 'beauty'}.png`;
-      link.href = dataURL;
-      link.click();
-      
-      const status = document.getElementById('renderStatus');
-      status.innerHTML = `✅ <span class="text-emerald-400 font-bold">¡Frame 3D Exportado!</span> Listo para subir a Higgsfield I2V.`;
-    }
-
-    function exportHiggsfieldJSON() {
-      const payload = {
-        alina_character: {
-          token_lock: "28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair, vivid emerald green eyes, light freckles, crimson lips",
-          location_floor: activeFloor,
-          room_spot: activeSpot.name,
-          spatial_coordinates: activeSpot.alinaPos,
-          current_pose: activeSpot.alinaPose
-        },
-        higgsfield_i2v_parameters: {
-          mode: "Image-to-Video",
-          camera_motion: "Slow Push-In / Dolly",
-          motion_strength: parseFloat(document.getElementById('motionSlider').value),
-          lens_focal_length: "85mm Prime f/1.4",
-          suggested_duration_seconds: 3.5,
-          zero_waste_checklist: {
-            motion_slider_lock: "2.0 - 3.5",
-            lipsync_engine: selectedEngine,
-            broll_ratio: "1:2 non-facial Bodegón"
-          }
-        },
-        flux_prompt: activeSpot.prompt,
-        voice_script: document.getElementById('scriptInput').value
-      };
-
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const link = document.createElement('a');
-      link.download = `alina_higgsfield_config_piso${activeFloor}.json`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
-
-      const status = document.getElementById('renderStatus');
-      status.innerHTML = `✅ <span class="text-amber-400 font-bold">¡JSON de Cámara Higgsfield Descargado!</span>`;
-    }
-
-    function copyShareableLink() {
-      navigator.clipboard.writeText(window.location.href);
-      const btn = document.getElementById('btn-share');
-      btn.innerHTML = `<span>¡Enlace Copiado!</span>`;
-      setTimeout(() => {
-        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg><span>Compartir Web</span>`;
-      }, 2000);
-    }
-
-    function copyPrompt() {
-      navigator.clipboard.writeText(document.getElementById('fluxPromptBox').innerText);
-      const btn = document.getElementById('copyBtn');
-      btn.innerText = "¡Copiado!";
-      setTimeout(() => { btn.innerText = "Copiar"; }, 1500);
-    }
-
-    function setMotionEngine(engine) {
-      selectedEngine = engine;
-      const engines = ['liveportrait', 'mimicmotion', 'higgsfield'];
-      engines.forEach(e => {
-        const btn = document.getElementById(`btn-engine-${e}`);
-        if (e === engine) {
-          btn.className = "p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left transition-all";
-          btn.querySelector('.font-bold').className = "font-bold text-emerald-400 text-[11px]";
-        } else {
-          btn.className = "p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5 transition-all";
-          btn.querySelector('.font-bold').className = "font-bold text-white text-[11px]";
-        }
-      });
-    }
-
-    function triggerRender() {
-      const btn = document.getElementById('renderBtn');
-      const status = document.getElementById('renderStatus');
-      
-      btn.disabled = true;
-      btn.innerText = "PROCESANDO PIPELINE...";
-      btn.className = "w-full py-3.5 px-4 rounded-xl font-bold text-white bg-slate-700 cursor-not-allowed transition-all text-sm";
-
-      status.innerText = "⏳ 1/4: Generando audio ElevenLabs con pausas binaurales...";
-
-      setTimeout(() => {
-        status.innerText = "⏳ 2/4: Cargando latentes Flux.1 con LoRA ALINA-FLUX-4K desde coordenadas 3D...";
-      }, 1000);
-
-      setTimeout(() => {
-        status.innerText = `⏳ 3/4: Ejecutando ${selectedEngine.toUpperCase()} con vector de cámara 3D...`;
-      }, 2000);
-
-      setTimeout(() => {
-        status.innerText = "⏳ 4/4: Empaquetando 2 clips B-roll con corte en segundo 11...";
-      }, 3000);
-
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.innerText = "GENERAR TOMA ZERO-WASTE (11s)";
-        btn.className = "w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-sm copper-glow";
-        status.innerHTML = "✅ <span class='text-emerald-400 font-bold'>¡TOMA COMPLETADA!</span> Video 9:16 listo en /output/alina_take_01.mp4 (0 créditos desperdiciados).";
-      }, 4000);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      camera.position.lerp(targetCameraPos, 0.06);
-      controls.target.lerp(targetLookAt, 0.06);
-      controls.update();
-
-      if (alinaCharacterGroup) {
-        const time = performance.now() * 0.0015;
-        const chest = alinaCharacterGroup.getObjectByName("alinaChest");
-        if (chest) {
-          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.018;
-        }
-      }
-
-      renderer.render(scene, camera);
-    }
-
-    window.onload = () => {
-      initThreeJS();
-      selectFloor(2);
-    };
-  </script>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>

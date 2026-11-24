@@ -304,7 +304,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     return m;
   }
 
-  function placeGLTFModel(parent, modelId, targetHeight, x, y, z, rotYRad = 0, { addShadow = true, customArtMat = null } = {}) {
+  function placeGLTFModel(parent, modelId, targetHeight, x, y, z, rotYRad = 0, { addShadow = true, customArtMat = null, hangFromCeiling = false } = {}) {
     loadCachedGLTF(modelId).then((gltf) => {
       const obj = gltf.scene.clone(true);
       obj.rotation.set(0, rotYRad, 0);
@@ -323,15 +323,16 @@ export function buildSanctuaryArchitecture(scene, lighting) {
       b1.getCenter(center1);
       b1.getSize(size1);
 
-      obj.position.set(x - center1.x, y - b1.min.y, z - center1.z);
+      const targetY = hangFromCeiling ? (y - b1.max.y) : (y - b1.min.y);
+      obj.position.set(x - center1.x, targetY, z - center1.z);
       obj.traverse((child) => {
         if (child.isMesh) {
-          child.castShadow = true;
+          child.castShadow = !hangFromCeiling;
           child.receiveShadow = true;
+          const matName = String(child.material?.name || '').toLowerCase();
           if (customArtMat && child.material) {
-            const matName = String(child.material.name || '').toLowerCase();
             if (matName.includes('artwork')) {
-              child.material = customArtMat;
+              child.material = matWoodDark;
             } else if (matName.includes('glass')) {
               child.material = new THREE.MeshPhysicalMaterial({
                 color: 0xffffff,
@@ -342,13 +343,41 @@ export function buildSanctuaryArchitecture(scene, lighting) {
                 depthWrite: false
               });
             }
+          } else if (matName.includes('flame') || matName.includes('globe') || matName.includes('lamps_') || matName.endsWith('_light') || matName.includes('bulb') || matName.includes('lantern')) {
+            child.material = child.material.clone();
+            child.material.emissive = new THREE.Color(0xffc966);
+            child.material.emissiveIntensity = 1.9;
+            lighting.registerEmissive(child.material, { dayIntensity: 0.35, nightIntensity: 2.1 });
+          } else if (matName.includes('glass')) {
+            const isGreen = matName.includes('green');
+            const isAmber = matName.includes('orange') || matName.includes('yellow');
+            child.material = new THREE.MeshPhysicalMaterial({
+              color: isGreen ? 0x14532d : (isAmber ? 0xb45309 : 0xdbeafe),
+              roughness: 0.08,
+              metalness: 0.05,
+              transparent: true,
+              opacity: isGreen || isAmber ? 0.78 : 0.32,
+              depthWrite: false
+            });
           }
           if (child.material?.aoMap) child.material.aoMap.channel = 0;
         }
       });
       parent.add(obj);
-      if (addShadow) {
-        addContactShadow(parent, x, z, Math.max(0.32, size1.x * 0.58), Math.max(0.32, size1.z * 0.58), y + 0.014);
+
+      if (modelId === 'hanging_picture_frame_01' && customArtMat) {
+        const canvas = new THREE.Mesh(
+          new THREE.PlaneGeometry(Math.max(0.25, size1.x * 0.80), Math.max(0.35, size1.y * 0.82)),
+          customArtMat
+        );
+        canvas.rotation.y = rotYRad;
+        const fwd = new THREE.Vector3(0, 0, 0.009).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYRad);
+        canvas.position.set(x + fwd.x, center1.y + targetY, z + fwd.z);
+        parent.add(canvas);
+      }
+
+      if (addShadow && !hangFromCeiling) {
+        addContactShadow(parent, x, z, Math.max(0.26, size1.x * 0.58), Math.max(0.26, size1.z * 0.58), y + 0.014);
       }
     }).catch((err) => console.warn('[PolyHaven GLTF]', modelId, err));
   }
@@ -440,12 +469,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   addCar(pb, 5.1, 12.5, 0, 0xe2e8f0);
   addCar(pb, 8.5, 12.5, Math.PI, 0x7c2d12);
 
-  // 3 Streetlamps (left, right, far parking — NOT blocking center entrance!)
-  for (const [lx, lz] of [[-11.5, 4.9], [11.5, 4.9], [-11.5, 16.5]]) {
-    cyl(pb, 0.08, 0.14, 5.2, 12, lx, 2.6, lz, matSteel);
-    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 14), matWarmBulb);
-    lantern.position.set(lx, 5.3, lz);
+  // 4 Sculpted Streetlamps + 4 Boulevard Botanical Planters (potted_plant_02 + shrub_02)
+  for (const [lx, lz] of [[-11.5, 4.9], [11.5, 4.9], [-11.5, 16.5], [11.5, 16.5]]) {
+    placeGLTFModel(pb, 'street_lamp_01', 5.4, lx, 0, lz, lx < 0 ? Math.PI / 2 : -Math.PI / 2, { addShadow: true });
+    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), matWarmBulb);
+    lantern.position.set(lx, 4.95, lz);
     pb.add(lantern);
+  }
+  for (const [tx, tz] of [[-14.5, 5.2], [14.5, 5.2], [-14.5, 15.5], [14.5, 15.5]]) {
+    box(pb, 1.5, 0.72, 1.5, tx, 0.36, tz, matExteriorStone);
+    placeGLTFModel(pb, 'potted_plant_02', 2.85, tx, 0.72, tz, tx * 0.22, { addShadow: false });
+    const zOff = tz < 10 ? 1.25 : -1.25;
+    placeGLTFModel(pb, 'shrub_02', 1.10, tx, 0, tz + zOff, tx * 0.35, { addShadow: true });
   }
   const parkingLight = new THREE.PointLight(0xffcf88, 22.0, 32, 1.3);
   parkingLight.position.set(0, 6.2, 8.5);
@@ -500,9 +535,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     cyl(pb, 0.055, 0.055, 0.28, 10, -12.4, 2.15, bz, matWarmBulb);
   }
   for (let sz = -8.2; sz <= -3.0; sz += 1.3) {
-    cyl(pb, 0.2, 0.2, 0.06, 14, -8.3, 0.76, sz, matCrimsonVelvet);
-    cyl(pb, 0.04, 0.06, 0.74, 10, -8.3, 0.37, sz, matBrass);
+    placeGLTFModel(pb, 'bar_chair_round_01', 0.78, -8.3, 0, sz, Math.PI / 2, { addShadow: true });
   }
+  placeGLTFModel(pb, 'wine_bottles_01', 0.36, -9.6, 1.14, -4.4, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'wine_bottles_01', 0.36, -9.6, 1.14, -6.8, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'Chandelier_01', 1.35, 0, FLOOR_HEIGHT - 0.05, -5.2, 0, { addShadow: false, hangFromCeiling: true });
 
   // Grand Piano (Compound: contoured body, open lid + prop, 3 legs, keys, bench)
   const piano = new THREE.Group();
@@ -521,13 +558,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(piano, 0.82, 0.44, 0.34, 0, 0.22, 1.65, matPianoLacquer);
   pb.add(piano);
 
-  // 3 Cocktail Tables + Candles
+  // VIP Lounge Sculpted ArmChairs + Round Cocktail Tables + Candelabras
+  placeGLTFModel(pb, 'ArmChair_01', 0.88, 7.15, 0, -2.5, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(pb, 'ArmChair_01', 0.88, 7.15, 0, -5.5, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(pb, 'coffee_table_round_01', 0.62, 8.2, 0, -2.5, 0, { addShadow: true });
+  placeGLTFModel(pb, 'coffee_table_round_01', 0.62, 8.2, 0, -5.5, 0.7, { addShadow: true });
   for (const tz of [-2.5, -5.5, -8.5]) {
-    cyl(pb, 0.55, 0.55, 0.06, 20, 8.0, 0.78, tz, matDarkMarble);
-    cyl(pb, 0.06, 0.22, 0.75, 12, 8.0, 0.375, tz, matBrass);
-    addCandle(pb, 8.0, 0.81, tz, false);
-    addChair(pb, 7.15, 0, tz, Math.PI / 2, matCrimsonVelvet);
-    addChair(pb, 8.85, 0, tz, -Math.PI / 2, matCrimsonVelvet);
+    if (tz < -6.0) {
+      cyl(pb, 0.55, 0.55, 0.04, 20, 8.0, 0.78, tz, matDarkMarble);
+      cyl(pb, 0.06, 0.14, 0.75, 12, 8.0, 0.375, tz, matBrass);
+      placeGLTFModel(pb, 'dining_chair_02', 0.92, 7.15, 0, tz, Math.PI / 2, { addShadow: true });
+    }
+    placeGLTFModel(pb, 'brass_candleholders', 0.26, 8.2, tz < -6.0 ? 0.80 : 0.62, tz, 0, { addShadow: false });
   }
   const cabaretLight = new THREE.PointLight(0xff66b2, 24.0, 30, 1.3);
   cabaretLight.position.set(0, 3.85, -6.5);
@@ -571,14 +613,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p1, 'ArmChair_01', 0.88, -6.9, 0, -4.0, Math.PI / 2, { addShadow: true });
   placeGLTFModel(p1, 'ArmChair_01', 0.88, 7.1, 0, -4.2, -Math.PI / 2, { addShadow: true });
 
-  // 4 Carrara Bistro Tables + Thonet Chairs
-  for (const [tx, tz] of [[-5.8, -4.0], [-2.0, -3.5], [2.2, -3.8], [6.0, -4.2]]) {
-    cyl(p1, 0.56, 0.56, 0.05, 22, tx, 0.76, tz, matWhiteMarble);
-    cyl(p1, 0.05, 0.22, 0.74, 12, tx, 0.37, tz, matSteel);
-    cyl(p1, 0.055, 0.045, 0.08, 10, tx + 0.1, 0.82, tz, matCreamLinen);
-    addChair(p1, tx - 0.72, 0, tz, Math.PI / 2, matWoodDark);
-    addChair(p1, tx + 0.72, 0, tz, -Math.PI / 2, matWoodDark);
+  // 2 Center Carrara Bistro Tables + Sculpted Dining Chairs + Chandeliers
+  for (const [tx, tz] of [[-2.0, -3.5], [2.2, -3.8]]) {
+    cyl(p1, 0.56, 0.56, 0.04, 22, tx, 0.76, tz, matWhiteMarble);
+    cyl(p1, 0.05, 0.18, 0.74, 12, tx, 0.37, tz, matSteel);
+    cyl(p1, 0.05, 0.045, 0.08, 10, tx + 0.1, 0.82, tz, matCreamLinen);
+    placeGLTFModel(p1, 'brass_candleholders', 0.22, tx - 0.15, 0.78, tz, 0.35, { addShadow: false });
+    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx - 0.72, 0, tz, Math.PI / 2, { addShadow: true });
+    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx + 0.72, 0, tz, -Math.PI / 2, { addShadow: true });
   }
+  placeGLTFModel(p1, 'wine_bottles_01', 0.32, 1.8, 1.11, -9.8, 0, { addShadow: false });
+  placeGLTFModel(p1, 'Chandelier_01', 1.15, -3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
+  placeGLTFModel(p1, 'Chandelier_01', 1.15, 3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
   addPlantPot(p1, -11.5, 0, -12.5, 1.3);
   addPlantPot(p1, 8.8, 0, -12.5, 1.2);
   addPlantPot(p1, -11.2, 0, 0.2, 1.1);
@@ -612,13 +658,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, 2.4, 1.95, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
   placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, -2.8, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
 
-  // ZONE 1: TOCADOR VANITY & VESTIDOR (Center North Z: -14.2..-8.5)
-  box(p2, 3.2, 0.08, 0.85, -0.4, 0.78, -13.2, matWoodDark);
-  box(p2, 3.0, 0.22, 0.78, -0.4, 0.65, -13.2, matWoodOak);
-  for (const lx of [-1.8, 1.0]) {
-    cyl(p2, 0.035, 0.025, 0.74, 10, lx, 0.37, -13.5, matBrass);
-    cyl(p2, 0.035, 0.025, 0.74, 10, lx, 0.37, -12.9, matBrass);
-  }
+  // ZONE 1: TOCADOR VANITY & VESTIDOR (Sculpted Baroque ClassicConsole_01)
+  placeGLTFModel(p2, 'ClassicConsole_01', 0.82, -0.4, 0, -13.15, 0, { addShadow: true });
   // Real-Time Planar Reflector Mirror + Depth Fallback Disc + Brass Rim + 12 Bulbs
   const mirrorDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.04, 36), matMirror);
   mirrorDisc.rotation.x = Math.PI / 2;
@@ -642,14 +683,15 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     bulb.position.set(-0.4 + Math.cos(ba) * 0.78, 1.65 + Math.sin(ba) * 0.78, -13.505);
     p2.add(bulb);
   }
-  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brush Cup, Sculpted Tufted Ottoman_01)
+  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brush Cup, Candelabra, Ottoman_01)
   const matAmberGlass = new THREE.MeshPhysicalMaterial({ color: 0xd97706, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.85 });
-  cyl(p2, 0.045, 0.045, 0.14, 12, 0.35, 0.89, -13.1, matAmberGlass);
-  cyl(p2, 0.02, 0.02, 0.04, 10, 0.35, 0.98, -13.1, matBrass);
-  cyl(p2, 0.032, 0.032, 0.11, 12, 0.52, 0.88, -13.15, matAmberGlass);
-  cyl(p2, 0.015, 0.015, 0.08, 10, 0.22, 0.86, -13.05, matBrass); // Lipstick tube
-  cyl(p2, 0.012, 0.012, 0.04, 10, 0.22, 0.91, -13.05, matCrimsonVelvet);
-  cyl(p2, 0.045, 0.04, 0.12, 12, -1.05, 0.88, -13.1, matCreamLinen); // Brush cup
+  cyl(p2, 0.04, 0.04, 0.14, 12, 0.14, 0.89, -13.12, matAmberGlass);
+  cyl(p2, 0.018, 0.018, 0.04, 10, 0.14, 0.98, -13.12, matBrass);
+  cyl(p2, 0.03, 0.03, 0.11, 12, 0.24, 0.88, -13.16, matAmberGlass);
+  cyl(p2, 0.014, 0.014, 0.08, 10, 0.02, 0.86, -13.06, matBrass);
+  cyl(p2, 0.012, 0.012, 0.04, 10, 0.02, 0.91, -13.06, matCrimsonVelvet);
+  cyl(p2, 0.04, 0.038, 0.12, 12, -0.68, 0.88, -13.12, matCreamLinen);
+  placeGLTFModel(p2, 'brass_candleholders', 0.24, -0.92, 0.82, -13.14, 0.18, { addShadow: false });
   placeGLTFModel(p2, 'Ottoman_01', 0.48, -0.4, 0, -12.05, -0.26, { addShadow: true });
 
   // Walk-In Wardrobe Rack (West of Vanity)
@@ -675,9 +717,9 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   tubOuter.position.set(-9.0, 0.33, -7.8);
   tubOuter.castShadow = true;
   p2.add(tubOuter);
-  const tubWater = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.86, 0.04, 28), matWater);
+  const tubWater = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.86, 0.03, 28), matWater);
   tubWater.scale.set(1.3, 1.0, 0.68);
-  tubWater.position.set(-9.0, 0.62, -7.8);
+  tubWater.position.set(-9.0, 0.665, -7.8);
   p2.add(tubWater);
   waterMeshes.push(tubWater);
   // Brass freestanding tub faucet
@@ -699,55 +741,42 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   // ZONE 3: COCINA & COMEDOR DE AUTOR (East X: +4.4..+10.0)
   box(p2, 1.35, 0.94, 3.6, 7.3, 0.47, -8.0, matDarkMarble);
   box(p2, 1.45, 0.06, 3.7, 7.3, 0.96, -8.0, matDarkMarble);
-  // Brass Faucet & Espresso Cup on Island
+  // Brass Faucet, Espresso Cup, Wine Bottles, Modern Pendants & Barstools
   cyl(p2, 0.02, 0.025, 0.38, 10, 7.4, 1.16, -7.4, matBrass);
   cyl(p2, 0.055, 0.045, 0.09, 12, 6.8, 1.03, -8.3, matCreamLinen);
-  // 3 Copper Pendant Lamps
+  placeGLTFModel(p2, 'wine_bottles_01', 0.34, 7.3, 0.99, -8.8, Math.PI / 2, { addShadow: false });
   for (const pz of [-9.0, -8.0, -7.0]) {
-    const rodH = FLOOR_HEIGHT - 2.35;
-    cyl(p2, 0.01, 0.01, rodH, 8, 7.3, 2.35 + rodH / 2, pz, matSteel, false);
-    cyl(p2, 0.1, 0.22, 0.24, 16, 7.3, 2.25, pz, matCopper);
+    placeGLTFModel(p2, 'modern_ceiling_lamp_01', 1.45, 7.3, FLOOR_HEIGHT - 0.05, pz, 0, { addShadow: false, hangFromCeiling: true });
+    placeGLTFModel(p2, 'bar_chair_round_01', 0.72, 6.1, 0, pz, -Math.PI / 2, { addShadow: true });
   }
-  // 3 Barstools
-  for (const sz of [-9.0, -8.0, -7.0]) {
-    cyl(p2, 0.2, 0.2, 0.06, 16, 6.1, 0.68, sz, matCognacLeather);
-    cyl(p2, 0.035, 0.05, 0.66, 10, 6.1, 0.33, sz, matSteel);
-  }
-  // Dining Table & 4 Chairs
+  // Dining Table & 4 Sculpted Dining Chairs
   box(p2, 1.8, 0.06, 1.1, 7.3, 0.75, -2.5, matWoodDark);
   for (const [lx, lz] of [[6.5, -2.95], [8.1, -2.95], [6.5, -2.05], [8.1, -2.05]]) {
     cyl(p2, 0.03, 0.02, 0.72, 8, lx, 0.36, lz, matSteel);
   }
-  addChair(p2, 6.8, 0, -1.65, Math.PI, matCognacLeather);
-  addChair(p2, 7.8, 0, -1.65, Math.PI, matCognacLeather);
-  addChair(p2, 6.8, 0, -3.35, 0, matCognacLeather);
-  addChair(p2, 7.8, 0, -3.35, 0, matCognacLeather);
+  placeGLTFModel(p2, 'dining_chair_02', 0.92, 6.8, 0, -1.65, Math.PI, { addShadow: true });
+  placeGLTFModel(p2, 'dining_chair_02', 0.92, 7.8, 0, -1.65, Math.PI, { addShadow: true });
+  placeGLTFModel(p2, 'dining_chair_02', 0.92, 6.8, 0, -3.35, 0, { addShadow: true });
+  placeGLTFModel(p2, 'dining_chair_02', 0.92, 7.8, 0, -3.35, 0, { addShadow: true });
 
   const kitchenLight = new THREE.PointLight(0xffd39c, 10.0, 14, 1.4);
-  kitchenLight.position.set(7.1, 2.15, -7.8);
+  kitchenLight.position.set(7.1, 2.55, -7.8);
   p2.add(kitchenLight);
   lighting.registerLight(kitchenLight, { dayIntensity: 2.0, nightIntensity: 10.0 });
 
-  // ZONE 4: SUITE PRINCIPAL (Center-South Z: -6.2..+1.2)
-  // Area Rug + King Bed + Low 1.22m Headboard (won't block vanity view) + Bedside Lamps
-  box(p2, 3.6, 0.02, 3.8, -0.5, 0.01, -3.1, matCharcoalLinen, false, true);
-  box(p2, 2.15, 0.32, 2.3, -0.5, 0.16, -3.2, matWoodDark);
-  box(p2, 2.02, 0.28, 2.18, -0.5, 0.45, -3.2, matCreamLinen);
-  box(p2, 2.08, 0.16, 1.45, -0.5, 0.56, -2.75, matCharcoalLinen); // Charcoal duvet
-  for (const px of [-0.95, -0.05]) {
-    box(p2, 0.72, 0.14, 0.44, px, 0.66, -3.95, matCreamLinen);
+  // ZONE 4: SUITE PRINCIPAL (Raised Walnut Dais + Sculpted GothicBed_01 + Nightstands + Desk Lamps + Chandelier)
+  box(p2, 3.9, 0.28, 4.1, -0.5, 0.14, -3.2, matWoodDark);
+  box(p2, 3.6, 0.02, 3.8, -0.5, 0.29, -3.1, matCharcoalLinen, false, true);
+  placeGLTFModel(p2, 'GothicBed_01', 1.52, -0.5, 0.28, -3.35, 0, { addShadow: true });
+  for (const nx of [-1.85, 0.85]) {
+    placeGLTFModel(p2, 'ClassicNightstand_01', 0.58, nx, 0.28, -4.15, 0, { addShadow: true });
+    placeGLTFModel(p2, 'desk_lamp_arm_01', 0.44, nx, 0.86, -4.15, nx < 0 ? -0.44 : 0.44, { addShadow: false });
   }
-  box(p2, 2.45, 1.22, 0.18, -0.5, 0.61, -4.4, matEmeraldVelvet);
-  // 2 Sculpted Bedside Nightstands (ClassicNightstand_01) + Lamps
-  for (const nx of [-2.15, 1.15]) {
-    placeGLTFModel(p2, 'ClassicNightstand_01', 0.58, nx, 0, -4.15, 0, { addShadow: true });
-    cyl(p2, 0.04, 0.08, 0.24, 12, nx, 0.70, -4.15, matBrass);
-    cyl(p2, 0.14, 0.2, 0.22, 16, nx, 0.90, -4.15, matWarmBulb);
-  }
-  const suiteLight = new THREE.PointLight(0xffb870, 8.5, 12, 1.4);
-  suiteLight.position.set(-0.5, 1.45, -3.6);
+  placeGLTFModel(p2, 'Chandelier_01', 1.20, -0.5, FLOOR_HEIGHT - 0.05, -3.2, 0, { addShadow: false, hangFromCeiling: true });
+  const suiteLight = new THREE.PointLight(0xffb870, 9.5, 12, 1.4);
+  suiteLight.position.set(-0.5, 1.85, -3.6);
   p2.add(suiteLight);
-  lighting.registerLight(suiteLight, { dayIntensity: 1.5, nightIntensity: 8.5 });
+  lighting.registerLight(suiteLight, { dayIntensity: 1.5, nightIntensity: 9.5 });
 
   // Eixample Balcony Railing + Sculpted Coffee Table + Accent ArmChair
   box(p2, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
@@ -787,21 +816,17 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p3, 0.32, 0.08, 0.2, -5.5, 0.88, -10.3, matSteel); // Interface
   box(p3, 0.05, 0.03, 0.02, -5.5, 0.88, -10.19, matNeonCyan, false);
   cyl(p3, 0.02, 0.06, 0.32, 10, -3.7, 1.0, -10.5, matBrass); // Headphone stand
-  const lampHead = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matWarmBulb);
-  lampHead.position.set(-6.0, 1.32, -10.6);
-  p3.add(lampHead);
-  cyl(p3, 0.02, 0.09, 0.42, 10, -6.0, 1.05, -10.6, matBrass);
-  // Floor-to-ceiling Bookshelf filled with colorful books
+  placeGLTFModel(p3, 'desk_lamp_arm_01', 0.48, -6.0, 0.84, -10.55, -0.78, { addShadow: false });
+  // Floor-to-ceiling Bookshelf filled with sculpted encyclopedia volumes
   box(p3, 0.55, 3.8, 6.4, -12.4, 1.9, -7.2, matWoodDark);
-  const bookColors = [0x7c2d12, 0x064e3b, 0x1e293b, 0x991b1b, 0xb45309, 0x312e81];
-  for (let shelfY = 0.45; shelfY <= 3.45; shelfY += 0.5) {
-    for (let bz = -10.0; bz <= -4.4; bz += 0.28) {
-      const bm = new THREE.MeshStandardMaterial({ color: bookColors[Math.abs(Math.round(bz * 10 + shelfY)) % bookColors.length], roughness: 0.75 });
-      box(p3, 0.32, 0.36, 0.18, -12.35, shelfY, bz, bm);
+  for (let shelfY = 0.42; shelfY <= 3.12; shelfY += 0.68) {
+    for (let bz = -9.6; bz <= -4.8; bz += 1.55) {
+      placeGLTFModel(p3, 'book_encyclopedia_set_01', 0.34, -12.35, shelfY, bz, Math.PI / 2, { addShadow: false });
     }
   }
-  // Sculpted Leather/Velvet Psychoanalytic Sofa (Sofa_01)
+  // Sculpted Leather/Velvet Psychoanalytic Sofa (Sofa_01) + Modern Ceiling Lamp
   placeGLTFModel(p3, 'Sofa_01', 0.88, -5.5, 0, -4.2, -1.48, { addShadow: true });
+  placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, -4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
 
   const podcastLight = new THREE.PointLight(0xffb86c, 15.0, 18, 1.3);
   podcastLight.position.set(-4.8, 2.95, -9.2);
@@ -820,9 +845,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     coil.position.set(rx, 1.6, -14.12);
     p3.add(coil);
   }
-  // 3Dio Binaural Microphone on Tripod
+  // 3Dio Binaural Microphone on Tripod + Pendant Lamp + Brass Candelabra
   cyl(p3, 0.025, 0.04, 1.05, 10, 4.8, 0.525, -8.8, matSteel);
   box(p3, 0.28, 0.14, 0.12, 4.8, 1.12, -8.8, matCreamLinen);
+  placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, 4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
+  placeGLTFModel(p3, 'brass_candleholders', 0.28, 6.4, 0.0, -9.5, 0.44, { addShadow: false });
   addCandle(p3, 6.4, 0.0, -9.5, true);
 
   // =========================================================================
@@ -840,15 +867,23 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p4, 0.08, 1.05, BUILDING_DEPTH, -12.95, 0.525, BUILDING_CENTER_Z, matGlass, false);
   box(p4, 0.08, 1.05, BUILDING_DEPTH, 12.95, 0.525, BUILDING_CENTER_Z, matGlass, false);
 
-  // Basalt Plunge Pool (7.0m x 4.2m) + Submerged Steps + Underwater Cyan Light
-  box(p4, 7.4, 0.65, 4.6, -3.0, 0.325, -6.8, matDarkMarble);
-  const poolSurface = box(p4, 6.8, 0.08, 4.0, -3.0, 0.58, -6.8, matWater, false, true);
+  // Hollow Basalt Plunge Pool Basin + Submerged Step + Underwater Cyan & Warm Key Lights
+  box(p4, 7.0, 0.28, 4.2, -3.0, 0.14, -6.8, matDarkMarble);
+  box(p4, 7.4, 0.66, 0.32, -3.0, 0.33, -8.95, matDarkMarble);
+  box(p4, 7.4, 0.66, 0.32, -3.0, 0.33, -4.65, matDarkMarble);
+  box(p4, 0.32, 0.66, 4.6, -6.55, 0.33, -6.8, matDarkMarble);
+  box(p4, 0.32, 0.66, 4.6, 0.55, 0.33, -6.8, matDarkMarble);
+  box(p4, 1.3, 0.22, 0.7, -5.65, 0.34, -5.35, matDarkMarble);
+  const poolSurface = box(p4, 6.8, 0.03, 4.0, -3.0, 0.59, -6.8, matWater, false, true);
   waterMeshes.push(poolSurface);
-  box(p4, 1.4, 0.24, 0.7, -5.5, 0.36, -5.3, matDarkMarble);
-  const poolLight = new THREE.PointLight(0x22d3ee, 14.0, 16, 1.4);
-  poolLight.position.set(-3.0, 0.5, -6.8);
+  const poolLight = new THREE.PointLight(0x22d3ee, 18.0, 18, 1.35);
+  poolLight.position.set(-3.0, 0.85, -6.8);
   p4.add(poolLight);
-  lighting.registerLight(poolLight, { dayIntensity: 2.0, nightIntensity: 14.0 });
+  lighting.registerLight(poolLight, { dayIntensity: 2.5, nightIntensity: 18.0 });
+  const poolKeyLight = new THREE.PointLight(0xffd6a5, 14.0, 16, 1.4);
+  poolKeyLight.position.set(-1.6, 2.85, -0.9);
+  p4.add(poolKeyLight);
+  lighting.registerLight(poolKeyLight, { dayIntensity: 2.0, nightIntensity: 14.0 });
 
   // 2 Teak Sun Loungers + Cream Linen Cushions
   for (const lz of [-8.2, -5.6]) {
@@ -872,19 +907,23 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   for (let bx = 3.6; bx <= 7.4; bx += 0.55) {
     cyl(p4, 0.05, 0.05, 0.28, 10, bx, 1.45, -11.35, bx % 1.1 === 0 ? matWarmBulb : matCopper);
   }
+  placeGLTFModel(p4, 'wine_bottles_01', 0.34, 4.6, 1.13, -9.8, 0, { addShadow: false });
+  placeGLTFModel(p4, 'brass_candleholders', 0.26, 6.4, 1.13, -9.8, 0.26, { addShadow: false });
   for (let sx = 3.8; sx <= 7.2; sx += 1.1) {
-    cyl(p4, 0.2, 0.2, 0.06, 14, sx, 0.76, -8.8, matCreamLinen);
-    cyl(p4, 0.035, 0.05, 0.74, 10, sx, 0.37, -8.8, matSteel);
+    placeGLTFModel(p4, 'bar_chair_round_01', 0.78, sx, 0, -8.8, Math.PI, { addShadow: true });
   }
-  const barLight = new THREE.PointLight(0xffb76b, 10.0, 14, 1.4);
-  barLight.position.set(5.5, 2.45, -9.2);
+  const barLight = new THREE.PointLight(0xffb76b, 11.0, 15, 1.4);
+  barLight.position.set(5.5, 2.85, -9.2);
   p4.add(barLight);
-  lighting.registerLight(barLight, { dayIntensity: 2.0, nightIntensity: 10.0 });
+  lighting.registerLight(barLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
-  // 6 Terracotta Planters
-  for (const [px, pz] of [[-11.8, -13.0], [-11.8, -1.0], [0.5, -13.0], [11.5, -13.0], [11.5, -1.0], [2.0, -1.0]]) {
-    addPlantPot(p4, px, 0, pz, 1.25);
+  // Botanical Rooftop Planters (potted_plant_02, potted_plant_04, shrub_02)
+  for (const [px, pz] of [[-11.8, -13.0], [-11.8, -1.0], [11.5, -13.0], [11.5, -1.0]]) {
+    const isBack = pz < -6.0;
+    placeGLTFModel(p4, isBack ? 'potted_plant_02' : 'potted_plant_04', isBack ? 2.15 : 1.65, px, 0, pz, px * 0.35, { addShadow: true });
   }
+  placeGLTFModel(p4, 'shrub_02', 1.05, -7.6, 0, -10.4, 0.44, { addShadow: true });
+  placeGLTFModel(p4, 'shrub_02', 1.05, 1.4, 0, -10.4, -0.52, { addShadow: true });
 
   addPlantPot(p2, -11.6, 0, -5.8, 1.0);
   return {

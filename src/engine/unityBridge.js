@@ -6,6 +6,7 @@ export class UnityWebGLBridge {
     this.onScreenshot = onScreenshot;
     this.onFps = onFps;
     this.onDepthScreenshot = onDepthScreenshot;
+    this.onFloorLoadProgress = null;
     this.instance = null;
     this.loading = false;
     this.ready = false;
@@ -35,6 +36,9 @@ export class UnityWebGLBridge {
       },
       onFps: (fps) => {
         if (this.onFps) this.onFps(fps);
+      },
+      onFloorLoadProgress: (payload) => {
+        if (this.onFloorLoadProgress) this.onFloorLoadProgress(payload);
       }
     };
   }

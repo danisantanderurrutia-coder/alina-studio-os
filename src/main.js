@@ -47,10 +47,69 @@ const state = {
   defaultChapterIdForNextShot: '',
   pendingObjectIdsForNextShot: [],
   pendingUnityCapture: null,
+  unityLoadedFloors: new Set(),
   threeLoadMs: 0,
   unityLoadMs: null,
   unityFps: null
 };
+
+const UNITY_FLOOR_DESCRIPTIONS = {
+  0: 'Planta Baja — Cabaret Nocturne, parking exterior, marquesina VIP y piano de cola',
+  1: 'Le Velvet Café — Barra de roble con La Marzocco en cobre, mesas Carrara y balcón',
+  2: 'Residencia Privada — Tocador vanity iluminado, baño spa basáltico, cocina y suite',
+  3: 'The Mind Sanctuary — Estudio de podcast con Shure SM7B, biblioteca clínica y boudoir',
+  4: 'Penthouse Rooftop — Plunge pool basáltica, tumbonas de teca, barra en cobre y skyline'
+};
+
+let floorOverlayHideTimer = null;
+
+function updateUnityFloorLoadingUI({ floor, percent = 0, done = false, error = '' }) {
+  const overlay = document.getElementById('unity-floor-loading-overlay');
+  const titleEl = document.getElementById('unity-floor-loading-title');
+  const pctEl = document.getElementById('unity-floor-loading-pct');
+  const barEl = document.getElementById('unity-floor-progress-bar');
+  if (!overlay || !titleEl || !pctEl || !barEl) return;
+
+  const desc = UNITY_FLOOR_DESCRIPTIONS[floor] || SANCTUARY_FLOORS[floor]?.description || 'Escenario 3D';
+  const loadingMessage = `Cargando piso ${floor}: ${desc}, favor espere`;
+
+  if (floorOverlayHideTimer) {
+    clearTimeout(floorOverlayHideTimer);
+    floorOverlayHideTimer = null;
+  }
+
+  if (error) {
+    overlay.classList.remove('hidden');
+    titleEl.textContent = `Error cargando piso ${floor}: ${error}`;
+    pctEl.textContent = 'ERR';
+    setStatusText(`⚠️ <span class="text-rose-400 font-semibold">Error cargando piso ${floor}:</span> ${error}`);
+    return;
+  }
+
+  const clampedPct = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+  overlay.classList.remove('hidden');
+  titleEl.textContent = loadingMessage;
+  pctEl.textContent = `${clampedPct}%`;
+  barEl.style.width = `${clampedPct}%`;
+
+  if (state.activeEngine === 'unity') {
+    const hud = document.getElementById('viewport-status-hud');
+    if (hud) hud.textContent = `${loadingMessage} (${clampedPct}%)`;
+    setStatusText(`⏳ <span class="text-amber-300 font-semibold">${loadingMessage}</span> <span class="font-mono text-emerald-400">${clampedPct}%</span>`);
+  }
+
+  if (done) {
+    state.unityLoadedFloors.add(floor);
+    floorOverlayHideTimer = setTimeout(() => {
+      overlay.classList.add('hidden');
+      floorOverlayHideTimer = null;
+      if (state.activeEngine === 'unity') {
+        updateViewportHud();
+        setStatusText(`✅ <span class="text-emerald-400 font-semibold">Piso ${floor} cargado (100%):</span> ${desc}`);
+      }
+    }, 450);
+  }
+}
 
 let scene, renderer, lighting, arch, alina, camCtrl, unityBridge, cinema, cinemaUI, objectsUI, chaptersUI;
 const clock = new THREE.Clock();
@@ -296,6 +355,9 @@ function selectFloor(floorNum) {
   updateFloorCardStyles();
   applyThreeJSSlicing();
 
+  if (state.activeEngine === 'unity' && unityBridge?.ready && !state.unityLoadedFloors.has(floorNum)) {
+    updateUnityFloorLoadingUI({ floor: floorNum, percent: 0, done: false });
+  }
   unityBridge?.sendFloor(floorNum);
   selectSpot(floorInfo.spots[0]);
 }
@@ -1302,6 +1364,9 @@ async function init() {
     (loadMs) => {
       if (loadMs != null) state.unityLoadMs = loadMs;
       document.getElementById('unity-loading-overlay').classList.add('hidden');
+      if (!state.unityLoadedFloors.has(state.activeFloor)) {
+        updateUnityFloorLoadingUI({ floor: state.activeFloor, percent: 0, done: false });
+      }
       unityBridge.requestCameraTelemetry();
       updatePerfBadge();
       updateViewportHud();
@@ -1367,6 +1432,7 @@ async function init() {
       setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Depth Map 1080×1920 PNG descargada.</span>');
     }
   );
+  unityBridge.onFloorLoadProgress = updateUnityFloorLoadingUI;
 
   cinema = new CinemaDirector({
     scene, renderer, lighting, camCtrl, alina, unityBridge,

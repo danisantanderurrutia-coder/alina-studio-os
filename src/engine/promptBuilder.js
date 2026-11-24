@@ -184,7 +184,8 @@ export function buildFluxPromptFromCapture({
   lightingMode,
   framing,
   imageMetrics,
-  depthPass
+  depthPass,
+  attachedObjects = []
 }) {
   const pose = POSE_DESCRIPTORS[anim]?.still || POSE_DESCRIPTORS.Idle.still;
   const baseLight =
@@ -204,7 +205,14 @@ export function buildFluxPromptFromCapture({
     ? '[ControlNet Depth 9:16 lock active] '
     : '';
 
-  return `${depthNote}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa Mini LF ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}, ${pose}, located at ${spot.name} (${floorName}). ${measuredLight}, ${ baseLight }. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
+  const objectsClause =
+    Array.isArray(attachedObjects) && attachedObjects.length > 0
+      ? ` Featured Higgsfield reference objects (${attachedObjects.map((o) => o.handle).join(', ')}): ${attachedObjects
+          .map((o) => o.promptToken)
+          .join('; ')}.`
+      : '';
+
+  return `${depthNote}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa Mini LF ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}, ${pose}, located at ${spot.name} (${floorName}).${objectsClause} ${measuredLight}, ${baseLight}. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
 }
 
 /**

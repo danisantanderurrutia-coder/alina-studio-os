@@ -13,9 +13,22 @@ import {
   buildHiggsfieldMotionFromCapture,
   describeCaptureFraming
 } from './engine/promptBuilder.js';
-import { deleteShotFromDB, loadShotsFromDB, saveShotToDB } from './engine/shotsStorage.js';
+import {
+  deleteShotFromDB,
+  loadChaptersFromDB,
+  loadObjectsFromDB,
+  loadShotsFromDB,
+  saveChapterToDB,
+  saveObjectToDB,
+  saveShotToDB
+} from './engine/shotsStorage.js';
+import { mountObjectsVaultUI } from './engine/objectsVaultUI.js';
+import { mountChaptersCinemaUI } from './engine/chaptersCinemaUI.js';
 
 const state = {
+  activeView: 'plato', // 'plato' | 'prompts' | 'objects' | 'cinema'
+  cinemaSubView: 'chapters', // 'chapters' | 'director' | 'bible'
+  objects3DVisible: false,
   activeEngine: 'threejs', // 'threejs' | 'unity'
   activeFloor: 2,
   activeSpot: SANCTUARY_FLOORS[2].spots[0],
@@ -26,18 +39,20 @@ const state = {
   depthPass: false,
   guide916: false,
   theaterMode: false,
-  promptsMode: false,
-  promptsTab: 'captures', // 'captures' | 'director'
   motionEngine: 'higgsfield',
   shots: [],
+  objects: [],
+  chapters: [],
   selectedShotId: null,
-  pendingUnityCapture: null, // null | { mode: 'create', withDepth: boolean } | { mode: 'attachDepth', shotId: string } | { mode: 'exportDepth', baseName: string, payload: object }
+  defaultChapterIdForNextShot: '',
+  pendingObjectIdsForNextShot: [],
+  pendingUnityCapture: null,
   threeLoadMs: 0,
   unityLoadMs: null,
   unityFps: null
 };
 
-let scene, renderer, lighting, arch, alina, camCtrl, unityBridge, cinema, cinemaUI;
+let scene, renderer, lighting, arch, alina, camCtrl, unityBridge, cinema, cinemaUI, objectsUI, chaptersUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -59,6 +74,25 @@ function downloadJson(obj, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function cropDataUrlSquare(dataUrl, size = 1080) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height);
+      const sx = Math.round((img.width - side) / 2);
+      const sy = Math.round((img.height - side) / 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 function setStatusText(html) {
   const el = document.getElementById('renderStatus');
   if (el) el.innerHTML = html;
@@ -66,21 +100,22 @@ function setStatusText(html) {
 
 function updatePerfBadge() {
   const el = document.getElementById('perf-badge');
+  if (!el) return;
   if (state.activeEngine === 'threejs') {
-    el.textContent = `FPS: ${currentFps || '--'} | Carga: ${state.threeLoadMs}ms`;
+    el.textContent = `FPS: ${currentFps || '--'}`;
   } else {
-    const loadTxt = state.unityLoadMs != null ? `${(state.unityLoadMs / 1000).toFixed(1)}s` : 'Cargando...';
     const fpsTxt = state.unityFps != null ? `${state.unityFps}` : '--';
-    el.textContent = `Unity 6 URP | FPS: ${fpsTxt} | Carga: ${loadTxt}`;
+    el.textContent = `U6 FPS: ${fpsTxt}`;
   }
 }
 
 function syncSliceButtonUI() {
   const btn = document.getElementById('btn-slice');
-  btn.textContent = state.sliced ? '🔪 Corte Sliced: ACTIVO' : '🏛️ Corte Sliced: OFF';
+  if (!btn) return;
+  btn.textContent = state.sliced ? '🔪 Sliced: ON' : '🏛️ Sliced: OFF';
   btn.className = state.sliced
-    ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 px-2.5 py-1.5 rounded-lg border border-emerald-500/30 font-mono transition-colors'
-    : 'bg-white/5 hover:bg-white/10 text-slate-300 px-2.5 py-1.5 rounded-lg border border-white/10 font-mono transition-colors';
+    ? 'text-[10px] bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 px-2 py-0.5 rounded-lg border border-emerald-500/30 font-mono transition-colors'
+    : 'text-[10px] bg-white/5 hover:bg-white/10 text-slate-300 px-2 py-0.5 rounded-lg border border-white/10 font-mono transition-colors';
 }
 
 function applyThreeJSSlicing() {
@@ -101,6 +136,64 @@ function applyThreeJSSlicing() {
       group.visible = true;
     }
   }
+}
+
+// ===========================================================================
+// NAVEGACIÓN SUPERIOR LIMPIA DE 4 VISTAS
+// ===========================================================================
+function is3DViewportVisibleInCurrentView() {
+  if (state.activeView === 'plato' || state.activeView === 'prompts') return true;
+  if (state.activeView === 'objects' && state.objects3DVisible) return true;
+  if (state.activeView === 'cinema' && state.cinemaSubView === 'director') return true;
+  return false;
+}
+
+function refreshViewportLayout() {
+  if (!is3DViewportVisibleInCurrentView()) return;
+  requestAnimationFrame(() => {
+    camCtrl?.onWindowResize();
+    window.dispatchEvent(new Event('resize'));
+  });
+  setTimeout(() => {
+    camCtrl?.onWindowResize();
+    window.dispatchEvent(new Event('resize'));
+  }, 140);
+}
+
+function switchMainView(viewName) {
+  const valid = ['plato', 'prompts', 'objects', 'cinema'];
+  const next = valid.includes(viewName) ? viewName : 'plato';
+  state.activeView = next;
+  document.body.dataset.view = next;
+
+  document.querySelectorAll('.top-nav-btn').forEach((btn) => {
+    const act = btn.dataset.nav === next;
+    btn.className = act
+      ? 'top-nav-btn px-3 py-1.5 rounded-xl bg-[#c86446] text-white font-bold shadow transition-all flex items-center gap-1.5 whitespace-nowrap copper-glow'
+      : 'top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap';
+  });
+
+  if (next === 'objects') objectsUI?.render();
+  if (next === 'cinema') {
+    if (state.cinemaSubView === 'chapters') chaptersUI?.renderChapters();
+    if (state.cinemaSubView === 'bible') chaptersUI?.renderBible();
+  }
+  if (next === 'prompts') renderShotsPanel();
+
+  refreshViewportLayout();
+}
+
+function updateTopCounters() {
+  const shotBadge = document.getElementById('shotsCountBadge');
+  const objBadge = document.getElementById('objectsCountBadge');
+  const chapBadge = document.getElementById('chaptersCountBadge');
+
+  if (shotBadge) {
+    shotBadge.textContent = String(state.shots.length);
+    shotBadge.classList.toggle('hidden', state.shots.length === 0);
+  }
+  if (objBadge) objBadge.textContent = String(state.objects.length);
+  if (chapBadge) chapBadge.textContent = String(state.chapters.length);
 }
 
 function renderFloorSidebar() {
@@ -135,13 +228,11 @@ function renderFloorSidebar() {
         <span class="text-xs font-bold ${colorMap[info.badgeColor]} font-mono">${floorNum === 0 ? 'PLANTA BAJA' : `PISO ${floorNum}${floorNum === 2 ? ' ★' : ''}`}</span>
         <span class="text-[10px] px-2 py-0.5 rounded-full border font-medium ${badgeMap[info.badgeColor]}">${info.badge}</span>
       </div>
-      <h3 class="text-xs font-semibold text-white mt-1">${info.subtitle}</h3>
-      <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">${info.description}</p>
+      <h3 class="text-xs font-semibold text-white mt-1 truncate">${info.subtitle}</h3>
     `;
     card.addEventListener('click', () => selectFloor(floorNum));
     container.appendChild(card);
 
-    // Botón compacto para cambiar de piso cuando la columna izquierda está oculta en Modo Prompts
     const chip = document.createElement('button');
     chip.id = `floor-chip-${floorNum}`;
     chip.textContent = floorNum === 0 ? 'PB' : `P${floorNum}`;
@@ -178,8 +269,8 @@ function renderSpotPills() {
     btn.id = `pill-${spot.id}`;
     const active = spot.id === state.activeSpot.id;
     btn.className = active
-      ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow'
-      : 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all';
+      ? 'px-3 py-1 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow'
+      : 'px-3 py-1 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all';
     btn.textContent = `${spot.icon} ${spot.name}`;
     btn.addEventListener('click', () => selectSpot(spot));
     container.appendChild(btn);
@@ -218,7 +309,7 @@ function selectSpot(spot) {
   document.getElementById('fluxPromptBox').textContent = spot.prompt;
   document.getElementById('scriptInput').value = spot.script;
   document.getElementById('alinaPosBadge').textContent =
-    `X: ${spot.alinaPos.x.toFixed(1)} Y: ${spot.alinaPos.y.toFixed(1)} Z: ${spot.alinaPos.z.toFixed(1)}`;
+    `${spot.alinaPos.x.toFixed(1)}, ${spot.alinaPos.y.toFixed(1)}, ${spot.alinaPos.z.toFixed(1)}`;
   document.getElementById('brollPackage').innerHTML = spot.brolls.map((b) => `<div>• ${b}</div>`).join('');
 
   alina?.placeAtSpot(spot);
@@ -239,7 +330,6 @@ function findSpotById(spotId) {
   return null;
 }
 
-/** Posiciona piso/spot/Alina para un plano de cine SIN mover la cámara (la mueve el Director). */
 function prepareSpotForCinema(spotId) {
   const spot = findSpotById(spotId);
   if (!spot || (state.activeSpot && state.activeSpot.id === spot.id && state.activeFloor === spot.floor)) return;
@@ -252,13 +342,13 @@ function prepareSpotForCinema(spotId) {
   document.getElementById('currentSpotTitle').textContent = spot.name;
   document.getElementById('fluxPromptBox').textContent = spot.prompt;
   document.getElementById('alinaPosBadge').textContent =
-    `X: ${spot.alinaPos.x.toFixed(1)} Y: ${spot.alinaPos.y.toFixed(1)} Z: ${spot.alinaPos.z.toFixed(1)}`;
+    `${spot.alinaPos.x.toFixed(1)}, ${spot.alinaPos.y.toFixed(1)}, ${spot.alinaPos.z.toFixed(1)}`;
   alina?.placeAtSpot(spot);
 }
 
 function updateViewportHud() {
   const floorLabel = SANCTUARY_FLOORS[state.activeFloor].floorName.split('•')[0].trim();
-  const engineTag = state.activeEngine === 'threejs' ? 'Three.js GLB' : 'Unity 6 URP';
+  const engineTag = state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP';
   const passTag = state.depthPass ? 'DEPTH PASS' : state.activeSpot.name;
   document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [${engineTag}]`;
 }
@@ -272,11 +362,11 @@ function setLightingMode(mode) {
   const btnDay = document.getElementById('btn-mode-day');
   const btnNight = document.getElementById('btn-mode-night');
   if (mode === 'day') {
-    btnDay.className = 'px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all';
-    btnNight.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all';
+    btnDay.className = 'px-2 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all';
+    btnNight.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all';
   } else {
-    btnNight.className = 'px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all';
-    btnDay.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all';
+    btnNight.className = 'px-2 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow transition-all';
+    btnDay.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-medium transition-all';
   }
 }
 
@@ -289,11 +379,11 @@ function setDepthPass(enabled) {
   const btnBeauty = document.getElementById('btn-beauty-pass');
   const btnDepth = document.getElementById('btn-depth-pass');
   if (enabled) {
-    btnDepth.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow';
-    btnBeauty.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
+    btnDepth.className = 'px-2 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow';
+    btnBeauty.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
   } else {
-    btnBeauty.className = 'px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow';
-    btnDepth.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
+    btnBeauty.className = 'px-2 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow';
+    btnDepth.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
   }
   updateViewportHud();
 }
@@ -308,7 +398,7 @@ function setCameraPreset(mode) {
     camCtrl?.flyTo({ x: 3.5, y: 12.8, z: 36.0 }, { x: 0, y: 11.2, z: -5.5 });
     unityBridge?.sendDollhouseSlice(false);
     unityBridge?.sendCameraAngle('dollhouse');
-    document.getElementById('viewport-status-hud').textContent = `CASA DE MUÑECAS 5 PISOS (4.9m/nivel) [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
+    document.getElementById('viewport-status-hud').textContent = `CASA DE MUÑECAS 5 PISOS [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
     return;
   }
   if (mode === 'overview') {
@@ -318,7 +408,7 @@ function setCameraPreset(mode) {
     camCtrl?.flyTo({ x: 30.0, y: 24.5, z: 33.5 }, { x: 0, y: 10.5, z: -4.0 });
     unityBridge?.sendDollhouseSlice(false);
     unityBridge?.sendCameraAngle('overview');
-    document.getElementById('viewport-status-hud').textContent = `EXTERIOR 3/4 • 5 PISOS (24.5m ALTO) [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
+    document.getElementById('viewport-status-hud').textContent = `EXTERIOR 3/4 • 5 PISOS [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
     return;
   }
 
@@ -339,7 +429,7 @@ function setCameraPreset(mode) {
 function buildHiggsfieldPayload() {
   const camTelemetry = state.activeEngine === 'threejs' && camCtrl
     ? camCtrl.getCameraTelemetry()
-    : { source: 'Unity6_URP_WebGL', spot: state.activeSpot.id, preset: state.activeCamPreset };
+    : (unityBridge?.lastCameraTelemetry || { source: 'Unity6_URP_WebGL', spot: state.activeSpot.id, preset: state.activeCamPreset });
 
   return {
     engine: state.activeEngine === 'threejs' ? 'Motor A: Three.js WebGL + alina.glb' : 'Motor B: Unity 6 URP WebGL',
@@ -365,46 +455,15 @@ function buildHiggsfieldPayload() {
 }
 
 // ===========================================================================
-// MODO PROMPTS: Columna izquierda oculta, Visor 3D a la izq, Prompts a la der
+// ESTUDIO DE PROMPTS + INTEGRACIÓN CON BÓVEDA DE OBJETOS Y CAPÍTULOS
 // ===========================================================================
-function refreshViewportLayout() {
-  requestAnimationFrame(() => {
-    camCtrl?.onWindowResize();
-    window.dispatchEvent(new Event('resize'));
-  });
-  setTimeout(() => {
-    camCtrl?.onWindowResize();
-    window.dispatchEvent(new Event('resize'));
-  }, 140);
-}
-
-function setPromptsMode(enabled) {
-  state.promptsMode = Boolean(enabled);
-  document.body.classList.toggle('prompts-mode', state.promptsMode);
-
-  const btn = document.getElementById('btn-prompts-toggle');
-  btn.setAttribute('aria-pressed', String(state.promptsMode));
-  btn.className = state.promptsMode
-    ? 'bg-[#c86446] text-white px-3 py-1.5 rounded-lg border border-[#c86446] font-semibold transition-all flex items-center gap-1.5 shadow-lg copper-glow'
-    : 'bg-white/5 hover:bg-[#c86446]/25 text-slate-100 hover:text-white px-3 py-1.5 rounded-lg border border-[#c86446]/40 font-semibold transition-all flex items-center gap-1.5';
-
-  refreshViewportLayout();
-}
-
-function setPromptsTab(tabName) {
-  state.promptsTab = tabName;
-  const isCap = tabName === 'captures';
-  document.getElementById('pane-ptab-captures').classList.toggle('hidden', !isCap);
-  document.getElementById('pane-ptab-captures').classList.toggle('flex', isCap);
-  document.getElementById('pane-ptab-director').classList.toggle('hidden', isCap);
-  document.getElementById('pane-ptab-director').classList.toggle('flex', !isCap);
-
-  document.getElementById('btn-ptab-captures').className = isCap
-    ? 'py-1.5 px-2 rounded-lg bg-[#c86446] text-white font-semibold transition-all'
-    : 'py-1.5 px-2 rounded-lg text-slate-400 hover:text-white font-semibold transition-all';
-  document.getElementById('btn-ptab-director').className = !isCap
-    ? 'py-1.5 px-2 rounded-lg bg-[#c86446] text-white font-semibold transition-all'
-    : 'py-1.5 px-2 rounded-lg text-slate-400 hover:text-white font-semibold transition-all';
+let saveShotTimer = null;
+function scheduleSaveShot(shot) {
+  if (!shot) return;
+  clearTimeout(saveShotTimer);
+  saveShotTimer = setTimeout(() => {
+    saveShotToDB(shot);
+  }, 220);
 }
 
 function getCurrentCameraSnapshot() {
@@ -432,20 +491,9 @@ function getSelectedShot() {
   return state.shots.find((s) => s.id === state.selectedShotId) || null;
 }
 
-let saveShotTimer = null;
-function scheduleSaveShot(shot) {
-  if (!shot) return;
-  clearTimeout(saveShotTimer);
-  saveShotTimer = setTimeout(() => {
-    saveShotToDB(shot);
-  }, 220);
-}
-
-function updateShotsBadge() {
-  const badge = document.getElementById('shotsCountBadge');
-  const count = state.shots.length;
-  badge.textContent = String(count);
-  badge.classList.toggle('hidden', count === 0);
+function getObjectsForShot(shot) {
+  const ids = shot?.objectIds || [];
+  return state.objects.filter((o) => ids.includes(o.id));
 }
 
 async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
@@ -473,8 +521,10 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
 
   const imageMetrics = await analyzeCapturedImage(beautyDataUrl);
   const hasDepth = Boolean(depthDataUrl) || state.depthPass;
+  const initialObjectIds = [...state.pendingObjectIdsForNextShot];
+  state.pendingObjectIdsForNextShot = [];
+  const attachedObjects = state.objects.filter((o) => initialObjectIds.includes(o.id));
 
-  // Si el Director de Fotografía está activo en Three.js, aprovechamos también su prompt óptico si aplica
   const fluxPrompt = buildFluxPromptFromCapture({
     spot,
     floorName,
@@ -482,7 +532,8 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     lightingMode: state.lightingMode,
     framing,
     imageMetrics,
-    depthPass: hasDepth
+    depthPass: hasDepth,
+    attachedObjects
   });
 
   const motionPrompt = buildHiggsfieldMotionFromCapture({
@@ -513,6 +564,8 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     depthImage: depthDataUrl,
     motionEngine: state.motionEngine,
     motionStrength,
+    objectIds: initialObjectIds,
+    chapterId: state.defaultChapterIdForNextShot || '',
     fluxPrompt,
     motionPrompt
   };
@@ -523,18 +576,17 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     if (oldest?.id) deleteShotFromDB(oldest.id);
   }
   state.selectedShotId = shot.id;
-  saveShotToDB(shot);
+  await saveShotToDB(shot);
 
-  updateShotsBadge();
+  updateTopCounters();
   renderShotsPanel();
   setStatusText(
-    `✅ <span class="text-emerald-400 font-bold">Captura #${state.shots.length} (${shot.engine === 'unity' ? 'Unity 6 URP' : 'Three.js'}) convertida en Prompt Higgsfield.</span>`
+    `✅ <span class="text-emerald-400 font-bold">Captura #${state.shots.length} (${shot.engine === 'unity' ? 'Unity 6 URP' : 'Three.js'}) lista en Estudio Prompts.</span>`
   );
 }
 
 function captureCurrentViewportToPrompt({ withDepth = false } = {}) {
-  if (!state.promptsMode) setPromptsMode(true);
-  if (state.promptsTab !== 'captures') setPromptsTab('captures');
+  if (state.activeView !== 'prompts') switchMainView('prompts');
 
   if (state.activeEngine === 'threejs') {
     const beautyUrl = camCtrl.renderVertical916DataURL(1080, 1920, state.depthPass ? true : false);
@@ -543,19 +595,36 @@ function captureCurrentViewportToPrompt({ withDepth = false } = {}) {
     return;
   }
 
-  // Motor B: Unity 6 URP WebGL
   if (!unityBridge?.ready) {
-    setStatusText('⏳ <span class="text-amber-300 font-bold">Espera a que termine de cargar Unity 6 URP para capturar el frame.</span>');
+    setStatusText('⏳ <span class="text-amber-300 font-bold">Espera a que cargue Unity 6 URP para capturar el frame.</span>');
     return;
   }
 
   state.pendingUnityCapture = { mode: 'create', withDepth };
-  setStatusText('📸 <span class="text-[#f29979]">Capturando frame 1080×1920 en vivo desde Unity 6 URP...</span>');
-  if (state.depthPass) {
-    unityBridge.requestDepthScreenshot916();
-  } else {
-    unityBridge.requestScreenshot916();
+  setStatusText('📸 <span class="text-[#f29979]">Capturando frame 1080×1920 desde Unity 6 URP...</span>');
+  if (state.depthPass) unityBridge.requestDepthScreenshot916();
+  else unityBridge.requestScreenshot916();
+}
+
+function captureViewportAsObjectRender(aspect = '1:1') {
+  if (state.activeEngine === 'threejs') {
+    const h = aspect === '1:1' ? 1080 : 1920;
+    return Promise.resolve(camCtrl.renderVertical916DataURL(1080, h, false));
   }
+
+  if (!unityBridge?.ready) {
+    setStatusText('⏳ <span class="text-amber-300 font-bold">Espera a que cargue Unity 6 URP para capturar el objeto.</span>');
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    state.pendingUnityCapture = {
+      mode: 'objectCapture',
+      aspect,
+      resolve
+    };
+    unityBridge.requestScreenshot916();
+  });
 }
 
 function attachDepthToSelectedShot() {
@@ -567,7 +636,7 @@ function attachDepthToSelectedShot() {
     regenerateShotPrompts(shot, { onlyFluxIfClean: true });
     saveShotToDB(shot);
     renderShotsPanel();
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura actual.</span>');
+    setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura.</span>');
     return;
   }
 
@@ -588,7 +657,8 @@ function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
     lightingMode: shot.lightingMode,
     framing: shot.framing,
     imageMetrics: shot.imageMetrics,
-    depthPass: Boolean(shot.depthImage) || shot.depthPass
+    depthPass: Boolean(shot.depthImage) || shot.depthPass,
+    attachedObjects: getObjectsForShot(shot)
   });
   if (!onlyFluxIfClean) {
     shot.motionPrompt = buildHiggsfieldMotionFromCapture({
@@ -633,7 +703,7 @@ function renderShotsPanel() {
     btn.className = `relative shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
       isSel ? 'border-[#c86446] scale-[1.02] copper-glow' : 'border-white/10 opacity-75 hover:opacity-100'
     }`;
-    btn.title = `Toma #${num} • ${s.spot.name} (${s.engine === 'unity' ? 'Unity' : 'Three.js'})`;
+    btn.title = `Toma #${num} • ${s.spot.name}`;
     btn.innerHTML = `
       <img src="${s.image}" alt="Toma ${num}" class="block w-12 object-cover bg-black" style="aspect-ratio: 9/16;">
       <span class="absolute top-0.5 left-0.5 px-1 rounded bg-black/80 text-[8px] font-mono text-white">#${num}</span>
@@ -672,9 +742,52 @@ function renderShotsPanel() {
   document.getElementById('shotMetaFraming').textContent =
     `${shot.framing.shot} • ${shot.framing.mm}mm • ${shot.framing.angle}`;
   document.getElementById('shotMetaState').textContent =
-    `${shot.floorName.split('•')[0].trim()} • Pose: ${shot.anim} • ${shot.lightingMode === 'day' ? '☀️ Día' : '🌙 Noche'} • ${shot.createdAt}`;
+    `${shot.floorName.split('•')[0].trim()} • ${shot.anim} • ${shot.lightingMode === 'day' ? '☀️ Día' : '🌙 Noche'} • ${shot.createdAt}`;
   document.getElementById('shotMetaLight').textContent =
     shot.imageMetrics ? `Luz medida: ${shot.imageMetrics.summary}` : '';
+
+  // Selector de Capítulo asociado a esta captura
+  const chapSelect = document.getElementById('shotChapterSelect');
+  chapSelect.innerHTML =
+    `<option value="">📖 Sin capítulo</option>` +
+    state.chapters
+      .map(
+        (c) =>
+          `<option value="${c.id}" ${shot.chapterId === c.id ? 'selected' : ''}>Cap. ${c.number}: ${c.title}</option>`
+      )
+      .join('');
+
+  // Chips de Objetos Renderizados para inyectar/quitar de esta captura
+  const objChips = document.getElementById('shotObjectChips');
+  shot.objectIds = Array.isArray(shot.objectIds) ? shot.objectIds : [];
+  objChips.innerHTML = state.objects
+    .map((o) => {
+      const on = shot.objectIds.includes(o.id);
+      return `
+      <button type="button" data-oid="${o.id}" class="shot-obj-chip flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-mono transition-all ${
+        on
+          ? 'border-[#c86446] bg-[#c86446]/25 text-white font-bold shadow'
+          : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
+      }" title="${o.name}">
+        <img src="${o.image}" alt="" class="w-4 h-4 rounded object-cover">
+        <span>${o.handle}</span>
+      </button>`;
+    })
+    .join('');
+
+  objChips.querySelectorAll('.shot-obj-chip').forEach((btn) => {
+    btn.onclick = () => {
+      const oid = btn.dataset.oid;
+      if (shot.objectIds.includes(oid)) {
+        shot.objectIds = shot.objectIds.filter((x) => x !== oid);
+      } else {
+        shot.objectIds.push(oid);
+      }
+      regenerateShotPrompts(shot, { onlyFluxIfClean: true });
+      saveShotToDB(shot);
+      renderShotsPanel();
+    };
+  });
 
   document.getElementById('shotFluxPrompt').value = shot.fluxPrompt;
   document.getElementById('shotMotionPrompt').value = shot.motionPrompt;
@@ -699,7 +812,7 @@ function restoreShotToViewport(shot) {
   document.getElementById('currentSpotTitle').textContent = shot.spot.name;
   document.getElementById('fluxPromptBox').textContent = shot.spot.prompt;
   document.getElementById('alinaPosBadge').textContent =
-    `X: ${shot.spot.alinaPos.x.toFixed(1)} Y: ${shot.spot.alinaPos.y.toFixed(1)} Z: ${shot.spot.alinaPos.z.toFixed(1)}`;
+    `${shot.spot.alinaPos.x.toFixed(1)}, ${shot.spot.alinaPos.y.toFixed(1)}, ${shot.spot.alinaPos.z.toFixed(1)}`;
 
   alina?.placeAtSpot(shot.spot);
   syncAnimButtons(shot.anim);
@@ -723,10 +836,14 @@ function restoreShotToViewport(shot) {
 }
 
 function buildShotExportPayload(shot) {
+  const attachedObjects = getObjectsForShot(shot);
+  const linkedChapter = state.chapters.find((c) => c.id === shot.chapterId);
+
   return {
     captured_at: shot.createdAt,
     engine: shot.engine === 'unity' ? 'Motor B: Unity 6 URP WebGL' : 'Motor A: Three.js WebGL + alina.glb',
     character: 'Alina Van Dijk',
+    chapter: linkedChapter ? { number: linkedChapter.number, title: linkedChapter.title } : null,
     floor: shot.floorName,
     spot: shot.spot.name,
     animation: shot.anim,
@@ -735,6 +852,14 @@ function buildShotExportPayload(shot) {
     camera_telemetry: shot.camera,
     framing_analysis: shot.framing,
     measured_frame_lighting: shot.imageMetrics,
+    reference_objects: attachedObjects.map((o) => ({
+      id: o.id,
+      handle: o.handle,
+      name: o.name,
+      category: o.category,
+      object_token_lock: o.promptToken,
+      broll_motion_prompt: o.motionPrompt
+    })),
     higgsfield_zero_waste: {
       mode: 'Image-to-Video',
       target_engine: shot.motionEngine,
@@ -747,7 +872,7 @@ function buildShotExportPayload(shot) {
       flux_keyframe_prompt: shot.fluxPrompt,
       higgsfield_motion_prompt: shot.motionPrompt
     },
-    elevenlabs_script: document.getElementById('scriptInput').value
+    elevenlabs_script: linkedChapter?.hook || document.getElementById('scriptInput').value
   };
 }
 
@@ -756,49 +881,47 @@ function exportSelectedShotPackage() {
   if (!shot) return;
 
   const baseName = `alina_${shot.engine}_piso${shot.floor}_${shot.spot.id}_${shot.id.slice(-5)}`;
+  const attachedObjects = getObjectsForShot(shot);
+
   downloadDataUrl(shot.image, `${baseName}_beauty_1080x1920.png`);
 
+  // Descarga también los renders de los Objetos asociados para subirlos como Elements a Higgsfield
+  attachedObjects.forEach((obj, i) => {
+    setTimeout(() => {
+      downloadDataUrl(obj.image, `${baseName}_ref_${obj.handle.replace('@', '')}.png`);
+    }, 650 + i * 220);
+  });
+
   if (shot.depthImage) {
-    setTimeout(() => {
-      downloadDataUrl(shot.depthImage, `${baseName}_depth_1080x1920.png`);
-    }, 220);
-    setTimeout(() => {
-      downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`);
-    }, 440);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete de captura exportado (Beauty + Depth + JSON con tus prompts).</span>');
+    setTimeout(() => downloadDataUrl(shot.depthImage, `${baseName}_depth_1080x1920.png`), 220);
+    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 440);
+    setStatusText(
+      `✅ <span class="text-emerald-400 font-bold">Paquete exportado (Beauty + Depth + ${attachedObjects.length} Objeto(s) + JSON).</span>`
+    );
     return;
   }
 
   if (state.activeEngine === 'threejs') {
     const autoDepth = camCtrl.renderVertical916DataURL(1080, 1920, true);
     shot.depthImage = autoDepth;
+    saveShotToDB(shot);
     renderShotsPanel();
-    setTimeout(() => {
-      downloadDataUrl(autoDepth, `${baseName}_depth_1080x1920.png`);
-    }, 220);
-    setTimeout(() => {
-      downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`);
-    }, 440);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete completo exportado (Beauty + Depth + JSON).</span>');
+    setTimeout(() => downloadDataUrl(autoDepth, `${baseName}_depth_1080x1920.png`), 220);
+    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 440);
+    setStatusText(
+      `✅ <span class="text-emerald-400 font-bold">Paquete completo exportado (Beauty + Depth + ${attachedObjects.length} Objeto(s) + JSON).</span>`
+    );
     return;
   }
 
   if (unityBridge?.ready) {
-    state.pendingUnityCapture = {
-      mode: 'exportDepth',
-      shotId: shot.id,
-      baseName
-    };
+    state.pendingUnityCapture = { mode: 'exportDepth', shotId: shot.id, baseName };
     unityBridge.requestDepthScreenshot916();
-    setTimeout(() => {
-      downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`);
-    }, 450);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportando Beauty + Depth desde Unity 6 URP + JSON...</span>');
+    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 450);
+    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportando Beauty + Depth desde Unity 6 URP + Objetos + JSON...</span>');
   } else {
-    setTimeout(() => {
-      downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`);
-    }, 250);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportado Beauty PNG + JSON de la captura.</span>');
+    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 250);
+    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportado Beauty PNG + Objetos + JSON.</span>');
   }
 }
 
@@ -817,7 +940,7 @@ async function switchEngine(targetEngine) {
     unityBox.classList.add('hidden');
     btnA.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all';
     btnB.className = 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-semibold transition-all';
-    badge.textContent = 'THREE.JS ACTIVE';
+    badge.textContent = 'THREE.JS';
     badge.className = 'text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold shrink-0';
     camCtrl?.onWindowResize();
     updatePerfBadge();
@@ -825,7 +948,6 @@ async function switchEngine(targetEngine) {
     return;
   }
 
-  // Motor B: Unity 6 URP WebGL (lazy load on first activation)
   threeBox.classList.add('hidden');
   unityBox.classList.remove('hidden');
   btnB.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all';
@@ -861,14 +983,22 @@ function toggleTheaterMode(forceState = null) {
   const wrapper = document.getElementById('viewport-wrapper');
   const btn = document.getElementById('btn-fullscreen');
   wrapper.classList.toggle('viewport-theater', next);
-  btn.textContent = next ? '✕ Salir Completa' : '⛶ Completa';
+  btn.textContent = next ? '✕ Salir' : '⛶ Completa';
   refreshViewportLayout();
 }
 
 function bindUIEvents() {
+  // Menú superior de 4 vistas
+  document.getElementById('brand-home-btn').addEventListener('click', () => switchMainView('plato'));
+  document.querySelectorAll('.top-nav-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchMainView(btn.dataset.nav));
+  });
+  document.getElementById('btn-prompts-close').addEventListener('click', () => switchMainView('plato'));
+  document.getElementById('btn-goto-objects-vault').addEventListener('click', () => switchMainView('objects'));
+
+  // Motores e iluminación
   document.getElementById('btn-engine-a').addEventListener('click', () => switchEngine('threejs'));
   document.getElementById('btn-engine-b').addEventListener('click', () => switchEngine('unity'));
-
   document.getElementById('btn-mode-day').addEventListener('click', () => setLightingMode('day'));
   document.getElementById('btn-mode-night').addEventListener('click', () => setLightingMode('night'));
 
@@ -879,19 +1009,40 @@ function bindUIEvents() {
     unityBridge?.sendDollhouseSlice(state.sliced);
   });
 
-  // Conmutación Modo Plató 3D <-> Modo Prompts Higgsfield
-  document.getElementById('btn-prompts-toggle').addEventListener('click', () => setPromptsMode(!state.promptsMode));
-  document.getElementById('btn-prompts-close').addEventListener('click', () => setPromptsMode(false));
-
-  document.getElementById('btn-ptab-captures').addEventListener('click', () => setPromptsTab('captures'));
-  document.getElementById('btn-ptab-director').addEventListener('click', () => setPromptsTab('director'));
-
-  // Botones de captura directa hacia prompts (desde el visor o desde el panel derecho)
+  // Captura rápida de Toma hacia Prompts
   document.getElementById('btn-capture-to-prompt').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: false }));
   document.getElementById('btn-capture-shot').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: false }));
   document.getElementById('btn-capture-shot-depth').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: true }));
 
-  // Edición e interacción sobre la captura seleccionada (con persistencia IndexedDB)
+  // Captura rápida de Objeto desde el visor 3D hacia la Bóveda de Objetos
+  document.getElementById('btn-quick-save-object').addEventListener('click', async () => {
+    const imgUrl = await captureViewportAsObjectRender('1:1');
+    if (!imgUrl) return;
+    const spotName = state.activeSpot?.name || 'Santuario';
+    const num = state.objects.length + 1;
+    const newObj = {
+      id: `obj-${Date.now()}`,
+      order: num,
+      name: `Objeto ${spotName}`,
+      handle: `@prop_${state.activeSpot?.id || 'set'}_${num}`,
+      category: 'Audio & Set',
+      floor: state.activeFloor,
+      spotId: state.activeSpot?.id || 'vanity',
+      image: imgUrl,
+      isPlaceholderImage: false,
+      promptToken: `photorealistic prop captured from ${spotName}, detailed luxury surface texture and lighting`,
+      motionPrompt: 'Subtle macro light reflections across prop surface, slow 2% push-in, no humans, motion strength 2.2',
+      usage: `Capturado desde Piso ${state.activeFloor} (${spotName}).`
+    };
+    state.objects.unshift(newObj);
+    await saveObjectToDB(newObj);
+    updateTopCounters();
+    switchMainView('objects');
+    objectsUI?.selectObject(newObj.id);
+    setStatusText(`🏺 <span class="text-emerald-400 font-bold">Objeto guardado en la Bóveda (${newObj.handle}).</span>`);
+  });
+
+  // Edición sobre la captura seleccionada
   document.getElementById('shotFluxPrompt').addEventListener('input', (e) => {
     const s = getSelectedShot();
     if (s) {
@@ -906,13 +1057,24 @@ function bindUIEvents() {
       scheduleSaveShot(s);
     }
   });
+  document.getElementById('shotChapterSelect').addEventListener('change', (e) => {
+    const s = getSelectedShot();
+    if (!s) return;
+    s.chapterId = e.target.value;
+    saveShotToDB(s);
+    setStatusText(
+      s.chapterId
+        ? '📖 <span class="text-emerald-400 font-bold">Captura vinculada al capítulo seleccionado.</span>'
+        : 'ℹ️ Captura desvinculada de capítulo.'
+    );
+  });
   document.getElementById('btn-shot-regen').addEventListener('click', () => {
     const s = getSelectedShot();
     if (!s) return;
     regenerateShotPrompts(s);
     saveShotToDB(s);
     renderShotsPanel();
-    setStatusText('↻ <span class="text-[#f29979]">Prompts regenerados desde la telemetría de la captura.</span>');
+    setStatusText('↻ <span class="text-[#f29979]">Prompts regenerados con los Objetos y telemetría activos.</span>');
   });
   document.getElementById('btn-shot-restore').addEventListener('click', () => {
     const s = getSelectedShot();
@@ -923,7 +1085,7 @@ function bindUIEvents() {
     const s = getSelectedShot();
     if (!s) return;
     downloadDataUrl(s.image, `alina_${s.engine}_piso${s.floor}_${s.spot.id}_1080x1920.png`);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">PNG 1080×1920 de la captura descargado.</span>');
+    setStatusText('✅ <span class="text-emerald-400 font-bold">PNG 1080×1920 descargado.</span>');
   });
   document.getElementById('btn-shot-package').addEventListener('click', exportSelectedShotPackage);
   document.getElementById('btn-shot-delete').addEventListener('click', () => {
@@ -932,7 +1094,7 @@ function bindUIEvents() {
     state.shots = state.shots.filter((s) => s.id !== deletedId);
     state.selectedShotId = state.shots[0]?.id ?? null;
     deleteShotFromDB(deletedId);
-    updateShotsBadge();
+    updateTopCounters();
     renderShotsPanel();
   });
 
@@ -951,7 +1113,7 @@ function bindUIEvents() {
   document.getElementById('btn-overview').addEventListener('click', () => setCameraPreset('overview'));
   document.getElementById('btn-fullscreen').addEventListener('click', () => toggleTheaterMode());
 
-  // Modal de Arquitectura & Motor (5 pestañas)
+  // Modal de Guía Técnica del Motor Dual
   const docsModal = document.getElementById('docs-modal');
   const setDocsModalOpen = (open) => {
     if (!docsModal) return;
@@ -991,7 +1153,9 @@ function bindUIEvents() {
   document.getElementById('btn-guide-916').addEventListener('click', () => {
     state.guide916 = !state.guide916;
     document.getElementById('guide-916-overlay').classList.toggle('hidden', !state.guide916);
-    document.getElementById('btn-guide-916').textContent = state.guide916 ? '📱 Guía 9:16: ON' : '📱 Guía 9:16: OFF';
+    document.getElementById('btn-guide-916').className = state.guide916
+      ? 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[11px] font-mono transition-colors'
+      : 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors';
   });
 
   document.getElementById('btn-beauty-pass').addEventListener('click', () => setDepthPass(false));
@@ -1048,18 +1212,19 @@ function bindUIEvents() {
     }
   });
 
-  document.getElementById('copyBtn').addEventListener('click', () => {
+  document.getElementById('copyBtn').addEventListener('click', (e) => {
+    e.preventDefault();
     navigator.clipboard.writeText(document.getElementById('fluxPromptBox').textContent);
     const btn = document.getElementById('copyBtn');
     btn.textContent = '¡Copiado!';
     setTimeout(() => { btn.textContent = 'Copiar'; }, 1500);
   });
 
-  document.getElementById('btn-share').addEventListener('click', () => {
+  document.getElementById('btn-share')?.addEventListener('click', () => {
     navigator.clipboard.writeText(window.location.href);
     const btn = document.getElementById('btn-share');
-    btn.innerHTML = '<span>¡Enlace Copiado!</span>';
-    setTimeout(() => { btn.innerHTML = '<span>Compartir Web</span>'; }, 1800);
+    btn.innerHTML = '<span>¡Copiado!</span>';
+    setTimeout(() => { btn.innerHTML = '<span>🔗 Compartir</span>'; }, 1800);
   });
 
   document.getElementById('btn-export-png').addEventListener('click', () => {
@@ -1079,7 +1244,7 @@ function bindUIEvents() {
 
   document.getElementById('btn-export-json').addEventListener('click', () => {
     downloadJson(buildHiggsfieldPayload(), `alina_higgsfield_piso${state.activeFloor}_${state.activeSpot.id}.json`);
-    setStatusText('✅ <span class="text-amber-300 font-bold">JSON técnico de cámara Higgsfield descargado.</span>');
+    setStatusText('✅ <span class="text-amber-300 font-bold">JSON técnico del Spot descargado.</span>');
   });
 
   document.getElementById('btn-export-package').addEventListener('click', () => {
@@ -1094,16 +1259,12 @@ function bindUIEvents() {
       setTimeout(() => {
         downloadJson(buildHiggsfieldPayload(), `${baseName}_higgsfield.json`);
       }, 440);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete 9:16 completo exportado (Beauty + Depth + JSON).</span>');
+      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete 9:16 exportado (Beauty + Depth + JSON).</span>');
     } else {
       unityBridge.requestScreenshot916();
-      setTimeout(() => {
-        unityBridge.requestDepthScreenshot916();
-      }, 300);
-      setTimeout(() => {
-        downloadJson(buildHiggsfieldPayload(), `${baseName}_unity_higgsfield.json`);
-      }, 600);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete Unity 9:16 exportado (Beauty + Depth + JSON).</span>');
+      setTimeout(() => unityBridge.requestDepthScreenshot916(), 300);
+      setTimeout(() => downloadJson(buildHiggsfieldPayload(), `${baseName}_unity_higgsfield.json`), 600);
+      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete Unity 9:16 exportado.</span>');
     }
   });
 }
@@ -1147,8 +1308,15 @@ async function init() {
     },
     async (base64Png) => {
       const dataUrl = `data:image/png;base64,${base64Png}`;
-      if (state.pendingUnityCapture?.mode === 'create') {
-        const wantDepth = state.pendingUnityCapture.withDepth;
+      const pending = state.pendingUnityCapture;
+      if (pending?.mode === 'objectCapture') {
+        state.pendingUnityCapture = null;
+        const finalUrl = pending.aspect === '1:1' ? await cropDataUrlSquare(dataUrl, 1080) : dataUrl;
+        pending.resolve(finalUrl);
+        return;
+      }
+      if (pending?.mode === 'create') {
+        const wantDepth = pending.withDepth;
         state.pendingUnityCapture = null;
         await createShotFromCapture(dataUrl, null);
         if (wantDepth && state.selectedShotId) {
@@ -1180,7 +1348,7 @@ async function init() {
           regenerateShotPrompts(target, { onlyFluxIfClean: true });
           saveShotToDB(target);
           renderShotsPanel();
-          setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map Unity 1080×1920 adjuntado a la captura.</span>');
+          setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map Unity 1080×1920 adjuntado.</span>');
         }
         return;
       }
@@ -1217,17 +1385,98 @@ async function init() {
     setStatus: setStatusText
   });
 
-  // Restaurar capturas y prompts guardados en IndexedDB de sesiones anteriores
-  loadShotsFromDB(findSpotById).then((savedShots) => {
-    if (savedShots.length > 0 && state.shots.length === 0) {
-      state.shots = savedShots;
-      state.selectedShotId = savedShots[0].id;
-      updateShotsBadge();
-      renderShotsPanel();
-    }
+  // Montar Bóveda de Objetos
+  objectsUI = mountObjectsVaultUI(document.getElementById('col-objects'), {
+    getObjects: () => state.objects,
+    getActiveFloor: () => state.activeFloor,
+    getActiveSpot: () => state.activeSpot,
+    onObjectsChanged: () => {
+      updateTopCounters();
+      if (state.activeView === 'prompts') renderShotsPanel();
+    },
+    toggle3DViewportInObjects: () => {
+      state.objects3DVisible = !state.objects3DVisible;
+      document.body.classList.toggle('objects-with-3d', state.objects3DVisible);
+      refreshViewportLayout();
+      return state.objects3DVisible;
+    },
+    captureObjectFrom3D: (aspect) => captureViewportAsObjectRender(aspect),
+    injectObjectIntoPrompts: (obj) => {
+      const currentShot = getSelectedShot();
+      if (currentShot) {
+        currentShot.objectIds = Array.isArray(currentShot.objectIds) ? currentShot.objectIds : [];
+        if (!currentShot.objectIds.includes(obj.id)) {
+          currentShot.objectIds.push(obj.id);
+          regenerateShotPrompts(currentShot, { onlyFluxIfClean: true });
+          saveShotToDB(currentShot);
+        }
+      } else if (!state.pendingObjectIdsForNextShot.includes(obj.id)) {
+        state.pendingObjectIdsForNextShot.push(obj.id);
+      }
+      switchMainView('prompts');
+      setStatusText(`🏺 <span class="text-emerald-400 font-bold">Objeto ${obj.handle} inyectado en Estudio Prompts.</span>`);
+    },
+    downloadDataUrl,
+    downloadJson,
+    setStatus: setStatusText
   });
 
-  // Immediately render Floor 2 UI + spots so pills never wait on network
+  // Montar Cine & Capítulos + Biblia de Alina
+  chaptersUI = mountChaptersCinemaUI(
+    document.getElementById('cinema-subnav-wrap'),
+    document.getElementById('col-chapters'),
+    document.getElementById('col-bible'),
+    {
+      getChapters: () => state.chapters,
+      getObjects: () => state.objects,
+      getShots: () => state.shots,
+      getActiveFloor: () => state.activeFloor,
+      getActiveSpot: () => state.activeSpot,
+      getLightingMode: () => state.lightingMode,
+      onChaptersChanged: () => {
+        updateTopCounters();
+      },
+      onSubTabChanged: (sub) => {
+        state.cinemaSubView = sub;
+        document.body.dataset.cinemaSub = sub;
+        refreshViewportLayout();
+      },
+      loadChapterSetIntoStudio: (ch) => {
+        state.defaultChapterIdForNextShot = ch.id;
+        state.pendingObjectIdsForNextShot = Array.isArray(ch.linkedObjectIds) ? [...ch.linkedObjectIds] : [];
+        setLightingMode(ch.lightingMode || 'night');
+        selectFloor(ch.floor ?? 3);
+        const sp = findSpotById(ch.spotId);
+        if (sp) selectSpot(sp);
+        if (ch.hook) document.getElementById('scriptInput').value = ch.hook;
+        switchMainView('prompts');
+        setStatusText(
+          `🎥 <span class="text-emerald-400 font-bold">Set del Capítulo ${ch.number} («${ch.title}») cargado.</span> Tus próximas capturas se vincularán a este capítulo.`
+        );
+      },
+      downloadJson,
+      setStatus: setStatusText
+    }
+  );
+
+  // Cargar datos persistidos en IndexedDB (Objetos, Capítulos y Capturas)
+  const [savedObjects, savedChapters, savedShots] = await Promise.all([
+    loadObjectsFromDB(),
+    loadChaptersFromDB(),
+    loadShotsFromDB(findSpotById)
+  ]);
+  state.objects = savedObjects;
+  state.chapters = savedChapters;
+  if (savedShots.length > 0) {
+    state.shots = savedShots;
+    state.selectedShotId = savedShots[0].id;
+  }
+  updateTopCounters();
+  objectsUI.render();
+  chaptersUI.renderChapters();
+  renderShotsPanel();
+
+  // Inicializar Piso 2 en el visor 3D
   selectFloor(2);
 
   try {
@@ -1247,7 +1496,7 @@ async function init() {
     const dt = Math.min(clock.getDelta(), 0.1);
     const elapsed = clock.elapsedTime;
 
-    if (state.activeEngine === 'threejs') {
+    if (state.activeEngine === 'threejs' && is3DViewportVisibleInCurrentView()) {
       alina.update(dt);
       lighting.update(elapsed);
       for (const wm of arch.waterMeshes) {

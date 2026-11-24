@@ -1,4 +1,4 @@
-export const FLOOR_HEIGHT = 3.4;
+export const FLOOR_HEIGHT = 4.9;
 export const BUILDING_WIDTH = 26.0;
 export const BUILDING_DEPTH = 16.0;
 export const BUILDING_CENTER_Z = -6.5;

@@ -7,7 +7,9 @@ import {
   buildAsphaltTexture,
   buildTeakDeckTexture,
   buildSignTexture,
-  buildDanceFloorTexture
+  buildDanceFloorTexture,
+  buildExteriorStonePair,
+  buildSideWindowTexture
 } from './textures.js';
 
 export function buildSanctuaryArchitecture(scene, lighting) {
@@ -50,8 +52,25 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     metalness: 0.05
   });
 
-  const matPlaster = new THREE.MeshStandardMaterial({ color: 0x21242d, roughness: 0.85, metalness: 0.05 });
-  const matDivider = new THREE.MeshStandardMaterial({ color: 0x262933, roughness: 0.78, metalness: 0.06 });
+  const matPlaster = new THREE.MeshStandardMaterial({ color: 0x262934, roughness: 0.85, metalness: 0.05 });
+  const extStone = buildExteriorStonePair(BUILDING_WIDTH, FLOOR_HEIGHT, 3.0);
+  const matExteriorStone = new THREE.MeshStandardMaterial({
+    map: extStone.map,
+    bumpMap: extStone.bumpMap,
+    bumpScale: 0.025,
+    roughness: 0.82,
+    metalness: 0.06
+  });
+  const sideWinTex = buildSideWindowTexture();
+  const matSideWindow = new THREE.MeshStandardMaterial({
+    map: sideWinTex,
+    emissiveMap: sideWinTex,
+    emissive: new THREE.Color(0xffcfa0),
+    emissiveIntensity: 1.2,
+    roughness: 0.25
+  });
+  lighting.registerEmissive(matSideWindow, { dayIntensity: 0.35, nightIntensity: 1.25 });
+  const matDivider = new THREE.MeshStandardMaterial({ color: 0x2a2d38, roughness: 0.78, metalness: 0.06 });
   const matTeak = new THREE.MeshStandardMaterial({
     map: buildTeakDeckTexture(26, 16, 2.2),
     roughness: 0.62,
@@ -138,29 +157,47 @@ export function buildSanctuaryArchitecture(scene, lighting) {
 
   function addFloorBase(group, floorIndex, floorMat) {
     // Main interior slab
-    box(group, BUILDING_WIDTH, 0.24, BUILDING_DEPTH, 0, -0.12, BUILDING_CENTER_Z, floorMat, false, true);
-    // Exterior cornice band on front edge
-    box(group, BUILDING_WIDTH + 0.4, 0.28, 0.35, 0, -0.12, 1.55, matSteel, true, true);
-    // Back (North) & West & East structural walls
+    box(group, BUILDING_WIDTH, 0.26, BUILDING_DEPTH, 0, -0.13, BUILDING_CENTER_Z, floorMat, false, true);
+    // Exterior cornice band on front open-side cutaway edge + brushed brass hairline accent
+    box(group, BUILDING_WIDTH + 0.5, 0.34, 0.38, 0, -0.13, 1.55, matSteel, true, true);
+    box(group, BUILDING_WIDTH + 0.52, 0.06, 0.06, 0, 0.01, 1.73, matBrass, false, false);
+
+    // Interior walls (open front South facade for cutaway dollhouse visibility)
     box(group, BUILDING_WIDTH, FLOOR_HEIGHT, 0.3, 0, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z - BUILDING_DEPTH / 2, floorIndex === 3 || floorIndex === 0 ? matBrick : matPlaster);
     box(group, 0.3, FLOOR_HEIGHT, BUILDING_DEPTH, -BUILDING_WIDTH / 2, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z, matPlaster);
     box(group, 0.3, FLOOR_HEIGHT, BUILDING_DEPTH, BUILDING_WIDTH / 2, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z, matPlaster);
+
+    // Exterior architectural limestone shell (North, West, East) + illuminated loft side-window bays
+    box(group, BUILDING_WIDTH + 0.36, FLOOR_HEIGHT, 0.16, 0, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 - 0.19, matExteriorStone);
+    box(group, 0.16, FLOOR_HEIGHT, BUILDING_DEPTH + 0.16, -BUILDING_WIDTH / 2 - 0.19, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z, matExteriorStone);
+    box(group, 0.16, FLOOR_HEIGHT, BUILDING_DEPTH + 0.16, BUILDING_WIDTH / 2 + 0.19, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z, matExteriorStone);
+    if (floorIndex >= 1 && floorIndex <= 3) {
+      for (const wz of [-4.2, -9.8]) {
+        box(group, 0.08, 3.1, 2.5, -BUILDING_WIDTH / 2 - 0.28, FLOOR_HEIGHT * 0.52, wz, matSideWindow, false, false);
+        box(group, 0.08, 3.1, 2.5, BUILDING_WIDTH / 2 + 0.28, FLOOR_HEIGHT * 0.52, wz, matSideWindow, false, false);
+      }
+    }
+
+    // Ceiling cutaway cove beam along top perimeter (gives tall 4.9m rooms architectural framing)
+    box(group, BUILDING_WIDTH + 0.2, 0.24, 0.24, 0, FLOOR_HEIGHT - 0.12, 1.45, matSteel, false, false);
+    box(group, BUILDING_WIDTH, 0.24, 0.36, 0, FLOOR_HEIGHT - 0.12, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 + 0.18, matDivider, false, false);
+
     // Modernist front facade columns
     for (const px of [-12.85, -5.2, 4.4, 12.85]) {
-      box(group, 0.36, FLOOR_HEIGHT, 0.36, px, FLOOR_HEIGHT / 2, 1.45, matSteel);
+      box(group, 0.38, FLOOR_HEIGHT, 0.38, px, FLOOR_HEIGHT / 2, 1.45, matSteel);
     }
     // Vertical elevator + staircase core (East wing X = +10.2..+12.7, Z = -14.2..-10.0)
     const elevWall = box(group, 0.1, FLOOR_HEIGHT, 4.2, 10.2, FLOOR_HEIGHT / 2, -12.1, matGlass, false, false);
     elevWall.castShadow = false;
     box(group, 1.8, 0.14, 1.8, 11.4, 0.08, -12.8, matSteel);
     box(group, 0.08, FLOOR_HEIGHT, 0.08, 10.6, FLOOR_HEIGHT / 2, -11.9, matNeonCyan, false, false);
-    // Stepped staircase connecting to next level (floors 0..3)
+    // Stepped staircase connecting 4.9m levels (floors 0..3)
     if (floorIndex < 4) {
-      const steps = 10;
+      const steps = 14;
       for (let s = 0; s < steps; s++) {
         const sy = (s + 0.5) * (FLOOR_HEIGHT / steps);
-        const sz = -10.2 + s * 0.42;
-        box(group, 1.3, 0.16, 0.44, 11.4, sy, sz, matWoodOak);
+        const sz = -10.5 + s * 0.38;
+        box(group, 1.3, 0.16, 0.4, 11.4, sy, sz, matWoodOak);
       }
     }
   }
@@ -274,7 +311,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   lighting.registerLight(parkingLight, { dayIntensity: 1.0, nightIntensity: 22.0 });
 
   // VIP Entrance Canopy, Neon "NOCTURNE" Sign, Red Carpet & Brass Stanchions
-  box(pb, 6.4, 0.24, 3.4, 0, 3.1, 3.1, matSteel);
+  box(pb, 6.4, 0.24, 3.4, 0, 3.45, 3.1, matSteel);
   const signTex = buildSignTexture('NOCTURNE', '#120610', '#ff2a85', 'CABARET  •  SPEAKEASY  •  VIP');
   const matSign = new THREE.MeshStandardMaterial({
     map: signTex,
@@ -284,7 +321,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     roughness: 0.2
   });
   lighting.registerEmissive(matSign, { dayIntensity: 0.4, nightIntensity: 1.7 });
-  box(pb, 4.8, 0.9, 0.14, 0, 3.65, 4.78, matSign, false);
+  box(pb, 4.8, 0.9, 0.14, 0, 4.0, 4.78, matSign, false);
   box(pb, 2.3, 0.03, 4.2, 0, 0.175, 3.4, matCrimsonVelvet, false, true);
   for (const sx of [-1.25, 1.25]) {
     for (const sz of [1.8, 3.3, 4.7]) {
@@ -350,10 +387,10 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     addChair(pb, 7.15, 0, tz, Math.PI / 2, matCrimsonVelvet);
     addChair(pb, 8.85, 0, tz, -Math.PI / 2, matCrimsonVelvet);
   }
-  const cabaretLight = new THREE.PointLight(0xff66b2, 14.0, 26, 1.4);
-  cabaretLight.position.set(0, 2.9, -6.5);
+  const cabaretLight = new THREE.PointLight(0xff66b2, 24.0, 30, 1.3);
+  cabaretLight.position.set(0, 3.85, -6.5);
   pb.add(cabaretLight);
-  lighting.registerLight(cabaretLight, { dayIntensity: 1.5, nightIntensity: 14.0 });
+  lighting.registerLight(cabaretLight, { dayIntensity: 2.0, nightIntensity: 24.0 });
 
   // =========================================================================
   // NIVEL 1 (PISO 1): LE VELVET CAFÉ & LOUNGE
@@ -384,7 +421,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const cafeSignTex = buildSignTexture('LE VELVET CAFÉ', '#1c1410', '#d99a64', 'SPECIALTY ESPRESSO  •  EIXAMPLE');
   const matCafeSign = new THREE.MeshStandardMaterial({ map: cafeSignTex, emissiveMap: cafeSignTex, emissive: new THREE.Color(0xffdfa8), emissiveIntensity: 1.0 });
   lighting.registerEmissive(matCafeSign, { dayIntensity: 0.3, nightIntensity: 1.2 });
-  box(p1, 4.4, 0.8, 0.1, -0.5, 2.3, -14.2, matCafeSign, false);
+  box(p1, 4.4, 0.8, 0.1, -0.5, 3.1, -14.2, matCafeSign, false);
 
   // 4 Carrara Bistro Tables + Thonet Chairs
   for (const [tx, tz] of [[-5.8, -4.0], [-2.0, -3.5], [2.2, -3.8], [6.0, -4.2]]) {
@@ -398,10 +435,10 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   addPlantPot(p1, 8.8, 0, -12.5, 1.2);
   addPlantPot(p1, -11.2, 0, 0.2, 1.1);
 
-  const cafeLight = new THREE.PointLight(0xffdfb0, 14.0, 24, 1.4);
-  cafeLight.position.set(0, 2.9, -5.5);
+  const cafeLight = new THREE.PointLight(0xffdfb0, 20.0, 28, 1.3);
+  cafeLight.position.set(0, 3.85, -5.5);
   p1.add(cafeLight);
-  lighting.registerLight(cafeLight, { dayIntensity: 2.5, nightIntensity: 14.0 });
+  lighting.registerLight(cafeLight, { dayIntensity: 3.0, nightIntensity: 20.0 });
 
   // =========================================================================
   // NIVEL 2 (PISO 2): RESIDENCIA PRIVADA DE ALINA (4 ZONAS CON TABIQUES)
@@ -417,7 +454,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   // West divider at X = -5.0 (doorway Z = -4.2..-2.2)
   box(p2, 0.16, FLOOR_HEIGHT, 9.8, -5.0, FLOOR_HEIGHT / 2, -9.4, matDivider);
   box(p2, 0.16, FLOOR_HEIGHT, 3.6, -5.0, FLOOR_HEIGHT / 2, -0.3, matDivider);
-  box(p2, 0.16, 1.0, 2.0, -5.0, 2.9, -3.2, matDivider); // Door lintel
+  box(p2, 0.16, FLOOR_HEIGHT - 2.4, 2.0, -5.0, 2.4 + (FLOOR_HEIGHT - 2.4) / 2, -3.2, matDivider); // Door lintel
   // East divider at X = +4.4 (wide archway Z = -9.5..-2.0)
   box(p2, 0.16, FLOOR_HEIGHT, 4.8, 4.4, FLOOR_HEIGHT / 2, -12.0, matDivider);
   box(p2, 0.16, FLOOR_HEIGHT, 3.4, 4.4, FLOOR_HEIGHT / 2, -0.2, matDivider);
@@ -505,7 +542,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   cyl(p2, 0.055, 0.045, 0.09, 12, 6.8, 1.03, -8.3, matCreamLinen);
   // 3 Copper Pendant Lamps
   for (const pz of [-9.0, -8.0, -7.0]) {
-    cyl(p2, 0.01, 0.01, 1.1, 8, 7.3, 2.85, pz, matSteel, false);
+    const rodH = FLOOR_HEIGHT - 2.35;
+    cyl(p2, 0.01, 0.01, rodH, 8, 7.3, 2.35 + rodH / 2, pz, matSteel, false);
     cyl(p2, 0.1, 0.22, 0.24, 16, 7.3, 2.25, pz, matCopper);
   }
   // 3 Barstools
@@ -587,9 +625,9 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   p3.add(lampHead);
   cyl(p3, 0.02, 0.09, 0.42, 10, -6.0, 1.05, -10.6, matBrass);
   // Floor-to-ceiling Bookshelf filled with colorful books
-  box(p3, 0.55, 2.9, 6.4, -12.4, 1.45, -7.2, matWoodDark);
+  box(p3, 0.55, 3.8, 6.4, -12.4, 1.9, -7.2, matWoodDark);
   const bookColors = [0x7c2d12, 0x064e3b, 0x1e293b, 0x991b1b, 0xb45309, 0x312e81];
-  for (let shelfY = 0.45; shelfY <= 2.45; shelfY += 0.5) {
+  for (let shelfY = 0.45; shelfY <= 3.45; shelfY += 0.5) {
     for (let bz = -10.0; bz <= -4.4; bz += 0.28) {
       const bm = new THREE.MeshStandardMaterial({ color: bookColors[Math.abs(Math.round(bz * 10 + shelfY)) % bookColors.length], roughness: 0.75 });
       box(p3, 0.32, 0.36, 0.18, -12.35, shelfY, bz, bm);
@@ -599,8 +637,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p3, 2.3, 0.38, 0.95, -5.5, 0.25, -4.2, matBlackLeather);
   box(p3, 0.45, 0.32, 0.95, -6.45, 0.52, -4.2, matBlackLeather);
 
-  const podcastLight = new THREE.PointLight(0xffb86c, 11.0, 14, 1.4);
-  podcastLight.position.set(-4.8, 2.15, -9.2);
+  const podcastLight = new THREE.PointLight(0xffb86c, 15.0, 18, 1.3);
+  podcastLight.position.set(-4.8, 2.95, -9.2);
   p3.add(podcastLight);
   lighting.registerLight(podcastLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
@@ -656,10 +694,10 @@ export function buildSanctuaryArchitecture(scene, lighting) {
 
   // Bioclimatic Pergola over Copper Cocktail Bar
   for (const [px, pz] of [[2.2, -11.5], [8.8, -11.5], [2.2, -6.8], [8.8, -6.8]]) {
-    box(p4, 0.18, 3.0, 0.18, px, 1.5, pz, matSteel);
+    box(p4, 0.18, 3.6, 0.18, px, 1.8, pz, matSteel);
   }
   for (let lz = -11.4; lz <= -6.8; lz += 0.48) {
-    box(p4, 6.8, 0.08, 0.18, 5.5, 3.0, lz, matSteel);
+    box(p4, 6.8, 0.08, 0.18, 5.5, 3.6, lz, matSteel);
   }
   // Hammered Copper Bar + Backlit Liquor Display + Stools
   box(p4, 4.6, 1.08, 1.15, 5.5, 0.54, -9.8, matCopper);

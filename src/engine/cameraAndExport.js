@@ -11,16 +11,16 @@ export class CameraAndExportController {
     const w = container.clientWidth || 720;
     const h = container.clientHeight || 480;
 
-    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 260);
-    this.camera.position.set(0.25, 8.3, -8.1);
+    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 320);
+    this.camera.position.set(0.25, 11.3, -8.1);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.06;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.01;
     this.controls.minDistance = 0.8;
-    this.controls.maxDistance = 80;
-    this.controls.target.set(-0.4, 8.18, -10.8);
+    this.controls.maxDistance = 110;
+    this.controls.target.set(-0.4, 11.18, -10.8);
     this.controls.update();
 
     this.isTransitioning = false;

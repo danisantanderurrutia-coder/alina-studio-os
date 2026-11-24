@@ -105,7 +105,7 @@ export function buildMarbleTexture(dark = true, widthMeters = 10, depthMeters = 
   return finalizeTexture(c, { repeatX: widthMeters / tileMeters, repeatY: depthMeters / tileMeters });
 }
 
-export function buildBrickWallPair(widthMeters = 16, heightMeters = 3.4, tileMeters = 2.0) {
+export function buildBrickWallPair(widthMeters = 16, heightMeters = 4.9, tileMeters = 2.0) {
   const [c, ctx] = makeCanvas(512);
   const [b, bctx] = makeCanvas(512);
 
@@ -209,4 +209,60 @@ export function buildDanceFloorTexture(widthMeters = 12, depthMeters = 9, tileMe
     }
   }
   return finalizeTexture(c, { repeatX: widthMeters / tileMeters, repeatY: depthMeters / tileMeters });
+}
+
+export function buildExteriorStonePair(widthMeters = 26, heightMeters = 4.9, tileMeters = 3.0) {
+  const [c, ctx] = makeCanvas(512);
+  const [b, bctx] = makeCanvas(512);
+
+  ctx.fillStyle = '#3b3e47';
+  ctx.fillRect(0, 0, 512, 512);
+  bctx.fillStyle = '#606060';
+  bctx.fillRect(0, 0, 512, 512);
+
+  const bh = 64;
+  const bw = 128;
+  for (let r = 0; r < 512 / bh; r++) {
+    const off = (r % 2) * (bw / 2);
+    for (let col = -1; col < 512 / bw + 1; col++) {
+      const x = col * bw + off + 3;
+      const y = r * bh + 3;
+      const shade = 64 + ((r * 11 + col * 17) % 16);
+      ctx.fillStyle = `rgb(${shade + 6}, ${shade + 4}, ${shade + 2})`;
+      ctx.fillRect(x, y, bw - 6, bh - 6);
+      bctx.fillStyle = `rgb(${190 + ((r + col) % 3) * 15}, ${190}, ${190})`;
+      bctx.fillRect(x, y, bw - 6, bh - 6);
+    }
+  }
+
+  return {
+    map: finalizeTexture(c, { repeatX: widthMeters / tileMeters, repeatY: heightMeters / tileMeters }),
+    bumpMap: finalizeTexture(b, { colorSpace: THREE.NoColorSpace, repeatX: widthMeters / tileMeters, repeatY: heightMeters / tileMeters })
+  };
+}
+
+export function buildSideWindowTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, '#ffd8a8');
+  grad.addColorStop(0.55, '#c86446');
+  grad.addColorStop(1, '#1e293b');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 512);
+
+  // Dark steel mullions
+  ctx.fillStyle = '#111319';
+  ctx.fillRect(0, 0, 256, 16);
+  ctx.fillRect(0, 496, 256, 16);
+  ctx.fillRect(0, 0, 14, 512);
+  ctx.fillRect(242, 0, 14, 512);
+  ctx.fillRect(122, 0, 12, 512);
+  ctx.fillRect(0, 170, 256, 10);
+  ctx.fillRect(0, 340, 256, 10);
+
+  return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
 }

@@ -1,9 +1,11 @@
 export class UnityWebGLBridge {
-  constructor(canvasEl, onProgress, onReady, onScreenshot) {
+  constructor(canvasEl, onProgress, onReady, onScreenshot, onFps, onDepthScreenshot) {
     this.canvasEl = canvasEl;
     this.onProgress = onProgress;
     this.onReady = onReady;
     this.onScreenshot = onScreenshot;
+    this.onFps = onFps;
+    this.onDepthScreenshot = onDepthScreenshot;
     this.instance = null;
     this.loading = false;
     this.ready = false;
@@ -21,6 +23,12 @@ export class UnityWebGLBridge {
       },
       onScreenshot: (base64Png) => {
         if (this.onScreenshot) this.onScreenshot(base64Png);
+      },
+      onDepthScreenshot: (base64Png) => {
+        if (this.onDepthScreenshot) this.onDepthScreenshot(base64Png);
+      },
+      onFps: (fps) => {
+        if (this.onFps) this.onFps(fps);
       }
     };
   }
@@ -95,6 +103,12 @@ export class UnityWebGLBridge {
     this._send('SelectFloor', state.floor);
     this._send('SelectSpot', state.spotId);
     if (state.anim) this._send('SetAnimation', state.anim);
+    if (state.renderPass) this._send('SetRenderPass', state.renderPass);
+  }
+
+  sendRenderPass(pass) {
+    if (this.pendingState) this.pendingState.renderPass = pass;
+    this._send('SetRenderPass', pass);
   }
 
   sendFloor(floorNum) {
@@ -128,5 +142,9 @@ export class UnityWebGLBridge {
 
   requestScreenshot916() {
     this._send('CaptureFrame916');
+  }
+
+  requestDepthScreenshot916() {
+    this._send('CaptureDepth916');
   }
 }

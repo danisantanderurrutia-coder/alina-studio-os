@@ -15,9 +15,11 @@ const state = {
   sliced: true,
   depthPass: false,
   guide916: false,
+  theaterMode: false,
   motionEngine: 'liveportrait',
   threeLoadMs: 0,
-  unityLoadMs: null
+  unityLoadMs: null,
+  unityFps: null
 };
 
 let scene, renderer, lighting, arch, alina, camCtrl, unityBridge;
@@ -52,7 +54,8 @@ function updatePerfBadge() {
     el.textContent = `FPS: ${currentFps || '--'} | Carga: ${state.threeLoadMs}ms`;
   } else {
     const loadTxt = state.unityLoadMs != null ? `${(state.unityLoadMs / 1000).toFixed(1)}s` : 'Cargando...';
-    el.textContent = `Unity WebGL | Carga: ${loadTxt}`;
+    const fpsTxt = state.unityFps != null ? `${state.unityFps}` : '--';
+    el.textContent = `Unity 6 URP | FPS: ${fpsTxt} | Carga: ${loadTxt}`;
   }
 }
 
@@ -196,7 +199,7 @@ function selectSpot(spot) {
 function updateViewportHud() {
   const floorLabel = SANCTUARY_FLOORS[state.activeFloor].floorName.split('•')[0].trim();
   const engineTag = state.activeEngine === 'threejs' ? 'Three.js GLB' : 'Unity 6 URP';
-  const passTag = state.depthPass && state.activeEngine === 'threejs' ? 'DEPTH PASS' : state.activeSpot.name;
+  const passTag = state.depthPass ? 'DEPTH PASS' : state.activeSpot.name;
   document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [${engineTag}]`;
 }
 
@@ -217,13 +220,10 @@ function setLightingMode(mode) {
 }
 
 function setDepthPass(enabled) {
-  if (state.activeEngine === 'unity' && enabled) {
-    setStatusText('ℹ️ <span class="text-amber-300">Nota:</span> El pase Depth Map Z-Buffer se genera desde Motor A (Three.js).');
-    return;
-  }
   state.depthPass = enabled;
   const focus = new THREE.Vector3(state.activeSpot.alinaPos.x, state.activeSpot.alinaPos.y + 1.0, state.activeSpot.alinaPos.z);
   camCtrl?.setDepthPass(enabled, focus);
+  unityBridge?.sendRenderPass(enabled ? 'depth' : 'beauty');
 
   const btnBeauty = document.getElementById('btn-beauty-pass');
   const btnDepth = document.getElementById('btn-depth-pass');
@@ -239,14 +239,24 @@ function setDepthPass(enabled) {
 
 function setCameraPreset(mode) {
   const s = state.activeSpot;
+  if (mode === 'dollhouse') {
+    state.sliced = false;
+    syncSliceButtonUI();
+    applyThreeJSSlicing();
+    camCtrl?.flyTo({ x: 3.5, y: 12.8, z: 36.0 }, { x: 0, y: 11.2, z: -5.5 });
+    unityBridge?.sendDollhouseSlice(false);
+    unityBridge?.sendCameraAngle('dollhouse');
+    document.getElementById('viewport-status-hud').textContent = `CASA DE MUÑECAS 5 PISOS (4.9m/nivel) [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
+    return;
+  }
   if (mode === 'overview') {
     state.sliced = false;
     syncSliceButtonUI();
     applyThreeJSSlicing();
-    camCtrl?.flyTo({ x: 24.0, y: 19.5, z: 24.5 }, { x: 0, y: 6.2, z: -2.0 });
+    camCtrl?.flyTo({ x: 30.0, y: 24.5, z: 33.5 }, { x: 0, y: 10.5, z: -4.0 });
     unityBridge?.sendDollhouseSlice(false);
     unityBridge?.sendCameraAngle('overview');
-    document.getElementById('viewport-status-hud').textContent = `VISTA GENERAL 5 PISOS (28m × 22m) [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6'}]`;
+    document.getElementById('viewport-status-hud').textContent = `EXTERIOR 3/4 • 5 PISOS (24.5m ALTO) [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
     return;
   }
 
@@ -256,7 +266,7 @@ function setCameraPreset(mode) {
     camCtrl?.flyTo(s.macroPos, s.macroTarget);
   } else if (mode === 'top') {
     camCtrl?.flyTo(
-      { x: s.alinaPos.x, y: s.alinaPos.y + 6.5, z: s.alinaPos.z + 1.2 },
+      { x: s.alinaPos.x, y: s.alinaPos.y + 4.3, z: s.alinaPos.z + 1.0 },
       { x: s.alinaPos.x, y: s.alinaPos.y, z: s.alinaPos.z }
     );
   }
@@ -315,7 +325,6 @@ async function switchEngine(targetEngine) {
   }
 
   // Motor B: Unity 6 URP WebGL (lazy load on first activation)
-  if (state.depthPass) setDepthPass(false);
   threeBox.classList.add('hidden');
   unityBox.classList.remove('hidden');
   btnB.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all';
@@ -329,7 +338,8 @@ async function switchEngine(targetEngine) {
     spotId: state.activeSpot.id,
     lightingMode: state.lightingMode,
     sliced: state.sliced,
-    anim: state.activeAnim
+    anim: state.activeAnim,
+    renderPass: state.depthPass ? 'depth' : 'beauty'
   };
 
   try {
@@ -339,6 +349,17 @@ async function switchEngine(targetEngine) {
     document.getElementById('unity-loading-text').textContent = `Error al cargar Unity WebGL: ${err.message}`;
     setStatusText(`⚠️ <span class="text-rose-400">Error Unity WebGL:</span> ${err.message}`);
   }
+}
+
+function toggleTheaterMode(forceState = null) {
+  const next = forceState !== null ? forceState : !state.theaterMode;
+  state.theaterMode = next;
+  const wrapper = document.getElementById('viewport-wrapper');
+  const btn = document.getElementById('btn-fullscreen');
+  wrapper.classList.toggle('viewport-theater', next);
+  btn.textContent = next ? '✕ Salir Completa' : '⛶ Completa';
+  requestAnimationFrame(() => camCtrl?.onWindowResize());
+  setTimeout(() => camCtrl?.onWindowResize(), 120);
 }
 
 function bindUIEvents() {
@@ -355,7 +376,12 @@ function bindUIEvents() {
     unityBridge?.sendDollhouseSlice(state.sliced);
   });
 
+  document.getElementById('btn-dollhouse').addEventListener('click', () => setCameraPreset('dollhouse'));
   document.getElementById('btn-overview').addEventListener('click', () => setCameraPreset('overview'));
+  document.getElementById('btn-fullscreen').addEventListener('click', () => toggleTheaterMode());
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.theaterMode) toggleTheaterMode(false);
+  });
 
   document.getElementById('btn-guide-916').addEventListener('click', () => {
     state.guide916 = !state.guide916;
@@ -418,6 +444,9 @@ function bindUIEvents() {
       const tag = state.depthPass ? 'depth' : 'beauty';
       downloadDataUrl(url, `alina_9x16_piso${state.activeFloor}_${state.activeSpot.id}_${tag}.png`);
       setStatusText(`✅ <span class="text-emerald-400 font-bold">Frame 1080×1920 (${tag}) exportado.</span>`);
+    } else if (state.depthPass) {
+      unityBridge.requestDepthScreenshot916();
+      setStatusText('📸 Capturando Depth Map 1080×1920 desde Unity 6 URP...');
     } else {
       unityBridge.requestScreenshot916();
       setStatusText('📸 Capturando 1080×1920 desde Unity 6 URP...');
@@ -444,8 +473,13 @@ function bindUIEvents() {
       setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete 9:16 completo exportado (Beauty + Depth + JSON).</span>');
     } else {
       unityBridge.requestScreenshot916();
-      downloadJson(buildHiggsfieldPayload(), `${baseName}_unity_higgsfield.json`);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity 9:16 + JSON Higgsfield exportados.</span>');
+      setTimeout(() => {
+        unityBridge.requestDepthScreenshot916();
+      }, 300);
+      setTimeout(() => {
+        downloadJson(buildHiggsfieldPayload(), `${baseName}_unity_higgsfield.json`);
+      }, 600);
+      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete Unity 9:16 exportado (Beauty + Depth + JSON).</span>');
     }
   });
 }
@@ -487,8 +521,16 @@ async function init() {
       updateViewportHud();
     },
     (base64Png) => {
-      downloadDataUrl(`data:image/png;base64,${base64Png}`, `alina_unity_9x16_piso${state.activeFloor}_${state.activeSpot.id}.png`);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity 1080×1920 PNG descargada.</span>');
+      downloadDataUrl(`data:image/png;base64,${base64Png}`, `alina_unity_9x16_piso${state.activeFloor}_${state.activeSpot.id}_beauty.png`);
+      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Beauty 1080×1920 PNG descargada.</span>');
+    },
+    (fps) => {
+      state.unityFps = fps;
+      if (state.activeEngine === 'unity') updatePerfBadge();
+    },
+    (base64DepthPng) => {
+      downloadDataUrl(`data:image/png;base64,${base64DepthPng}`, `alina_unity_9x16_piso${state.activeFloor}_${state.activeSpot.id}_depth.png`);
+      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Depth Map 1080×1920 PNG descargada.</span>');
     }
   );
 

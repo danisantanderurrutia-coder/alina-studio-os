@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alina Studio OS v1.0 — Web 3D Sanctuary & Higgsfield Suite | LMNJDRS</title>
+  <title>Alina Studio OS v2.0 — Architectural 3D Sanctuary | LMNJDRS</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="description" content="Plató Virtual 3D hiperrealista para navegador web y suite de producción de Alina Van Dijk (Manejadores / LMNJDRS).">
+  <meta name="description" content="Edificio arquitectónico 3D fotorrealista a escala métrica real para Alina Van Dijk (Manejadores / LMNJDRS).">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -70,7 +70,7 @@
 </head>
 <body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
-  <!-- TOP BAR: HEADER & SHAREABLE WEB STATUS -->
+  <!-- TOP BAR: HEADER & CONTROLS -->
   <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
       <a href="#" class="group relative flex items-center justify-center">
@@ -78,49 +78,55 @@
       </a>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-sm font-bold tracking-wide text-white">ALINA STUDIO OS</h1>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">WEB 3D VIRTUAL SET</span>
+          <h1 class="text-sm font-bold tracking-wide text-white">THE ALINA SANCTUARY 3D</h1>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">ESCALA MÉTRICA 1:1</span>
         </div>
-        <p class="text-xs text-slate-400">Plató Virtual Web • Alina Van Dijk en Vivo • Exportación Higgsfield & Kling</p>
+        <p class="text-xs text-slate-400">Diseño Arquitectónico Completo • Parking, Cabaret, Residencia, Clínica & Rooftop</p>
       </div>
     </div>
 
-    <!-- Live Metrics / Shareable Badge -->
-    <div class="flex items-center flex-wrap gap-4 md:gap-6 text-xs">
-      <div class="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-400">Acceso Web Colegas:</span>
-        <span class="font-mono text-emerald-400 font-semibold">Público (GitHub Pages)</span>
+    <!-- Live Controls: Day/Night Toggle & Sharing -->
+    <div class="flex items-center flex-wrap gap-3 md:gap-5 text-xs">
+      
+      <!-- Day / Night Mode Toggle -->
+      <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10">
+        <button onclick="setLightingMode('day')" id="btn-mode-day" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all">
+          <span>☀️ Día (Golden Hour)</span>
+        </button>
+        <button onclick="setLightingMode('night')" id="btn-mode-night" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium flex items-center gap-1 shadow transition-all">
+          <span>🌙 Noche (Chiaroscuro)</span>
+        </button>
       </div>
-      <div class="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
-        <span class="text-slate-400">Créditos Higgsfield:</span>
-        <span class="font-mono text-amber-300 font-bold">940 / 1.000</span>
-        <span class="text-[10px] text-slate-500">(25 tomas)</span>
-      </div>
-      <button onclick="copyShareableLink()" id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5">
+
+      <!-- Sliced Dollhouse Toggle -->
+      <button onclick="toggleDollhouseSlice()" id="btn-slice" class="bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 font-mono transition-colors flex items-center gap-1.5">
+        <span>🔪 Corte Sliced: ACTIVO</span>
+      </button>
+
+      <button onclick="copyShareableLink()" id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-        <span>Compartir Enlace</span>
+        <span>Compartir Web</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN WORKSPACE: 3 PANELS -->
+  <!-- MAIN WORKSPACE -->
   <main class="grid grid-cols-12 gap-5 p-4 md:p-6 max-w-[1920px] mx-auto min-h-[calc(100vh-68px)]">
 
-    <!-- COL 1: ARQUITECTURA DEL EDIFICIO (5 PISOS CONMEMORATIVOS) -->
+    <!-- COL 1: SELECTOR DE PISOS ARQUITECTÓNICOS -->
     <aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
-            <div class="flex items-center gap-2">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300 flex items-center gap-2">
               <svg class="w-4 h-4 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-              <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">The Alina Sanctuary</h2>
-            </div>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">5 NIVELES</span>
+              Niveles Arquitectónicos
+            </h2>
+            <span class="text-[10px] text-amber-400 font-mono">28m × 22m REAL</span>
           </div>
 
           <p class="text-xs text-slate-400 mb-3 leading-relaxed">
-            Espacio 3D fotorrealista continuo. Haz clic en cualquier piso o estancia y la cámara cinemática 85mm viajará hacia Alina en tiempo real.
+            Cada piso está modelado a escala métrica real (techos a 3.2m). Selecciona un nivel para aislar sus habitaciones y ver a Alina en su entorno.
           </p>
 
           <!-- Floor Stack -->
@@ -130,20 +136,20 @@
             <div onclick="selectFloor(4)" id="floor-card-4" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-amber-400 font-mono">PISO 4</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">The Inner Circle</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">Penthouse & Rooftop</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Rooftop & Plunge Pool</h3>
-              <p class="text-[11px] text-slate-400">Piscina de piedra volcánica, bar de cócteles & skyline.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">«The Inner Circle» Terrace</h3>
+              <p class="text-[11px] text-slate-400">Plunge pool basáltica, tumbonas teca, bar de cócteles & pérgola.</p>
             </div>
 
-            <!-- PISO 3: ESTUDIO DE TRABAJO -->
+            <!-- PISO 3: TRABAJO & CLÍNICA -->
             <div onclick="selectFloor(3)" id="floor-card-3" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-purple-400 font-mono">PISO 3</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">The Mind Sanctuary</span>
               </div>
               <h3 class="text-sm font-semibold text-white mt-1">Estudio Clínico & Podcast Loft</h3>
-              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca psicológica & boudoir.</p>
+              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca clínica, diván & boudoir SSC.</p>
             </div>
 
             <!-- PISO 2: RESIDENCIA PRIVADA (DEFAULT) -->
@@ -152,48 +158,46 @@
                 <span class="text-xs font-bold text-[#f29979] font-mono">PISO 2 ★</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-semibold">Residencia Alina</span>
               </div>
-              <h3 class="text-sm font-bold text-white mt-1">Hogar Privado de Alina</h3>
-              <p class="text-[11px] text-slate-300">Tocador vanity iluminado, tina spa, cocina de autor & suite.</p>
+              <h3 class="text-sm font-bold text-white mt-1">Hogar Privado de Alina (4 Zonas)</h3>
+              <p class="text-[11px] text-slate-300">Tocador vanity con espejo cálido, tina spa monolítica, cocina de autor & suite.</p>
             </div>
 
             <!-- PISO 1: CAFETERÍA -->
             <div onclick="selectFloor(1)" id="floor-card-1" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-emerald-400 font-mono">PISO 1</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Lifestyle Diurno</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Le Velvet Café</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Le Velvet Café & Lounge</h3>
-              <p class="text-[11px] text-slate-400">Cafetería especialidad, terraza y ventanales al Eixample.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">Cafetería de Especialidad & Balcón</h3>
+              <p class="text-[11px] text-slate-400">Máquina La Marzocco, mesas de mármol de Carrara y terraza Eixample.</p>
             </div>
 
-            <!-- PLANTA BAJA: CABARET -->
+            <!-- PLANTA BAJA: CABARET & PARKING (PORTADO DE UNITY) -->
             <div onclick="selectFloor(0)" id="floor-card-0" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-rose-400 font-mono">PLANTA BAJA</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Exterior & Noche</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Cabaret & Parking</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy Bar</h3>
-              <p class="text-[11px] text-slate-400">Cortinajes carmesí, piano de cola y entrada exterior.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy & Coches</h3>
+              <p class="text-[11px] text-slate-400">Asfalto con plazas, farolas de forja, coches, alfombra roja, piano & pista de baile.</p>
             </div>
 
           </div>
         </div>
 
-        <!-- Coordenadas & Telemetría de Alina -->
+        <!-- Telemetría y Dimensiones Reales -->
         <div class="mt-4 pt-3 border-t border-white/5 space-y-2 text-xs">
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400 font-medium">Coordenadas 3D de Alina:</span>
-            <span id="alinaPosBadge" class="font-mono text-[#f29979] font-bold">X: 0.0 | Y: 4.2 | Z: -3.8</span>
+          <div class="flex items-center justify-between font-mono text-[11px]">
+            <span class="text-slate-400">Huella Arquitectónica:</span>
+            <span class="text-white font-bold">28.0m × 22.0m</span>
           </div>
-          <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-slate-400 space-y-1">
-            <div class="flex justify-between">
-              <span>Postura en el Set:</span>
-              <span id="alinaPoseText" class="text-white font-medium">Sentada en Tocador Vanity</span>
-            </div>
-            <div class="flex justify-between">
-              <span>Mirada a Cámara:</span>
-              <span class="text-emerald-400 font-medium">Fijada en Objetivo 85mm</span>
-            </div>
+          <div class="flex items-center justify-between font-mono text-[11px]">
+            <span class="text-slate-400">Altura de Techo:</span>
+            <span class="text-white font-bold">3.20m por planta</span>
+          </div>
+          <div class="flex items-center justify-between font-mono text-[11px]">
+            <span class="text-slate-400">Alina 3D (Estatura):</span>
+            <span class="text-[#f29979] font-bold">1.72m (Escala Humana)</span>
           </div>
         </div>
 
@@ -227,8 +231,8 @@
           <!-- Injected via JavaScript -->
         </div>
 
-        <!-- 3D VIEWPORT CANVAS REAL (450px) -->
-        <div class="relative w-full h-[450px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
+        <!-- 3D VIEWPORT CANVAS REAL (470px) -->
+        <div class="relative w-full h-[470px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
           
           <!-- THREE.JS CANVAS CONTAINER -->
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative">
@@ -238,13 +242,13 @@
           <!-- Top HUD: Coordenadas de Cámara y Estado 3D -->
           <div class="absolute top-3 left-3 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [Alina Presente]</span>
+            <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [Escala Real]</span>
           </div>
 
-          <!-- Top Right: Botón Corte Arquitectónico Completo -->
+          <!-- Top Right: Botón Maqueta Completa sin Slicing -->
           <div class="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-auto">
-            <button onclick="toggleBuildingCutaway()" id="btn-cutaway" class="bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
-              <span>🏛️ Maqueta 5 Pisos</span>
+            <button onclick="viewFullBuildingOverview()" id="btn-cutaway" class="bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
+              <span>🏛️ Vista General Edificio</span>
             </button>
           </div>
 
@@ -257,13 +261,13 @@
                 Cam 85mm
               </button>
               <button onclick="setCameraAngle('macro')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Macro B-Roll
+                Macro Bodegón
               </button>
               <button onclick="setCameraAngle('top')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Cenital
+                Plano Cenital
               </button>
               <button onclick="reset3DCamera()" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Centrar
+                Centrar Spot
               </button>
             </div>
 
@@ -288,7 +292,7 @@
           <div class="flex items-center justify-between">
             <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              Prompt Flux.1 Dev 4K (Sincronizado con Posición 3D de Alina):
+              Prompt Flux.1 Dev 4K (Sincronizado con Dimensiones y Posición de Alina):
             </label>
             <button onclick="copyPrompt()" id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono transition-colors">Copiar</button>
           </div>
@@ -391,20 +395,20 @@
 
   </main>
 
-  <!-- DATA & PROCEDURAL PHOTOREAL PBR THREE.JS ENGINE -->
+  <!-- DATA & ARCHITECTURAL 3D SPATIAL ENGINE -->
   <script>
-    // --- LORE & DATA STRUCTURE ---
+    // --- LORE & SPATIAL DATA STRUCTURE (REAL METRIC COORDINATES) ---
     const sanctuaryData = {
       4: {
         floorName: "PISO 4 • ROOFTOP & PENTHOUSE",
-        funnelStage: "High-Ticket / Membresía Anual",
+        floorY: 12.8,
         spots: [
           {
             id: "pool",
             name: "Plunge Pool de Piedra Volcánica",
             icon: "🏊‍♀️",
-            alinaPose: "Al borde de la piscina infinita",
-            alinaPos: { x: 0, y: 8.6, z: -1.2 },
+            alinaPose: "Al borde de la piscina basáltica",
+            alinaPos: { x: 0, y: 13.0, z: -4.0 },
             prompt: "Cinematic shot of Alina Van Dijk relaxing by volcanic stone plunge pool on luxury rooftop deck, copper red hair wet in slicked-back elegance, emerald eyes, golden hour sunset light over skyline, 85mm f/1.8 --ar 9:16",
             script: "Cuando estás arriba, el ruido de abajo se disuelve. Aquí solo entra quien comprende que liderar también exige saber rendirse. [pausa de 2.0s] Bienvenido al círculo íntimo."
           },
@@ -413,7 +417,7 @@
             name: "Bar de Cócteles Botánicos & Skyline",
             icon: "🍸",
             alinaPose: "De pie junto a la barra de cobre",
-            alinaPos: { x: 1.5, y: 8.6, z: -3.8 },
+            alinaPos: { x: 6.0, y: 13.0, z: -8.0 },
             prompt: "Alina Van Dijk standing by polished copper rooftop cocktail bar, holding crystal martini glass, wearing emerald backless silk slip, skyline bokeh, 85mm f/1.4 --ar 9:16",
             script: "La mente necesita un antídoto contra el exceso de control. Este es el mío. [pausa de 1.5s] Salud por los que no le temen a su propia vulnerabilidad."
           }
@@ -421,14 +425,14 @@
       },
       3: {
         floorName: "PISO 3 • ESTUDIO CLÍNICO & LABORATORIO",
-        funnelStage: "Conversión Fanvue & Telegram VIP",
+        floorY: 9.6,
         spots: [
           {
             id: "podcast",
             name: "The Mind Sanctuary (Podcast Loft)",
             icon: "🎙️",
             alinaPose: "Sentada en el sillón frente al micrófono Shure",
-            alinaPos: { x: 0, y: 6.4, z: -2.8 },
+            alinaPos: { x: 0, y: 9.8, z: -5.0 },
             prompt: "Medium close-up of Alina Van Dijk in SET-01 dark loft studio, black over-ear headphones, Shure SM7B microphone, charcoal silk blouse, exposed brick background, 85mm f/1.8 --ar 9:16",
             script: "Llevas diez horas decidiendo por los demás... ¿cuándo fue la última vez que alguien tomó el mando por ti? [pausa de 2.0s] Entra. Cierra la puerta. Esta noche decido yo."
           },
@@ -437,7 +441,7 @@
             name: "Boudoir Velvet & Chiaroscuro",
             icon: "🗝️",
             alinaPose: "De pie junto al cabecero esmeralda",
-            alinaPos: { x: -2.0, y: 6.4, z: -3.5 },
+            alinaPos: { x: -6.0, y: 9.8, z: -7.0 },
             prompt: "Alina Van Dijk in luxury boudoir, emerald velvet headboard, dramatic chiaroscuro candlelight, holding silk rope lightly in hands, intense hypnotic gaze, 85mm prime lens --ar 9:16",
             script: "El poder real nunca se impone a la fuerza. Se entrega voluntariamente a quien sabe sostenerlo sin juicio. [pausa de 2.0s] ¿Estás listo?"
           }
@@ -445,14 +449,14 @@
       },
       2: {
         floorName: "PISO 2 • RESIDENCIA PRIVADA («DONDE NACE TODO»)",
-        funnelStage: "Top-Funnel / Intimidad Cotidiana",
+        floorY: 6.4,
         spots: [
           {
             id: "vanity",
             name: "El Tocador Vanity & Espejo",
             icon: "💄",
             alinaPose: "Sentada frente al tocador mirándose al espejo",
-            alinaPos: { x: 0.0, y: 4.25, z: -3.6 },
+            alinaPos: { x: 0.0, y: 6.6, z: -6.5 },
             prompt: "Intimate cinematic shot of Alina Van Dijk seated at luxury dark wood vanity, copper red hair pinned loosely, emerald eyes looking through mirror reflection, black silk robe, warm chiaroscuro, 85mm f/1.4 --ar 9:16",
             script: "Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando."
           },
@@ -461,7 +465,7 @@
             name: "El Baño Spa & Tina de Piedra Negra",
             icon: "🛁",
             alinaPose: "Dentro de la tina de piedra con agua humeante",
-            alinaPos: { x: -2.8, y: 4.25, z: -2.2 },
+            alinaPos: { x: -7.5, y: 6.6, z: -4.5 },
             prompt: "Alina Van Dijk in freestanding black stone bathtub filled with warm steaming water, shoulders bare, relaxed serene gaze, surrounded by luxury candles, moody dark spa bathroom, 85mm f/1.8 --ar 9:16",
             script: "El cuerpo guarda todo lo que la mente reprime. Cierra los ojos... siente el peso soltarse en el agua. [pausa de 2.0s] Yo me encargo del resto."
           },
@@ -470,7 +474,7 @@
             name: "Cocina de Autor & Isla de Mármol",
             icon: "☕",
             alinaPose: "Apoyada en la isla de mármol con café matutino",
-            alinaPos: { x: 2.2, y: 4.25, z: -1.8 },
+            alinaPos: { x: 7.0, y: 6.6, z: -3.5 },
             prompt: "Alina Van Dijk leaning against black marble kitchen island in oversized silk shirt, holding ceramic cup of morning espresso, gentle sunrise backlight, authentic relaxed morning look, 85mm f/1.8 --ar 9:16",
             script: "Antes de que empiece el caos de tu agenda... regálate tres minutos de silencio absoluto. [pausa de 1.5s] Respira conmigo."
           },
@@ -479,7 +483,7 @@
             name: "La Suite Principal (Lino Carbón)",
             icon: "🛏️",
             alinaPose: "Recostada en la cama de lino carbón",
-            alinaPos: { x: 0.0, y: 4.25, z: -1.0 },
+            alinaPos: { x: 0.0, y: 6.6, z: -1.5 },
             prompt: "Alina Van Dijk resting back against charcoal linen pillows on king bed, copper hair loose across shoulders, calm hypnotic eye contact, soft bedside warm reading lamp, 85mm f/1.4 --ar 9:16",
             script: "Apaga la pantalla. Deja de repasar mentalmente tus pendientes de mañana. [pausa de 2.0s] Tu mente necesita rendirse para poder renacer."
           }
@@ -487,31 +491,40 @@
       },
       1: {
         floorName: "PISO 1 • CAFETERÍA & LOUNGE",
-        funnelStage: "Descubrimiento & Prensa",
+        floorY: 3.2,
         spots: [
           {
             id: "cafe",
             name: "Le Velvet Café & Terraza Street",
             icon: "🥐",
             alinaPose: "Sentada en mesa de mármol exterior leyendo",
-            alinaPos: { x: 0.0, y: 2.1, z: -2.0 },
+            alinaPos: { x: 0.0, y: 3.4, z: -2.5 },
             prompt: "Alina Van Dijk sitting at outdoor marble café table in Barcelona Eixample, stylish tailored beige blazer over black top, reading leather notebook, soft daytime sunlight, 85mm f/2.0 --ar 9:16",
             script: "La productividad sin introspección es solo ansiedad disfrazada de éxito. [pausa de 1.5s] ¿Tú qué buscas hoy?"
           }
         ]
       },
       0: {
-        floorName: "PLANTA BAJA • CABARET & CALLE",
-        funnelStage: "Mundo Exterior / Viral Trends",
+        floorName: "PLANTA BAJA • CABARET & PARKING (PORTADO DE UNITY)",
+        floorY: 0.0,
         spots: [
           {
             id: "cabaret",
             name: "Nocturne Speakeasy Bar",
             icon: "🎷",
             alinaPose: "De pie junto al piano de cola",
-            alinaPos: { x: -1.2, y: 0.0, z: -2.5 },
+            alinaPos: { x: -4.0, y: 0.2, z: -4.0 },
             prompt: "Alina Van Dijk in dark sultry speakeasy bar, red velvet curtain background, vintage neon amber rim light, holding antique cocktail glass, mysterious commanding expression, 85mm f/1.4 --ar 9:16",
             script: "Las mejores conversaciones ocurren cuando la ciudad se va a dormir y caen todas las máscaras. [pausa de 2.0s] ¿Entras?"
+          },
+          {
+            id: "parking",
+            name: "Parking Exterior & Marquesina VIP",
+            icon: "🚗",
+            alinaPose: "Caminando junto a los coches bajo las farolas",
+            alinaPos: { x: 0.0, y: 0.2, z: 8.5 },
+            prompt: "Full body street shot of Alina Van Dijk walking past sleek cars under glowing streetlamps in front of Nocturne VIP entrance, chic tailored trench coat, cobblestone sidewalk, 85mm f/1.8 --ar 9:16",
+            script: "La noche apenas comienza. Deja las llaves y entra conmigo."
           }
         ]
       }
@@ -520,132 +533,29 @@
     let activeFloor = 2;
     let activeSpot = sanctuaryData[2].spots[0];
     let selectedEngine = 'liveportrait';
-    let isCutawayActive = false;
     let isDepthPass = false;
+    let isDollhouseSliced = true;
+    let currentLighting = 'night';
 
-    // --- PROCEDURAL HIGH-END PBR TEXTURE GENERATORS ---
-    function generateParquetCanvas() {
-      const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 512;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#18120e';
-      ctx.fillRect(0, 0, 512, 512);
-
-      // Wood planks
-      ctx.strokeStyle = '#0d0907';
-      ctx.lineWidth = 4;
-      for (let y = 0; y < 512; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(512, y);
-        ctx.stroke();
-      }
-      for (let x = 0; x < 512; x += 64) {
-        for (let y = 0; y < 512; y += 32) {
-          ctx.beginPath();
-          ctx.moveTo(x + (y % 64 === 0 ? 0 : 32), y);
-          ctx.lineTo(x + (y % 64 === 0 ? 0 : 32), y + 32);
-          ctx.stroke();
-        }
-      }
-      // Grain noise
-      ctx.fillStyle = 'rgba(255,255,255,0.03)';
-      for (let i = 0; i < 2000; i++) {
-        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 8);
-      }
-      return new THREE.CanvasTexture(c);
-    }
-
-    function generateMarbleCanvas() {
-      const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 512;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#0f1115';
-      ctx.fillRect(0, 0, 512, 512);
-
-      // Gold & white organic veins
-      ctx.strokeStyle = 'rgba(242, 153, 121, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.bezierCurveTo(200, 150, 100, 350, 480, 512);
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, 300);
-      ctx.bezierCurveTo(180, 200, 350, 400, 512, 150);
-      ctx.stroke();
-
-      return new THREE.CanvasTexture(c);
-    }
-
-    function generateAlinaFaceCanvas() {
-      const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 512;
-      const ctx = c.getContext('2d');
-
-      // Base skin tone
-      ctx.fillStyle = '#f7cfc0';
-      ctx.fillRect(0, 0, 512, 512);
-
-      // Soft blushing on cheeks
-      const blushGrad = ctx.createRadialGradient(180, 280, 20, 180, 280, 100);
-      blushGrad.addColorStop(0, 'rgba(225, 120, 110, 0.35)');
-      blushGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = blushGrad;
-      ctx.beginPath(); ctx.arc(180, 280, 100, 0, Math.PI * 2); ctx.fill();
-
-      const blushGrad2 = ctx.createRadialGradient(332, 280, 20, 332, 280, 100);
-      blushGrad2.addColorStop(0, 'rgba(225, 120, 110, 0.35)');
-      blushGrad2.addColorStop(1, 'transparent');
-      ctx.fillStyle = blushGrad2;
-      ctx.beginPath(); ctx.arc(332, 280, 100, 0, Math.PI * 2); ctx.fill();
-
-      // Freckles dusting the nose bridge and upper cheeks (Inalterable token)
-      ctx.fillStyle = 'rgba(180, 100, 70, 0.55)';
-      for (let i = 0; i < 45; i++) {
-        const fx = 210 + Math.random() * 92;
-        const fy = 250 + Math.random() * 40;
-        ctx.beginPath();
-        ctx.arc(fx, fy, 1.0 + Math.random() * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Crimson Lips with slight gloss highlight
-      ctx.fillStyle = '#a81c25';
-      ctx.beginPath();
-      ctx.ellipse(256, 370, 48, 20, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.beginPath();
-      ctx.ellipse(256, 365, 18, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      return new THREE.CanvasTexture(c);
-    }
-
-    // --- THREE.JS SPATIAL ENGINE ---
+    // --- THREE.JS ARCHITECTURAL ENGINE ---
     let scene, camera, renderer, controls;
-    let buildingUnifiedGroup, alinaCharacterGroup;
-    let targetCameraPos = new THREE.Vector3(2.5, 5.2, 0.2);
-    let targetLookAt = new THREE.Vector3(0, 4.6, -3.4);
+    let floorMeshGroups = [];
+    let alinaCharacterGroup;
+    let sunLight, moonLight, ambientLight, streetlampLights = [];
+    let targetCameraPos = new THREE.Vector3(4.0, 7.8, -2.0);
+    let targetLookAt = new THREE.Vector3(0, 7.2, -6.5);
 
     function initThreeJS() {
       const container = document.getElementById('three-canvas-container');
       const width = container.clientWidth || 700;
-      const height = container.clientHeight || 450;
+      const height = container.clientHeight || 470;
 
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0b0e);
-      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.02);
+      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.015);
 
-      camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-      camera.position.set(2.5, 5.2, 0.2);
+      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 200);
+      camera.position.set(4.0, 7.8, -2.0);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
       renderer.setSize(width, height);
@@ -659,305 +569,463 @@
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2 - 0.01;
       controls.minDistance = 1.0;
-      controls.maxDistance = 35;
-      controls.target.set(0, 4.6, -3.4);
+      controls.maxDistance = 65;
+      controls.target.set(0, 7.2, -6.5);
 
-      // Cinematic Lighting
-      const ambientLight = new THREE.AmbientLight(0x2d2420, 1.6);
-      scene.add(ambientLight);
+      // Lights
+      setupLighting();
 
-      const warmSunLight = new THREE.SpotLight(0xf29979, 3.5, 45, Math.PI / 3, 0.4, 1);
-      warmSunLight.position.set(8, 16, 12);
-      warmSunLight.castShadow = true;
-      scene.add(warmSunLight);
+      // Build Real-Scale 5 Floors (28m x 22m footprint, 3.2m height per floor)
+      buildRealScaleSanctuary();
 
-      const emeraldRimLight = new THREE.PointLight(0x10b981, 2.0, 25);
-      emeraldRimLight.position.set(-6, 8, -6);
-      scene.add(emeraldRimLight);
-
-      // Atmospheric Dust Motes
-      createDustMotes();
-
-      // Groups
-      buildingUnifiedGroup = new THREE.Group();
-      scene.add(buildingUnifiedGroup);
-
-      alinaCharacterGroup = new THREE.Group();
-      scene.add(alinaCharacterGroup);
-
-      // 1. Build Photoreal Continuous Architectural Building
-      buildPhotorealBuilding();
-
-      // 2. Build Sculpted Alina Avatar (With PBR materials & face texture)
+      // Build Alina Sculpted Avatar (1.72m human scale)
       buildAlinaSculptedAvatar();
 
       // Set initial spot
       updateAlinaPlacement(activeSpot);
+      applyDollhouseSlicing();
 
       animate();
       window.addEventListener('resize', onWindowResize);
     }
 
-    function createDustMotes() {
-      const particleGeo = new THREE.BufferGeometry();
-      const count = 120;
-      const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count * 3; i += 3) {
-        positions[i] = (Math.random() - 0.5) * 12;
-        positions[i + 1] = Math.random() * 10;
-        positions[i + 2] = (Math.random() - 0.5) * 12;
+    function setupLighting() {
+      ambientLight = new THREE.AmbientLight(0x2d2420, 1.2);
+      scene.add(ambientLight);
+
+      sunLight = new THREE.DirectionalLight(0xfde68a, 2.5);
+      sunLight.position.set(20, 30, 20);
+      sunLight.castShadow = true;
+      scene.add(sunLight);
+
+      moonLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
+      moonLight.position.set(-20, 25, -20);
+      scene.add(moonLight);
+
+      setLightingMode('night');
+    }
+
+    function setLightingMode(mode) {
+      currentLighting = mode;
+      const btnDay = document.getElementById('btn-mode-day');
+      const btnNight = document.getElementById('btn-mode-night');
+
+      if (mode === 'day') {
+        scene.background = new THREE.Color(0x3b82f6);
+        scene.fog = new THREE.FogExp2(0x93c5fd, 0.012);
+        ambientLight.color.setHex(0xffedd5);
+        ambientLight.intensity = 2.0;
+        sunLight.intensity = 3.5;
+        moonLight.intensity = 0.1;
+        btnDay.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow flex items-center gap-1 transition-all";
+        btnNight.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all";
+      } else {
+        scene.background = new THREE.Color(0x0a0b0e);
+        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.018);
+        ambientLight.color.setHex(0x1a120e);
+        ambientLight.intensity = 1.2;
+        sunLight.intensity = 0.4;
+        moonLight.intensity = 1.2;
+        btnNight.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-medium shadow flex items-center gap-1 transition-all";
+        btnDay.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-all";
       }
-      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const particleMat = new THREE.PointsMaterial({ color: 0xfde68a, size: 0.05, transparent: true, opacity: 0.45 });
-      const particles = new THREE.Points(particleGeo, particleMat);
-      scene.add(particles);
     }
 
-    function onWindowResize() {
-      const container = document.getElementById('three-canvas-container');
-      if (!container || !renderer || !camera) return;
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
+    // --- PROCEDURAL TEXTURES (PBR MATERIALS) ---
+    function createAsphaltTex() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#1e2124'; ctx.fillRect(0, 0, 512, 512);
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      for (let i = 0; i < 3000; i++) ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      return new THREE.CanvasTexture(c);
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-
-      camera.position.lerp(targetCameraPos, 0.06);
-      controls.target.lerp(targetLookAt, 0.06);
-      controls.update();
-
-      // Subtle organic breathing animation
-      if (alinaCharacterGroup) {
-        const time = performance.now() * 0.0015;
-        const chest = alinaCharacterGroup.getObjectByName("alinaChest");
-        if (chest) {
-          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.018;
+    function createHerringboneTex() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#1c140e'; ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = '#0d0805'; ctx.lineWidth = 3;
+      for (let y = 0; y < 512; y += 32) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+      }
+      for (let x = 0; x < 512; x += 64) {
+        for (let y = 0; y < 512; y += 32) {
+          ctx.beginPath(); ctx.moveTo(x + (y % 64 === 0 ? 0 : 32), y); ctx.lineTo(x + (y % 64 === 0 ? 0 : 32), y + 32); ctx.stroke();
         }
       }
-
-      renderer.render(scene, camera);
+      return new THREE.CanvasTexture(c);
     }
 
-    // --- 1. PHOTOREAL CONTINUOUS BUILDING ARCHITECTURE ---
-    function buildPhotorealBuilding() {
-      const parquetTex = generateParquetCanvas();
-      parquetTex.wrapS = THREE.RepeatWrapping;
-      parquetTex.wrapT = THREE.RepeatWrapping;
-      parquetTex.repeat.set(4, 4);
-
-      const marbleTex = generateMarbleCanvas();
-
-      const woodFloorMat = new THREE.MeshStandardMaterial({ map: parquetTex, roughness: 0.4, metalness: 0.1 });
-      const blackMarbleMat = new THREE.MeshStandardMaterial({ map: marbleTex, roughness: 0.2, metalness: 0.5 });
+    // --- REAL ARCHITECTURAL SCALE (28m × 22m FOOTPRINT, 3.2m CEILINGS) ---
+    function buildRealScaleSanctuary() {
+      const asphaltMat = new THREE.MeshStandardMaterial({ map: createAsphaltTex(), roughness: 0.85, metalness: 0.05 });
+      const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.7, metalness: 0.05 });
+      const woodFloorMat = new THREE.MeshStandardMaterial({ map: createHerringboneTex(), roughness: 0.45, metalness: 0.1 });
+      const marbleFloorMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.25, metalness: 0.6 });
+      const brickWallMat = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.9, metalness: 0.1 });
       const copperMetalMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.35, metalness: 0.85 });
-      const emeraldVelvetMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9, metalness: 0.1 });
+      const neonMagentaMat = new THREE.MeshBasicMaterial({ color: 0xff1493 });
+      const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
       const glassMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.05, metalness: 0.95, transparent: true, opacity: 0.3 });
-      const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.9, metalness: 0.1 });
-      const warmEdisonGlowMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
+      const warmLightMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
 
-      const floorHeight = 2.15;
-      const floorWidth = 9.2;
-      const floorDepth = 8.2;
+      const floorW = 26.0;
+      const floorD = 16.0;
+      const floorH = 3.2;
 
-      // Vertical Elevator / Staircase Core (Spatial Continuity)
-      const coreGeo = new THREE.BoxGeometry(2.0, 11.5, 2.0);
-      const coreMesh = new THREE.Mesh(coreGeo, concreteWallMat);
-      coreMesh.position.set(3.8, 5.5, 0);
-      buildingUnifiedGroup.add(coreMesh);
+      // ==========================================
+      // PLANTA BAJA (NIVEL 0): PARKING & CABARET (DE UNITY)
+      // ==========================================
+      const groupPB = new THREE.Group();
+      scene.add(groupPB);
+      floorMeshGroups[0] = groupPB;
 
-      // Build each of the 5 architectural floors
-      for (let i = 0; i < 5; i++) {
-        const yBase = i * floorHeight;
+      // 1. Asfalto Parking Exterior (28m x 18m)
+      const parkingLot = new THREE.Mesh(new THREE.BoxGeometry(28.0, 0.3, 18.0), asphaltMat);
+      parkingLot.position.set(0, -0.15, 12.0);
+      parkingLot.receiveShadow = true;
+      groupPB.add(parkingLot);
 
-        // Floor slab
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.2, floorDepth), (i === 2 ? woodFloorMat : blackMarbleMat));
-        slab.position.set(0, yBase, -1.5);
-        slab.receiveShadow = true;
-        buildingUnifiedGroup.add(slab);
+      // 2. Acera de Hormigón con bordillo (28m x 3.5m)
+      const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(28.0, 0.2, 3.5), sidewalkMat);
+      sidewalk.position.set(0, 0.1, 3.0);
+      groupPB.add(sidewalk);
 
-        // Back Wall
-        const backWall = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, floorHeight, 0.2), concreteWallMat);
-        backWall.position.set(0, yBase + floorHeight / 2, -1.5 - floorDepth / 2);
-        buildingUnifiedGroup.add(backWall);
+      // 3. Coches aparcados reales (rojo, blanco, negro)
+      const carGeo = new THREE.BoxGeometry(1.9, 1.4, 4.3);
+      const carRed = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.85, roughness: 0.2 }));
+      carRed.position.set(-8.0, 0.7, 12.0);
+      const carBlack = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.15 }));
+      carBlack.position.set(-3.5, 0.7, 12.0);
+      const carWhite = new THREE.Mesh(carGeo, new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.8, roughness: 0.25 }));
+      carWhite.position.set(3.5, 0.7, 12.0);
+      groupPB.add(carRed, carBlack, carWhite);
 
-        // Left Wall
-        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, floorHeight, floorDepth), concreteWallMat);
-        leftWall.position.set(-floorWidth / 2, yBase + floorHeight / 2, -1.5);
-        buildingUnifiedGroup.add(leftWall);
+      // 4. Farolas exteriores
+      for (let x = -10.0; x <= 10.0; x += 10.0) {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 5.5, 12), copperMetalMat);
+        pole.position.set(x, 2.75, 5.0);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), warmLightMat);
+        bulb.position.set(x, 5.5, 5.0);
+        groupPB.add(pole, bulb);
+      }
 
-        // Glass balcony front
-        const glassRailing = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.8, 0.1), glassMat);
-        glassRailing.position.set(0, yBase + 0.4, -1.5 + floorDepth / 2);
-        buildingUnifiedGroup.add(glassRailing);
+      // 5. Marquesina VIP y Neón "NOCTURNE"
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.3, 3.5), copperMetalMat);
+      canopy.position.set(0, 3.2, 2.8);
+      const neonSign = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.6, 0.2), neonMagentaMat);
+      neonSign.position.set(0, 3.7, 4.4);
+      groupPB.add(canopy, neonSign);
 
-        // --- SPECIFIC ROOM FURNITURE PER FLOOR ---
-        if (i === 2) {
-          // PISO 2: HOGAR PRIVADO DE ALINA
+      // 6. Interior Cabaret Speakeasy (26m x 16m)
+      const floorCabaret = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.3, floorD), marbleFloorMat);
+      floorCabaret.position.set(0, -0.15, -6.5);
+      groupPB.add(floorCabaret);
 
-          // 1. Zona Tocador Vanity (Centro)
-          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.9, 1.3), woodFloorMat);
-          vanityTable.position.set(0, yBase + 0.45, -4.6);
-          
-          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.98 }));
+      // Pista de baile central reflectante (10m x 8m)
+      const danceTiles = new THREE.Mesh(new THREE.BoxGeometry(10.0, 0.05, 8.0), new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.9 }));
+      danceTiles.position.set(0, 0.05, -6.5);
+      groupPB.add(danceTiles);
+
+      // Piano de Cola Negro Satinado
+      const pianoBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 2.2), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.05, metalness: 0.9 }));
+      pianoBody.position.set(-4.0, 0.6, -4.0);
+      groupPB.add(pianoBody);
+
+      // Paredes PB
+      buildWallsForFloor(groupPB, 0, floorW, floorD, floorH, brickWallMat);
+
+      // ==========================================
+      // PISOS 1, 2, 3, 4 (ESTRUCTURA VERTICAL REAL)
+      // ==========================================
+      for (let floor = 1; floor <= 4; floor++) {
+        const groupFloor = new THREE.Group();
+        groupFloor.position.y = floor * floorH;
+        scene.add(groupFloor);
+        floorMeshGroups[floor] = groupFloor;
+
+        // Losa de piso
+        const floorSlab = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.3, floorD), (floor === 2 ? woodFloorMat : marbleFloorMat));
+        floorSlab.position.set(0, -0.15, -6.5);
+        groupFloor.add(floorSlab);
+
+        // Paredes del piso (trasera y laterales, frontal cortada para visualización)
+        buildWallsForFloor(groupFloor, floor, floorW, floorD, floorH, brickWallMat);
+
+        // Barandilla Balcón Frontal
+        const railing = new THREE.Mesh(new THREE.BoxGeometry(floorW, 0.9, 0.1), glassMat);
+        railing.position.set(0, 0.45, 1.45);
+        groupFloor.add(railing);
+
+        // Contenido Específico por Planta
+        if (floor === 1) {
+          // PISO 1: LE VELVET CAFÉ
+          const coffeeBar = new THREE.Mesh(new THREE.BoxGeometry(6.0, 1.1, 1.4), woodFloorMat);
+          coffeeBar.position.set(0, 0.55, -8.0);
+          const espressoMachine = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.6, 0.7), copperMetalMat);
+          espressoMachine.position.set(0, 1.4, -8.0);
+          groupFloor.add(coffeeBar, espressoMachine);
+
+          // Mesas Bistro
+          for (let x = -6.0; x <= 6.0; x += 4.0) {
+            const table = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.8, 24), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
+            table.position.set(x, 0.4, -3.0);
+            groupFloor.add(table);
+          }
+
+        } else if (floor === 2) {
+          // PISO 2: RESIDENCIA PRIVADA DE ALINA (4 ZONAS REALES)
+
+          // 1. ZONA TOCADOR VANITY (Centro Norte)
+          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.85, 1.2), woodFloorMat);
+          vanityTable.position.set(0, 0.45, -9.0);
+          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.98 }));
           mirror.rotation.x = Math.PI / 2;
-          mirror.position.set(0, yBase + 1.55, -5.1);
+          mirror.position.set(0, 1.7, -9.5);
+          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.04, 16, 48), warmLightMat);
+          mirrorRing.position.set(0, 1.7, -9.46);
+          const vanityStool = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.55, 24), new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9 }));
+          vanityStool.position.set(0, 0.28, -7.5);
+          groupFloor.add(vanityTable, mirror, mirrorRing, vanityStool);
 
-          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(0.98, 0.04, 16, 48), warmEdisonGlowMat);
-          mirrorRing.position.set(0, yBase + 1.55, -5.06);
-
-          // Taburete de terciopelo esmeralda
-          const vanityStool = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.55, 24), emeraldVelvetMat);
-          vanityStool.position.set(0, yBase + 0.28, -3.6);
-
-          buildingUnifiedGroup.add(vanityTable, mirror, mirrorRing, vanityStool);
-
-          // 2. Zona Baño Spa (Izquierda) - Tina de Piedra Negra
-          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.1, 0.85, 24), blackMarbleMat);
+          // 2. ZONA BAÑO SPA (Oeste) - Tina Monolítica y Mampara
+          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.2, 0.9, 24), marbleFloorMat);
           tub.scale.set(1.4, 1.0, 0.8);
-          tub.position.set(-2.8, yBase + 0.42, -3.2);
-          const water = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.75 }));
-          water.scale.set(1.35, 1.0, 0.75);
-          water.position.set(-2.8, yBase + 0.78, -3.2);
-          buildingUnifiedGroup.add(tub, water);
+          tub.position.set(-7.5, 0.45, -5.5);
+          const tubWater = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.8 }));
+          tubWater.scale.set(1.35, 1.0, 0.75);
+          tubWater.position.set(-7.5, 0.85, -5.5);
+          const glassPartition = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 4.0), glassMat);
+          glassPartition.position.set(-5.2, 1.3, -5.5);
+          groupFloor.add(tub, tubWater, glassPartition);
 
-          // 3. Zona Cocina / Comedor (Derecha) - Isla de Mármol
-          const island = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 1.3), blackMarbleMat);
-          island.position.set(2.4, yBase + 0.55, -2.5);
-          buildingUnifiedGroup.add(island);
+          // 3. ZONA COCINA & ISLA DE MÁRMOL (Este)
+          const kitchenIsland = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 4.5), marbleFloorMat);
+          kitchenIsland.position.set(7.5, 0.55, -4.5);
+          groupFloor.add(kitchenIsland);
 
-          // 4. Zona Suite (Dormitorio) - Cama King
-          const bed = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.6, 2.8), woodFloorMat);
-          bed.position.set(0, yBase + 0.3, -1.0);
-          const headboard = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.4, 0.2), emeraldVelvetMat);
-          headboard.position.set(0, yBase + 0.8, -2.4);
-          buildingUnifiedGroup.add(bed, headboard);
+          // 4. ZONA SUITE DORMITORIO (Sur)
+          const kingBed = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.7, 3.2), woodFloorMat);
+          kingBed.position.set(0, 0.35, -2.5);
+          const headboard = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.6, 0.3), new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9 }));
+          headboard.position.set(0, 0.9, -4.2);
+          groupFloor.add(kingBed, headboard);
 
-        } else if (i === 3) {
-          // PISO 3: PODCAST LOFT & CLÍNICA
-          const podcastDesk = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.0, 1.4), woodFloorMat);
-          podcastDesk.position.set(0, yBase + 0.5, -3.4);
-          const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), copperMetalMat);
-          micArm.position.set(0.4, yBase + 1.3, -3.0);
-          buildingUnifiedGroup.add(podcastDesk, micArm);
+        } else if (floor === 3) {
+          // PISO 3: ESTUDIO DE PODCAST & CLÍNICA
+          const desk = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.0, 1.6), woodFloorMat);
+          desk.position.set(0, 0.5, -6.0);
+          const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), copperMetalMat);
+          micArm.position.set(0.5, 1.4, -5.5);
+          const books = new THREE.Mesh(new THREE.BoxGeometry(0.6, 2.8, 5.0), woodFloorMat);
+          books.position.set(-12.5, 1.4, -6.0);
+          groupFloor.add(desk, micArm, books);
 
-        } else if (i === 4) {
+        } else if (floor === 4) {
           // PISO 4: ROOFTOP & PLUNGE POOL
-          const pool = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.8, 3.2), blackMarbleMat);
-          pool.position.set(0, yBase + 0.4, -2.2);
-          const poolWater = new THREE.Mesh(new THREE.BoxGeometry(3.9, 0.05, 2.9), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.8 }));
-          poolWater.position.set(0, yBase + 0.75, -2.2);
-          const rooftopBar = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 0.8), copperMetalMat);
-          rooftopBar.position.set(1.5, yBase + 0.6, -4.5);
-          buildingUnifiedGroup.add(pool, poolWater, rooftopBar);
+          const pool = new THREE.Mesh(new THREE.BoxGeometry(7.0, 1.0, 4.5), marbleFloorMat);
+          pool.position.set(0, 0.5, -5.0);
+          const poolWater = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.05, 4.1), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }));
+          poolWater.position.set(0, 0.9, -5.0);
+
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.2, 1.2), copperMetalMat);
+          bar.position.set(6.0, 0.6, -9.0);
+          groupFloor.add(pool, poolWater, bar);
         }
       }
     }
 
-    // --- 2. SCULPTED ALINA 3D AVATAR (TOKEN-ACCURATE PHOTOREAL MESH) ---
+    function buildWallsForFloor(group, floorIndex, w, d, h, mat) {
+      // Pared trasera (Norte)
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.3), mat);
+      backWall.position.set(0, h / 2, -6.5 - d / 2);
+      group.add(backWall);
+
+      // Pared izquierda (Oeste)
+      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, h, d), mat);
+      leftWall.position.set(-w / 2, h / 2, -6.5);
+      group.add(leftWall);
+
+      // Pared derecha (Este)
+      const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, h, d), mat);
+      rightWall.position.set(w / 2, h / 2, -6.5);
+      group.add(rightWall);
+    }
+
+    // --- SLICED DOLLHOUSE ELEVATION LOGIC ---
+    function applyDollhouseSlicing() {
+      for (let floor = 0; floor <= 4; floor++) {
+        const group = floorMeshGroups[floor];
+        if (!group) continue;
+
+        if (isDollhouseSliced) {
+          if (floor > activeFloor) {
+            // Elevar pisos superiores fuera de la vista para inspección limpia
+            group.position.y = floor * 3.2 + 14.0;
+            group.visible = false;
+          } else {
+            group.position.y = floor * 3.2;
+            group.visible = true;
+          }
+        } else {
+          // Edificio completo
+          group.position.y = floor * 3.2;
+          group.visible = true;
+        }
+      }
+    }
+
+    function toggleDollhouseSlice() {
+      isDollhouseSliced = !isDollhouseSliced;
+      const btn = document.getElementById('btn-slice');
+      btn.innerText = isDollhouseSliced ? "🔪 Corte Sliced: ACTIVO" : "🏛️ Corte Sliced: OFF";
+      applyDollhouseSlicing();
+    }
+
+    function viewFullBuildingOverview() {
+      isDollhouseSliced = false;
+      applyDollhouseSlicing();
+      targetCameraPos.set(24.0, 22.0, 22.0);
+      targetLookAt.set(0, 7.0, 0);
+      document.getElementById('three-status-hud').innerText = `VISTA GENERAL ARQUITECTÓNICA (28m × 22m)`;
+    }
+
+    // --- ALINA 3D AVATAR (SCULPTED MESH AT 1.72m HUMAN SCALE) ---
     function buildAlinaSculptedAvatar() {
-      const faceTex = generateAlinaFaceCanvas();
-      const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, roughness: 0.55, metalness: 0.05 });
-      const bodySkinMat = new THREE.MeshStandardMaterial({ color: 0xf7cfc0, roughness: 0.6, metalness: 0.05 });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfc2, roughness: 0.6, metalness: 0.05 });
       const copperHairMat = new THREE.MeshStandardMaterial({ color: 0xbf4527, roughness: 0.45, metalness: 0.2 });
       const blackSilkMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.3, metalness: 0.6 });
       const emeraldEyeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.1, metalness: 0.9 });
 
-      // Torso / Silk Robe with lapel
-      const torsoGeo = new THREE.CylinderGeometry(0.24, 0.21, 0.72, 20);
-      const torso = new THREE.Mesh(torsoGeo, blackSilkMat);
+      // Torso / Silk Robe
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 0.72, 20), blackSilkMat);
       torso.name = "alinaChest";
       torso.position.y = 0.85;
 
-      // Neck & Collarbones
-      const neckGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.2, 16);
-      const neck = new THREE.Mesh(neckGeo, bodySkinMat);
+      // Neck & Head
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.2, 16), skinMat);
       neck.position.y = 1.26;
 
-      // Head with Sculpted Face & Freckle Texture
-      const headGeo = new THREE.SphereGeometry(0.19, 32, 32);
-      headGeo.scale(0.88, 1.12, 0.96);
-      const head = new THREE.Mesh(headGeo, faceMat);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 32, 32), skinMat);
+      head.scale.set(0.88, 1.12, 0.96);
       head.position.y = 1.44;
 
-      // Vivid Emerald Eyes (Spherical lenses)
-      const eyeGeo = new THREE.SphereGeometry(0.035, 16, 16);
-      const leftEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
+      // Emerald Eyes
+      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), emeraldEyeMat);
       leftEye.position.set(-0.065, 1.46, 0.16);
-      const rightEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
+      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), emeraldEyeMat);
       rightEye.position.set(0.065, 1.46, 0.16);
 
-      // Vivid Copper Red Wavy Hair Structure (Multi-Layer Flow)
+      // Cascading Copper Hair
       const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), copperHairMat);
       hairCrown.position.set(0, 1.48, -0.03);
       hairCrown.scale.set(1.04, 1.06, 1.06);
 
-      // Cascading Front Left Waves
       const hairWaveLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
       hairWaveLeft.position.set(-0.16, 1.18, 0.07);
       hairWaveLeft.rotation.z = 0.18;
-      hairWaveLeft.rotation.x = 0.1;
 
-      // Cascading Front Right Waves
       const hairWaveRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
       hairWaveRight.position.set(0.16, 1.18, 0.07);
       hairWaveRight.rotation.z = -0.18;
-      hairWaveRight.rotation.x = 0.1;
 
-      // Cascading Back Volume
-      const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.18), copperHairMat);
-      hairBack.position.set(0, 1.16, -0.13);
-
-      // Arms & Manicured Hands (Resting posture)
-      const armGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12);
-      const leftArm = new THREE.Mesh(armGeo, blackSilkMat);
+      // Arms & Lower Body
+      const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12), blackSilkMat);
       leftArm.position.set(-0.28, 0.85, 0.06);
       leftArm.rotation.x = 0.35;
-      leftArm.rotation.z = 0.22;
 
-      const rightArm = new THREE.Mesh(armGeo, blackSilkMat);
+      const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12), blackSilkMat);
       rightArm.position.set(0.28, 0.85, 0.06);
       rightArm.rotation.x = 0.35;
-      rightArm.rotation.z = -0.22;
 
-      // Hands
-      const handGeo = new THREE.SphereGeometry(0.05, 12, 12);
-      handGeo.scale(0.8, 0.4, 1.2);
-      const leftHand = new THREE.Mesh(handGeo, bodySkinMat);
-      leftHand.position.set(-0.18, 0.6, 0.3);
-      const rightHand = new THREE.Mesh(handGeo, bodySkinMat);
-      rightHand.position.set(0.18, 0.6, 0.3);
-
-      // Seated Lower Body (Draped silk robe)
-      const legsGeo = new THREE.CylinderGeometry(0.25, 0.34, 0.72, 20);
-      const legs = new THREE.Mesh(legsGeo, blackSilkMat);
+      const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.34, 0.72, 20), blackSilkMat);
       legs.position.set(0, 0.36, 0.16);
       legs.rotation.x = 0.42;
 
-      // Assemble Character
-      alinaCharacterGroup.add(
-        torso, neck, head, leftEye, rightEye,
-        hairCrown, hairWaveLeft, hairWaveRight, hairBack,
-        leftArm, rightArm, leftHand, rightHand, legs
-      );
-
-      alinaCharacterGroup.scale.set(1.15, 1.15, 1.15);
+      alinaCharacterGroup = new THREE.Group();
+      alinaCharacterGroup.add(torso, neck, head, leftEye, rightEye, hairCrown, hairWaveLeft, hairWaveRight, leftArm, rightArm, legs);
+      scene.add(alinaCharacterGroup);
     }
 
-    // Dynamic placement of Alina in 3D world space
     function updateAlinaPlacement(spot) {
       if (!alinaCharacterGroup) return;
       alinaCharacterGroup.position.set(spot.alinaPos.x, spot.alinaPos.y, spot.alinaPos.z);
       alinaCharacterGroup.rotation.y = Math.PI;
 
-      document.getElementById('alinaPosBadge').innerText = `X: ${spot.alinaPos.x.toFixed(1)} | Y: ${spot.alinaPos.y.toFixed(1)} | Z: ${spot.alinaPos.z.toFixed(1)}`;
-      document.getElementById('alinaPoseText').innerText = spot.alinaPose;
+      document.getElementById('currentSpotTitle').innerText = spot.name;
+      document.getElementById('fluxPromptBox').innerText = spot.prompt;
+      document.getElementById('scriptInput').value = spot.script;
     }
 
-    // --- 3. CINEMATIC PASSES: BEAUTY PASS VS DEPTH MAP PASS ---
+    // --- SELECTION & CAMERA DIRECTING ---
+    function selectFloor(floorNum) {
+      activeFloor = floorNum;
+
+      for (let i = 0; i <= 4; i++) {
+        const el = document.getElementById(`floor-card-${i}`);
+        if (i === floorNum) {
+          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-[#c86446]/60 bg-[#c86446]/10 copper-glow transition-all";
+        } else {
+          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all";
+        }
+      }
+
+      const floorInfo = sanctuaryData[floorNum];
+      document.getElementById('currentFloorTag').innerText = floorInfo.floorName;
+
+      const container = document.getElementById('spotPillsContainer');
+      container.innerHTML = '';
+      floorInfo.spots.forEach((spot, idx) => {
+        const btn = document.createElement('button');
+        btn.onclick = () => selectSpot(spot);
+        btn.id = `pill-${spot.id}`;
+        btn.className = idx === 0 
+          ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
+          : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+        btn.innerText = `${spot.icon} ${spot.name}`;
+        container.appendChild(btn);
+      });
+
+      applyDollhouseSlicing();
+      selectSpot(floorInfo.spots[0]);
+    }
+
+    function selectSpot(spot) {
+      activeSpot = spot;
+
+      sanctuaryData[activeFloor].spots.forEach(s => {
+        const p = document.getElementById(`pill-${s.id}`);
+        if (p) {
+          p.className = (s.id === spot.id)
+            ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
+            : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
+        }
+      });
+
+      updateAlinaPlacement(spot);
+      reset3DCamera();
+    }
+
+    function reset3DCamera() {
+      const pos = activeSpot.alinaPos;
+      targetCameraPos.set(pos.x + 2.5, pos.y + 1.2, pos.z + 4.2);
+      targetLookAt.set(pos.x, pos.y + 0.6, pos.z);
+      document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
+    }
+
+    function setCameraAngle(type) {
+      const pos = activeSpot.alinaPos;
+      if (type === '85mm') {
+        targetCameraPos.set(pos.x + 0.1, pos.y + 0.55, pos.z + 2.2);
+        targetLookAt.set(pos.x, pos.y + 0.55, pos.z);
+      } else if (type === 'macro') {
+        targetCameraPos.set(pos.x + 0.6, pos.y + 0.35, pos.z + 0.9);
+        targetLookAt.set(pos.x + 0.1, pos.y + 0.1, pos.z);
+      } else if (type === 'top') {
+        targetCameraPos.set(pos.x, pos.y + 5.0, pos.z);
+        targetLookAt.set(pos.x, pos.y, pos.z);
+      }
+    }
+
     function toggleDepthPass(enableDepth) {
       isDepthPass = enableDepth;
       const btnBeauty = document.getElementById('btn-beauty-pass');
@@ -968,17 +1036,16 @@
         scene.fog = null;
         btnDepth.className = "px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow";
         btnBeauty.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
-        document.getElementById('three-status-hud').innerText = `DEPTH MAP PASS (Z-Buffer) • Listo para ControlNet`;
+        document.getElementById('three-status-hud').innerText = `DEPTH MAP PASS (Z-Buffer) • ControlNet Ready`;
       } else {
         scene.overrideMaterial = null;
-        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.02);
+        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.018);
         btnBeauty.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow";
         btnDepth.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
-        document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
+        document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name}`;
       }
     }
 
-    // --- 4. EXPORT DIRECTO PARA HIGGSFIELD / KLING ---
     function exportFramePNG() {
       renderer.render(scene, camera);
       const dataURL = renderer.domElement.toDataURL('image/png');
@@ -988,7 +1055,7 @@
       link.click();
       
       const status = document.getElementById('renderStatus');
-      status.innerHTML = `✅ <span class="text-emerald-400 font-bold">¡Frame 3D Exportado!</span> Listo para subir como imagen base en Higgsfield I2V.`;
+      status.innerHTML = `✅ <span class="text-emerald-400 font-bold">¡Frame 3D Exportado!</span> Listo para subir a Higgsfield I2V.`;
     }
 
     function exportHiggsfieldJSON() {
@@ -1026,110 +1093,20 @@
       status.innerHTML = `✅ <span class="text-amber-400 font-bold">¡JSON de Cámara Higgsfield Descargado!</span>`;
     }
 
-    // Toggle Building Cutaway View
-    function toggleBuildingCutaway() {
-      isCutawayActive = !isCutawayActive;
-      const btn = document.getElementById('btn-cutaway');
-
-      if (isCutawayActive) {
-        targetCameraPos.set(16, 11, 14);
-        targetLookAt.set(0, 5.0, 0);
-        btn.className = "bg-[#c86446] text-white px-3 py-1.5 rounded-lg border border-white/20 text-[11px] font-mono shadow";
-        document.getElementById('three-status-hud').innerText = `MAQUETA SECCIONADA: The Alina Sanctuary (5 Pisos)`;
-      } else {
-        setCameraToActiveFloor(activeFloor);
-        btn.className = "bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors";
-      }
-    }
-
-    function setCameraToActiveFloor(floor) {
-      isCutawayActive = false;
-      const yFloor = floor * 2.15;
-      targetCameraPos.set(2.4, yFloor + 1.2, 0.4);
-      targetLookAt.set(activeSpot.alinaPos.x, activeSpot.alinaPos.y + 0.4, activeSpot.alinaPos.z);
-      document.getElementById('three-status-hud').innerText = `${sanctuaryData[floor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
-    }
-
-    function reset3DCamera() {
-      setCameraToActiveFloor(activeFloor);
-    }
-
-    function setCameraAngle(type) {
-      isCutawayActive = false;
-      const pos = activeSpot.alinaPos;
-      if (type === '85mm') {
-        targetCameraPos.set(pos.x + 0.05, pos.y + 0.42, pos.z + 1.7);
-        targetLookAt.set(pos.x, pos.y + 0.42, pos.z);
-      } else if (type === 'macro') {
-        targetCameraPos.set(pos.x + 0.6, pos.y + 0.25, pos.z + 0.7);
-        targetLookAt.set(pos.x + 0.15, pos.y + 0.08, pos.z);
-      } else if (type === 'top') {
-        targetCameraPos.set(pos.x, pos.y + 3.8, pos.z);
-        targetLookAt.set(pos.x, pos.y, pos.z);
-      }
-    }
-
     function copyShareableLink() {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url);
+      navigator.clipboard.writeText(window.location.href);
       const btn = document.getElementById('btn-share');
       btn.innerHTML = `<span>¡Enlace Copiado!</span>`;
       setTimeout(() => {
-        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg><span>Compartir Enlace</span>`;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg><span>Compartir Web</span>`;
       }, 2000);
     }
 
-    // --- SELECTION LOGIC ---
-    function selectFloor(floorNum) {
-      activeFloor = floorNum;
-      
-      for (let i = 0; i <= 4; i++) {
-        const el = document.getElementById(`floor-card-${i}`);
-        if (i === floorNum) {
-          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-[#c86446]/60 bg-[#c86446]/10 copper-glow transition-all";
-        } else {
-          el.className = "floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all";
-        }
-      }
-
-      const floorInfo = sanctuaryData[floorNum];
-      document.getElementById('currentFloorTag').innerText = floorInfo.floorName;
-
-      const container = document.getElementById('spotPillsContainer');
-      container.innerHTML = '';
-      floorInfo.spots.forEach((spot, idx) => {
-        const btn = document.createElement('button');
-        btn.onclick = () => selectSpot(spot);
-        btn.id = `pill-${spot.id}`;
-        btn.className = idx === 0 
-          ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
-          : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
-        btn.innerText = `${spot.icon} ${spot.name}`;
-        container.appendChild(btn);
-      });
-
-      selectSpot(floorInfo.spots[0]);
-    }
-
-    function selectSpot(spot) {
-      activeSpot = spot;
-
-      sanctuaryData[activeFloor].spots.forEach(s => {
-        const p = document.getElementById(`pill-${s.id}`);
-        if (p) {
-          p.className = (s.id === spot.id)
-            ? "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c86446] text-white transition-all shadow"
-            : "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-slate-300 hover:bg-white/10 transition-all";
-        }
-      });
-
-      document.getElementById('currentSpotTitle').innerText = spot.name;
-      document.getElementById('fluxPromptBox').innerText = spot.prompt;
-      document.getElementById('scriptInput').value = spot.script;
-
-      // Update Alina's 3D position in the continuous building
-      updateAlinaPlacement(spot);
-      setCameraToActiveFloor(activeFloor);
+    function copyPrompt() {
+      navigator.clipboard.writeText(document.getElementById('fluxPromptBox').innerText);
+      const btn = document.getElementById('copyBtn');
+      btn.innerText = "¡Copiado!";
+      setTimeout(() => { btn.innerText = "Copiar"; }, 1500);
     }
 
     function setMotionEngine(engine) {
@@ -1145,14 +1122,6 @@
           btn.querySelector('.font-bold').className = "font-bold text-white text-[11px]";
         }
       });
-    }
-
-    function copyPrompt() {
-      const text = document.getElementById('fluxPromptBox').innerText;
-      navigator.clipboard.writeText(text);
-      const btn = document.getElementById('copyBtn');
-      btn.innerText = "¡Copiado!";
-      setTimeout(() => { btn.innerText = "Copiar"; }, 1500);
     }
 
     function triggerRender() {
@@ -1183,6 +1152,24 @@
         btn.className = "w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-sm copper-glow";
         status.innerHTML = "✅ <span class='text-emerald-400 font-bold'>¡TOMA COMPLETADA!</span> Video 9:16 listo en /output/alina_take_01.mp4 (0 créditos desperdiciados).";
       }, 4000);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      camera.position.lerp(targetCameraPos, 0.06);
+      controls.target.lerp(targetLookAt, 0.06);
+      controls.update();
+
+      if (alinaCharacterGroup) {
+        const time = performance.now() * 0.0015;
+        const chest = alinaCharacterGroup.getObjectByName("alinaChest");
+        if (chest) {
+          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.018;
+        }
+      }
+
+      renderer.render(scene, camera);
     }
 
     window.onload = () => {

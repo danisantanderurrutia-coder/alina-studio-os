@@ -38,6 +38,54 @@
       z-index: 120 !important;
       margin: 0 !important;
     }
+
+    /* =========================================================================
+       LAYOUT DINÁMICO DE 2 ESTADOS:
+       1) Por defecto (Plató 3D): Niveles (3 cols) + Visor 3D amplio (9 cols)
+       2) Modo Prompts (body.prompts-mode): Niveles oculto + Visor a la izq (7 cols) + Prompts a la der (5 cols)
+       ========================================================================= */
+    #col-prompts { display: none; }
+    #compactFloorBar { display: none; }
+
+    body.prompts-mode #col-levels { display: none; }
+    body.prompts-mode #col-prompts { display: flex; }
+    body.prompts-mode #compactFloorBar { display: flex; }
+
+    @media (min-width: 1024px) {
+      #col-levels { grid-column: span 3 / span 3; }
+      #col-viewer { grid-column: span 9 / span 9; }
+
+      body.prompts-mode #col-viewer { grid-column: span 7 / span 7; }
+      body.prompts-mode #col-prompts { grid-column: span 5 / span 5; }
+
+      #viewport-wrapper:not(.viewport-theater) {
+        height: calc(100vh - 205px);
+        min-height: 540px;
+      }
+      body.prompts-mode #col-prompts > .prompts-shell {
+        position: sticky;
+        top: 74px;
+        max-height: calc(100vh - 90px);
+      }
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #e2e8f0;
+      resize: vertical;
+    }
+    .prompt-textarea:focus {
+      outline: none;
+      border-color: var(--copper);
+      box-shadow: 0 0 0 1px rgba(200, 100, 70, 0.35);
+    }
   </style>
   <script type="module" crossorigin src="./assets/index-B5lc1y7c.js"></script>
 </head>
@@ -55,11 +103,11 @@
           <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">DUAL-ENGINE 1:1</span>
           <span id="perf-badge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">FPS: -- | Carga: --</span>
         </div>
-        <p class="text-[11px] text-slate-400 truncate">Comparativa en vivo: Motor A (Three.js GLB) vs Motor B (Unity 6 URP WebGL)</p>
+        <p class="text-[11px] text-slate-400 truncate">Plató 3D en tiempo real: Motor A (Three.js GLB) + Motor B (Unity 6 URP WebGL)</p>
       </div>
     </div>
 
-    <!-- Dual Engine Switcher + Lighting + Slice + Share -->
+    <!-- Dual Engine Switcher + Lighting + Slice + Prompts Toggle + Share -->
     <div class="flex items-center flex-wrap gap-2 text-xs">
       <!-- Dual Engine Toggle -->
       <div class="flex items-center bg-black/70 p-1 rounded-xl border border-white/15">
@@ -85,17 +133,22 @@
         🔪 Corte Sliced: ACTIVO
       </button>
 
+      <button id="btn-prompts-toggle" aria-pressed="false" aria-controls="col-prompts" class="bg-white/5 hover:bg-[#c86446]/25 text-slate-100 hover:text-white px-3 py-1.5 rounded-lg border border-[#c86446]/40 font-semibold transition-all flex items-center gap-1.5">
+        <span>✨ Prompts Higgsfield</span>
+        <span id="shotsCountBadge" class="hidden text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#c86446] text-white">0</span>
+      </button>
+
       <button id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
         <span>Compartir Web</span>
       </button>
     </div>
   </header>
 
-  <!-- MAIN 3-COLUMN WORKSPACE -->
+  <!-- MAIN WORKSPACE -->
   <main class="grid grid-cols-12 gap-4 p-4 md:p-5 max-w-[1920px] mx-auto min-h-[calc(100vh-64px)]">
 
-    <!-- COL 1: ARCHITECTURAL FLOOR NAVIGATOR -->
-    <aside class="col-span-12 lg:col-span-3 flex flex-col gap-3">
+    <!-- COL IZQUIERDA (Modo Plató): ARCHITECTURAL FLOOR NAVIGATOR -->
+    <aside id="col-levels" class="col-span-12 lg:col-span-3 flex flex-col gap-3">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-white/5">
@@ -106,7 +159,7 @@
           </div>
 
           <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">
-            Edificio continuo a escala métrica (techos 4.9m, Alina 1.72m). El corte sliced eleva los pisos superiores o usa Casa de Muñecas para ver todos los niveles abiertos.
+            Edificio continuo a escala métrica (techos 4.9m, Alina 1.72m). Encuadra con pantalla amplia y abre <strong class="text-slate-200">Prompts Higgsfield</strong> cuando quieras capturar tus tomas.
           </p>
 
           <div class="flex flex-col gap-2" id="floorContainer">
@@ -131,18 +184,27 @@
       </div>
     </aside>
 
-    <!-- COL 2: DUAL-ENGINE 3D VIEWPORT & HIGGSFIELD CONTROLS -->
-    <section class="col-span-12 lg:col-span-5 flex flex-col gap-3">
+    <!-- VISOR 3D DUAL-ENGINE (9 cols en modo Plató; pasa a la izquierda en 7 cols al abrir Prompts) -->
+    <section id="col-viewer" class="col-span-12 lg:col-span-9 flex flex-col gap-3 min-w-0">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col">
 
-        <!-- Spot Title + Passes + 9:16 Guide -->
-        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-white/5 mb-3 gap-2">
+        <!-- Spot Title + Quick Pose + Passes + 9:16 Guide -->
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-white/5 mb-2.5 gap-2">
           <div class="min-w-0">
             <span id="currentFloorTag" class="text-[11px] font-mono text-[#f29979] uppercase font-bold tracking-wider">PISO 2 • RESIDENCIA PRIVADA</span>
             <h2 id="currentSpotTitle" class="text-base font-bold text-white mt-0.5 truncate">El Tocador Vanity & Vestidor</h2>
           </div>
 
           <div class="flex items-center gap-1.5 flex-wrap">
+            <!-- Selector compacto de Pose de Alina siempre a mano mientras encuadras -->
+            <div class="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 text-[11px]" id="animButtons" role="group" aria-label="Pose o animación de Alina">
+              <button data-anim="Idle" class="anim-btn py-1 px-2 rounded-lg border border-[#c86446] bg-[#c86446]/25 text-white font-semibold">Idle</button>
+              <button data-anim="Walk" class="anim-btn py-1 px-2 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Walk</button>
+              <button data-anim="Rumba" class="anim-btn py-1 px-2 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Rumba</button>
+              <button data-anim="Laying" class="anim-btn py-1 px-2 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Laying</button>
+              <button data-anim="HipHop" class="anim-btn py-1 px-2 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">HipHop</button>
+            </div>
+
             <button id="btn-guide-916" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors">
               📱 Guía 9:16: OFF
             </button>
@@ -157,11 +219,16 @@
           </div>
         </div>
 
-        <!-- Spot Pills -->
-        <div id="spotPillsContainer" class="flex flex-wrap gap-1.5 mb-3"></div>
+        <!-- Compact Floor Switcher (solo visible cuando Niveles está oculto en modo Prompts) + Spot Pills -->
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <div id="compactFloorBar" class="items-center gap-1 pr-2 border-r border-white/10" role="group" aria-label="Cambio rápido de piso">
+            <!-- Populated from SANCTUARY_FLOORS -->
+          </div>
+          <div id="spotPillsContainer" class="flex flex-wrap gap-1.5"></div>
+        </div>
 
         <!-- 3D VIEWPORT -->
-        <div id="viewport-wrapper" class="relative w-full h-[460px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col mb-3 shadow-2xl">
+        <div id="viewport-wrapper" class="relative w-full h-[460px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col flex-1 shadow-2xl">
           <!-- Motor A: Three.js Container -->
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative"></div>
 
@@ -178,16 +245,16 @@
             </div>
           </div>
 
-          <!-- Optional 9:16 Safe Crop Overlay -->
-          <div id="guide-916-overlay" class="hidden absolute inset-0 pointer-events-none z-10 flex justify-between">
-            <div class="h-full bg-black/65 border-r border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
-            <div class="h-full flex items-start justify-center pt-10">
+          <!-- Exact 9:16 Safe Crop Overlay responsive to any viewport height -->
+          <div id="guide-916-overlay" class="hidden absolute inset-0 pointer-events-none z-10 flex items-stretch justify-center">
+            <div class="flex-1 bg-black/65"></div>
+            <div class="h-full aspect-[9/16] border-x border-amber-400/75 flex items-start justify-center pt-12">
               <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40">ENCUADRE 9:16 (1080×1920)</span>
             </div>
-            <div class="h-full bg-black/65 border-l border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
+            <div class="flex-1 bg-black/65"></div>
           </div>
 
-          <!-- Top HUD & Camera Controls (never overlaps at any width) -->
+          <!-- Top HUD & Camera Controls -->
           <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none z-20">
             <div class="min-w-0 flex-1 bg-black/85 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -207,7 +274,7 @@
             </div>
           </div>
 
-          <!-- Bottom Camera & Quick Exports -->
+          <!-- Bottom Camera & Capture-to-Prompt Controls -->
           <div class="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap items-center justify-between gap-2 z-20">
             <div class="flex items-center gap-1 bg-black/90 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
               <button data-cam="85mm" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cam 85mm</button>
@@ -217,108 +284,202 @@
             </div>
 
             <div class="flex items-center gap-1.5">
-              <button id="btn-export-png" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
-                📸 Frame 9:16 (PNG)
+              <button id="btn-export-png" class="bg-black/85 hover:bg-emerald-600 text-slate-200 hover:text-white border border-white/15 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shadow-lg transition-all" title="Descargar PNG 1080×1920 directamente">
+                📸 PNG 9:16
               </button>
-              <button id="btn-export-json" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all">
-                📦 JSON Higgsfield
+              <button id="btn-capture-to-prompt" class="bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all copper-glow">
+                ✨ Capturar → Prompt Higgsfield
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Synchronized Prompt Box -->
-        <div class="space-y-1.5 mt-auto">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
-              Prompt Flux.1 Dev 4K (Token Lock + Posición 3D):
-            </label>
-            <button id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono">Copiar</button>
-          </div>
-          <div id="fluxPromptBox" class="p-2.5 bg-black/60 border border-white/5 rounded-xl text-slate-300 text-[11px] font-mono leading-relaxed h-20 overflow-y-auto custom-scrollbar select-all"></div>
         </div>
       </div>
     </section>
 
-    <!-- COL 3: ANIMATIONS, VOICE & REAL HIGGSFIELD EXPORTER -->
-    <aside class="col-span-12 lg:col-span-4 flex flex-col gap-3">
-      <div id="cinema-panel"></div>
-      <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
-        <div class="space-y-3.5">
-          <div class="flex items-center justify-between pb-2.5 border-b border-white/5">
-            <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">
-              ⚡ Orquestador Alina & Higgsfield
+    <!-- COL DERECHA (solo visible en Modo Prompts): ESTUDIO DE PROMPTS DESDE CAPTURA + DIRECTOR -->
+    <aside id="col-prompts" class="col-span-12 lg:col-span-5 flex-col gap-3 min-w-0" aria-label="Estudio de Prompts Higgsfield">
+      <div class="prompts-shell bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col gap-3 overflow-y-auto custom-scrollbar">
+
+        <!-- Header del Panel Derecho -->
+        <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+          <div class="flex items-center gap-2 min-w-0">
+            <h2 class="text-xs font-bold tracking-wider uppercase text-white truncate">
+              ✨ Estudio de Prompts Higgsfield
             </h2>
-            <span id="motor-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">THREE.JS ACTIVE</span>
+            <span id="motor-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold shrink-0">THREE.JS ACTIVE</span>
+          </div>
+          <button id="btn-prompts-close" class="text-[11px] text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 font-mono px-2.5 py-1 rounded-lg border border-white/10 shrink-0 transition-colors" title="Cerrar panel y devolver espacio al visor 3D">
+            ✕ Cerrar
+          </button>
+        </div>
+
+        <!-- Sub-pestañas para separar Capturas→Prompts del Director/Audio -->
+        <div class="grid grid-cols-2 gap-1.5 bg-black/50 p-1 rounded-xl border border-white/10 text-xs">
+          <button id="btn-ptab-captures" class="py-1.5 px-2 rounded-lg bg-[#c86446] text-white font-semibold transition-all">
+            📸 Capturas → Prompts
+          </button>
+          <button id="btn-ptab-director" class="py-1.5 px-2 rounded-lg text-slate-400 hover:text-white font-semibold transition-all">
+            🎬 Director & Audio
+          </button>
+        </div>
+
+        <!-- PESTAÑA 1: PROMPTS GENERADOS DIRECTAMENTE DESDE CAPTURAS DE UNITY / THREE.JS -->
+        <div id="pane-ptab-captures" class="flex flex-col gap-3 flex-1">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button id="btn-capture-shot" class="sm:col-span-2 py-2.5 px-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all text-xs copper-glow">
+              📸 Capturar del Visor Actual → Crear Prompt
+            </button>
+            <button id="btn-capture-shot-depth" class="py-2.5 px-2.5 rounded-xl font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all text-[11px]">
+              + Beauty & Depth
+            </button>
           </div>
 
-          <!-- Animation Selector for Alina -->
-          <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-300 block">Animación / Pose de Alina (Mixamo Rig):</label>
-            <div class="grid grid-cols-5 gap-1.5 text-[11px]" id="animButtons">
-              <button data-anim="Idle" class="anim-btn py-1.5 px-1 rounded-lg border border-[#c86446] bg-[#c86446]/20 text-white font-semibold">Idle</button>
-              <button data-anim="Walk" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Walk</button>
-              <button data-anim="Rumba" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Rumba</button>
-              <button data-anim="Laying" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">Laying</button>
-              <button data-anim="HipHop" class="anim-btn py-1.5 px-1 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">HipHop</button>
+          <!-- Tira de capturas de la sesión -->
+          <div id="shotsStrip" class="hidden gap-2 overflow-x-auto custom-scrollbar pb-1" aria-label="Galería de capturas de la sesión"></div>
+
+          <!-- Estado vacío inicial -->
+          <div id="shotEmptyState" class="rounded-xl border border-dashed border-white/15 bg-black/35 p-5 text-center space-y-2 my-auto">
+            <div class="text-2xl">🎯</div>
+            <h3 class="text-xs font-bold text-white">Tus prompts nacen de lo que encuadras en Unity o Three.js</h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Mueve la cámara a tu gusto en el visor izquierdo, elige la pose de Alina y pulsa <strong class="text-[#f29979]">Capturar del Visor Actual</strong>. Extraeremos el frame 9:16 real, el tipo de plano, la focal, la clave de luz y la acción para redactar el prompt exacto de Flux y Higgsfield.
+            </p>
+          </div>
+
+          <!-- Detalle de la captura seleccionada -->
+          <div id="shotDetail" class="hidden flex-col gap-3">
+            <!-- Cabecera visual de la captura -->
+            <div class="flex items-start gap-3 p-2.5 rounded-xl bg-black/45 border border-white/10">
+              <div class="flex gap-1.5 shrink-0">
+                <img id="shotPreview" alt="Captura Beauty 9:16" class="w-16 rounded-lg border border-white/15 bg-black object-cover" style="aspect-ratio: 9/16;">
+                <img id="shotDepthPreview" alt="Captura Depth 9:16" class="hidden w-16 rounded-lg border border-emerald-500/30 bg-black object-cover" style="aspect-ratio: 9/16;">
+              </div>
+              <div class="min-w-0 flex-1 text-[11px] space-y-1">
+                <div class="flex items-center justify-between gap-1">
+                  <span id="shotMetaTitle" class="text-white font-bold truncate"></span>
+                  <span id="shotEngineTag" class="text-[9px] font-mono px-1.5 py-0.5 rounded border shrink-0"></span>
+                </div>
+                <div id="shotMetaFraming" class="font-mono text-[#f29979] text-[10px]"></div>
+                <div id="shotMetaState" class="font-mono text-slate-400 text-[10px]"></div>
+                <div id="shotMetaLight" class="font-mono text-emerald-400/90 text-[10px]"></div>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  <button id="btn-shot-restore" class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/15 text-[10px] font-mono text-slate-200 transition-colors">
+                    ↩ Restaurar encuadre
+                  </button>
+                  <button id="btn-shot-attach-depth" class="px-2 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-[10px] font-mono text-emerald-300 transition-colors">
+                    🌑 Capturar Depth 9:16
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Voice Script -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-300 font-medium">Guion ElevenLabs ("Alina-Hypno-v1"):</span>
-              <span class="text-[10px] text-slate-400 font-mono">Pitch 0.98 | Rate 0.95</span>
+            <!-- Prompt 1: Flux.1 Dev / Keyframe -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between gap-2">
+                <label for="shotFluxPrompt" class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                  1. Keyframe Prompt (Flux.1 Dev / ControlNet)
+                </label>
+                <div class="flex items-center gap-2">
+                  <button id="btn-shot-regen" class="text-[10px] text-slate-400 hover:text-white font-mono" title="Regenerar desde los metadatos de la captura">↻ Regenerar</button>
+                  <button data-copy="shotFluxPrompt" class="copy-prompt-btn text-[11px] text-[#f29979] hover:text-white font-mono font-semibold">Copiar</button>
+                </div>
+              </div>
+              <textarea id="shotFluxPrompt" rows="5" class="prompt-textarea"></textarea>
             </div>
-            <textarea id="scriptInput" rows="3" class="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#c86446] leading-relaxed"></textarea>
-          </div>
 
-          <!-- Motion Engine Target -->
-          <div class="space-y-1.5">
-            <label class="text-xs font-medium text-slate-300 block">Motor de Síntesis Video (Zero-Waste Shield):</label>
-            <div class="grid grid-cols-3 gap-2 text-xs">
-              <button data-motion="liveportrait" class="motion-btn p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left">
-                <div class="font-bold text-emerald-400 text-[11px]">LivePortrait</div>
+            <!-- Motor destino + Motion Strength -->
+            <div class="grid grid-cols-3 gap-1.5 text-xs">
+              <button data-motion="higgsfield" class="motion-btn p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left">
+                <div class="font-bold text-emerald-400 text-[11px]">Higgsfield I2V</div>
+                <div class="text-[9px] text-amber-300 mt-0.5">Dolly • 9:16</div>
+              </button>
+              <button data-motion="liveportrait" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
+                <div class="font-bold text-white text-[11px]">LivePortrait</div>
                 <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Lipsync</div>
               </button>
               <button data-motion="mimicmotion" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
                 <div class="font-bold text-white text-[11px]">MimicMotion</div>
                 <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Dance</div>
               </button>
-              <button data-motion="higgsfield" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
-                <div class="font-bold text-white text-[11px]">Higgsfield I2V</div>
-                <div class="text-[9px] text-amber-300 mt-0.5">1 Créd • Dolly</div>
+            </div>
+
+            <!-- Prompt 2: Higgsfield I2V Motion -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between gap-2">
+                <label for="shotMotionPrompt" class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                  2. Motion Prompt (Higgsfield I2V / Kling)
+                </label>
+                <button data-copy="shotMotionPrompt" class="copy-prompt-btn text-[11px] text-[#f29979] hover:text-white font-mono font-semibold">Copiar</button>
+              </div>
+              <textarea id="shotMotionPrompt" rows="3" class="prompt-textarea"></textarea>
+              <div class="flex items-center justify-between gap-2 pt-0.5 text-[11px]">
+                <span class="text-slate-400">Motion Strength (Zero-Waste 2.0–3.5):</span>
+                <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
+              </div>
+              <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" class="w-full accent-[#c86446]">
+            </div>
+
+            <!-- Acciones de exportación de esta captura -->
+            <div class="grid grid-cols-6 gap-1.5 text-[11px] font-bold pt-1">
+              <button id="btn-shot-png" class="col-span-2 py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                📸 Descargar PNG
+              </button>
+              <button id="btn-shot-package" class="col-span-3 py-2 px-2 rounded-xl bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white transition-all">
+                📦 Paquete Higgsfield
+              </button>
+              <button id="btn-shot-delete" class="col-span-1 py-2 px-2 rounded-xl bg-white/5 hover:bg-rose-600/70 text-slate-300 hover:text-white border border-white/10 transition-colors" title="Eliminar esta captura">
+                🗑
               </button>
             </div>
           </div>
+        </div>
 
-          <!-- B-Roll Formula 1:2 -->
-          <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1">
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="font-semibold text-slate-300">B-Roll Accesorios (Fórmula 1:2):</span>
-              <span class="text-[10px] text-emerald-400 font-mono">0% Fallo Facial</span>
-            </div>
-            <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5"></div>
-          </div>
+        <!-- PESTAÑA 2: DIRECTOR DE FOTOGRAFÍA, AUDIO ELEVENLABS Y EXPORTADOR DE SPOT -->
+        <div id="pane-ptab-director" class="hidden flex-col gap-3">
+          <div id="cinema-panel"></div>
 
-          <!-- Motion Strength Slider -->
-          <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-400">Motion Strength (Zero-Waste 2.0–3.5):</span>
-              <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
+          <div class="bg-black/40 border border-white/10 rounded-2xl p-3.5 space-y-3">
+            <!-- Voice Script -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-300 font-medium">Guion ElevenLabs ("Alina-Hypno-v1"):</span>
+                <span class="text-[10px] text-slate-400 font-mono">Pitch 0.98 | Rate 0.95</span>
+              </div>
+              <textarea id="scriptInput" rows="3" class="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#c86446] leading-relaxed"></textarea>
             </div>
-            <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" class="w-full accent-[#c86446]">
+
+            <!-- B-Roll Formula 1:2 -->
+            <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="font-semibold text-slate-300">B-Roll Accesorios (Fórmula 1:2):</span>
+                <span class="text-[10px] text-emerald-400 font-mono">0% Fallo Facial</span>
+              </div>
+              <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5"></div>
+            </div>
+
+            <!-- Referencia de Prompt Base del Spot -->
+            <div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Prompt Base del Spot:</span>
+                <button id="copyBtn" class="text-[11px] text-[#f29979] hover:text-white font-mono">Copiar</button>
+              </div>
+              <div id="fluxPromptBox" class="p-2 bg-black/60 border border-white/5 rounded-xl text-slate-400 text-[10px] font-mono leading-relaxed max-h-20 overflow-y-auto custom-scrollbar select-all"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button id="btn-export-json" class="py-2 px-3 rounded-xl font-semibold text-xs text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+                📦 JSON del Spot
+              </button>
+              <button id="btn-export-package" class="py-2 px-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 transition-all">
+                📦 Paquete Spot 9:16
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Real Package Exporter CTA -->
-        <div class="space-y-2 pt-3 border-t border-white/5">
-          <button id="btn-export-package" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all shadow-xl flex items-center justify-center gap-2 text-xs md:text-sm copper-glow">
-            <span>EXPORTAR PAQUETE HIGGSFIELD (BEAUTY + DEPTH + JSON)</span>
-          </button>
-          <div id="renderStatus" class="text-center text-[11px] font-mono text-slate-400">
-            Listo: Exportación real 1080×1920 PNG + Depth Map + JSON.
-          </div>
+        <!-- Barra de estado compartida -->
+        <div id="renderStatus" class="pt-2 border-t border-white/5 text-center text-[11px] font-mono text-slate-400" role="status" aria-live="polite">
+          Listo: Pantalla 3D expandida. Pulsa «Capturar → Prompt» cuando tengas tu encuadre.
         </div>
       </div>
     </aside>

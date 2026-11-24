@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 export class SkyAndLightingController {
   constructor(scene, renderer) {
@@ -9,11 +10,46 @@ export class SkyAndLightingController {
     this.flickerCandles = [];
     this.emissiveRefs = [];
     this.mode = 'night';
+    this.hdrDayRT = null;
+    this.hdrNightRT = null;
+    this.depthFogDisabled = false;
 
     this._setupEnvironment();
     this._setupSkyDome();
     this._setupSkylineSilhouettes();
     this._setupGlobalLights();
+    this._loadPhotographicHDRIs();
+  }
+
+  _loadPhotographicHDRIs() {
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    pmrem.compileEquirectangularShader();
+    const rgbe = new RGBELoader();
+
+    rgbe.load('./polyhaven/hdri/hdri_night.hdr', (tex) => {
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      this.hdrNightRT = pmrem.fromEquirectangular(tex);
+      tex.dispose();
+      if (this.mode === 'night' && !this.depthFogDisabled) this._applyHDRI('night');
+    }, undefined, (err) => console.warn('[HDRI Night]', err));
+
+    rgbe.load('./polyhaven/hdri/hdri_day.hdr', (tex) => {
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      this.hdrDayRT = pmrem.fromEquirectangular(tex);
+      tex.dispose();
+      if (this.mode === 'day' && !this.depthFogDisabled) this._applyHDRI('day');
+    }, undefined, (err) => console.warn('[HDRI Day]', err));
+  }
+
+  _applyHDRI(mode) {
+    const rt = mode === 'day' ? this.hdrDayRT : this.hdrNightRT;
+    if (!rt) return;
+    this.scene.environment = rt.texture;
+    this.scene.background = rt.texture;
+    this.scene.backgroundBlurriness = 0.04;
+    this.scene.backgroundIntensity = mode === 'day' ? 1.05 : 0.85;
+    this.scene.environmentIntensity = mode === 'day' ? 1.0 : 0.72;
+    if (this.skyDome) this.skyDome.visible = false;
   }
 
   _setupEnvironment() {
@@ -238,6 +274,16 @@ export class SkyAndLightingController {
     for (const em of this.emissiveRefs) {
       em.material.emissiveIntensity = mode === 'day' ? em.dayIntensity : em.nightIntensity;
     }
+
+    if (!this.depthFogDisabled) {
+      if ((mode === 'day' && this.hdrDayRT) || (mode === 'night' && this.hdrNightRT)) {
+        this._applyHDRI(mode);
+      } else {
+        if (this.envRT) this.scene.environment = this.envRT.texture;
+        this.scene.background = null;
+        if (this.skyDome) this.skyDome.visible = true;
+      }
+    }
   }
 
   update(time) {
@@ -248,8 +294,11 @@ export class SkyAndLightingController {
   }
 
   setDepthFogDisabled(disabled) {
+    this.depthFogDisabled = disabled;
     if (disabled) {
       this.scene.fog = null;
+      this.scene.background = null;
+      if (this.skyDome) this.skyDome.visible = false;
     } else {
       this.setMode(this.mode);
     }

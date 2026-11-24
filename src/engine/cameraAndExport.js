@@ -101,15 +101,16 @@ export class CameraAndExportController {
 
   setDepthPass(enabled, focusPoint = null) {
     this.isDepthPass = enabled;
+    this.scene.traverse((obj) => {
+      if (obj.userData?.hideOnDepthPass) obj.visible = !enabled;
+    });
     if (enabled) {
       if (focusPoint) this.updateDepthRangeForFocus(focusPoint);
       this.scene.overrideMaterial = this.depthMaterial;
-      if (this.lighting.skyDome) this.lighting.skyDome.visible = false;
       this.lighting.setDepthFogDisabled(true);
       this.renderer.setClearColor(0x000000, 1);
     } else {
       this.scene.overrideMaterial = null;
-      if (this.lighting.skyDome) this.lighting.skyDome.visible = true;
       this.lighting.setDepthFogDisabled(false);
     }
   }
@@ -139,21 +140,28 @@ export class CameraAndExportController {
 
   renderVertical916DataURL(width = 1080, height = 1920, forceDepth = null) {
     const prevOverride = this.scene.overrideMaterial;
-    const prevSkyVis = this.lighting.skyDome ? this.lighting.skyDome.visible : true;
     const prevFog = this.scene.fog;
+    const prevBg = this.scene.background;
+    const prevDepthDisabled = this.lighting.depthFogDisabled;
+    const prevHidden = [];
+    this.scene.traverse((obj) => {
+      if (obj.userData?.hideOnDepthPass) {
+        prevHidden.push([obj, obj.visible]);
+        if (forceDepth === true) obj.visible = false;
+        else if (forceDepth === false) obj.visible = true;
+      }
+    });
     const prevSize = this.renderer.getSize(new THREE.Vector2());
     const prevPR = this.renderer.getPixelRatio();
 
     if (forceDepth === true) {
       this.updateDepthRangeForFocus(this.controls.target);
       this.scene.overrideMaterial = this.depthMaterial;
-      this.scene.fog = null;
-      if (this.lighting.skyDome) this.lighting.skyDome.visible = false;
+      this.lighting.setDepthFogDisabled(true);
       this.renderer.setClearColor(0x000000, 1);
     } else if (forceDepth === false) {
       this.scene.overrideMaterial = null;
       this.lighting.setDepthFogDisabled(false);
-      if (this.lighting.skyDome) this.lighting.skyDome.visible = true;
     }
 
     const cam916 = this.camera.clone();
@@ -166,11 +174,13 @@ export class CameraAndExportController {
     const dataURL = this.renderer.domElement.toDataURL('image/png');
 
     // Restore viewport size and scene state
+    for (const [obj, vis] of prevHidden) obj.visible = vis;
     this.renderer.setPixelRatio(prevPR);
     this.renderer.setSize(prevSize.x, prevSize.y, false);
     this.scene.overrideMaterial = prevOverride;
+    this.lighting.setDepthFogDisabled(prevDepthDisabled);
     this.scene.fog = prevFog;
-    if (this.lighting.skyDome) this.lighting.skyDome.visible = prevSkyVis;
+    this.scene.background = prevBg;
     this.renderer.render(this.scene, this.camera);
 
     return dataURL;

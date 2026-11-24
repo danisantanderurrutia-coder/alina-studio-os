@@ -39,7 +39,7 @@
       margin: 0 !important;
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-B5s2auuW.js"></script>
+  <script type="module" crossorigin src="./assets/index-Dlohj2mj.js"></script>
 </head>
 <body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
@@ -187,22 +187,24 @@
             <div class="h-full bg-black/65 border-l border-amber-400/70" style="width: calc((100% - 258px) / 2)"></div>
           </div>
 
-          <!-- Top HUD -->
-          <div class="absolute top-2.5 left-2.5 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2 pointer-events-none z-20">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="viewport-status-hud" class="font-mono">Cargando Alina 3D GLB...</span>
-          </div>
+          <!-- Top HUD & Camera Controls (never overlaps at any width) -->
+          <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none z-20">
+            <div class="min-w-0 flex-1 bg-black/85 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+              <span id="viewport-status-hud" class="font-mono truncate">Cargando Alina 3D GLB...</span>
+            </div>
 
-          <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
-            <button id="btn-dollhouse" class="bg-black/85 hover:bg-[#c86446] text-slate-200 hover:text-white px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors">
-              🏠 Casa de Muñecas
-            </button>
-            <button id="btn-overview" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors">
-              🏛️ Exterior 3/4
-            </button>
-            <button id="btn-fullscreen" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors" title="Pantalla Completa / Modo Teatro">
-              ⛶ Completa
-            </button>
+            <div class="flex items-center gap-1 pointer-events-auto shrink-0">
+              <button id="btn-dollhouse" class="bg-black/85 hover:bg-[#c86446] text-slate-200 hover:text-white px-2 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono whitespace-nowrap transition-colors">
+                🏠 Casa de Muñecas
+              </button>
+              <button id="btn-overview" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono whitespace-nowrap transition-colors">
+                🏛️ Exterior 3/4
+              </button>
+              <button id="btn-fullscreen" class="bg-black/85 hover:bg-white/15 text-slate-200 px-2 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono whitespace-nowrap transition-colors" title="Pantalla Completa / Modo Teatro">
+                ⛶ Completa
+              </button>
+            </div>
           </div>
 
           <!-- Bottom Camera & Quick Exports -->

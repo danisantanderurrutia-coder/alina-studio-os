@@ -1,64 +1,97 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { FLOOR_HEIGHT, BUILDING_WIDTH, BUILDING_DEPTH, BUILDING_CENTER_Z } from '../data/sanctuaryData.js';
 import {
-  buildWalnutParquetPair,
-  buildMarbleTexture,
-  buildBrickWallPair,
-  buildAsphaltTexture,
-  buildTeakDeckTexture,
   buildSignTexture,
   buildDanceFloorTexture,
-  buildExteriorStonePair,
-  buildSideWindowTexture
+  buildSideWindowTexture,
+  loadPolyHavenPBR,
+  buildContactShadowTexture,
+  buildGalleryArtTexture
 } from './textures.js';
+
+const gltfModelLoader = new GLTFLoader();
+const gltfPromiseCache = new Map();
+
+function loadCachedGLTF(modelId) {
+  if (!gltfPromiseCache.has(modelId)) {
+    gltfPromiseCache.set(modelId, gltfModelLoader.loadAsync(`./polyhaven/models/${modelId}/${modelId}.gltf`));
+  }
+  return gltfPromiseCache.get(modelId);
+}
 
 export function buildSanctuaryArchitecture(scene, lighting) {
   const floorGroups = [];
   const waterMeshes = [];
   const frontGlassPanels = [];
 
-  // Shared PBR Materials
-  const asphaltMap = buildAsphaltTexture(28, 18, 3.0);
-  const matAsphalt = new THREE.MeshStandardMaterial({ map: asphaltMap, roughness: 0.88, metalness: 0.04 });
-  const matSidewalk = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.78, metalness: 0.04 });
+  // Shared 1K CC0 Poly Haven PBR Materials
+  const pbrAsphalt = loadPolyHavenPBR('asphalt_02', { repeatX: 8, repeatY: 5.5 });
+  const matAsphalt = new THREE.MeshStandardMaterial({
+    ...pbrAsphalt,
+    color: 0x9aa0aa,
+    roughness: 1.0,
+    metalness: 0.03
+  });
+  const pbrConcrete = loadPolyHavenPBR('brushed_concrete_04', { repeatX: 9, repeatY: 1.2 });
+  const matSidewalk = new THREE.MeshStandardMaterial({
+    ...pbrConcrete,
+    color: 0xd0d4dc,
+    roughness: 1.0,
+    metalness: 0.04
+  });
   const matYellowLine = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.65 });
 
-  const parquet = buildWalnutParquetPair(26, 16, 1.8);
+  const pbrParquet = loadPolyHavenPBR('herringbone_parquet', { repeatX: 6.5, repeatY: 4.0 });
   const matWalnutFloor = new THREE.MeshStandardMaterial({
-    map: parquet.map,
-    bumpMap: parquet.bumpMap,
-    bumpScale: 0.015,
-    roughness: 0.42,
-    metalness: 0.08
+    ...pbrParquet,
+    color: 0xe6d3c2,
+    normalScale: new THREE.Vector2(0.75, 0.75),
+    roughness: 0.92,
+    metalness: 0.04
   });
 
+  const pbrMarbleDark = loadPolyHavenPBR('marble_01', { repeatX: 5.2, repeatY: 3.2 });
   const matDarkMarble = new THREE.MeshStandardMaterial({
-    map: buildMarbleTexture(true, 26, 16, 2.4),
-    roughness: 0.22,
-    metalness: 0.15
+    ...pbrMarbleDark,
+    color: 0x2d333f,
+    normalScale: new THREE.Vector2(0.5, 0.5),
+    roughness: 0.72,
+    metalness: 0.1
   });
+  const pbrMarbleWhite = loadPolyHavenPBR('marble_01', { repeatX: 5.2, repeatY: 3.2 });
   const matWhiteMarble = new THREE.MeshStandardMaterial({
-    map: buildMarbleTexture(false, 26, 16, 2.4),
-    roughness: 0.24,
-    metalness: 0.12
+    ...pbrMarbleWhite,
+    color: 0xf5f2ec,
+    normalScale: new THREE.Vector2(0.45, 0.45),
+    roughness: 0.76,
+    metalness: 0.06
   });
 
-  const brick = buildBrickWallPair(26, FLOOR_HEIGHT, 2.2);
+  const pbrBrick = loadPolyHavenPBR('brick_wall_005', { repeatX: 8, repeatY: 1.8 });
   const matBrick = new THREE.MeshStandardMaterial({
-    map: brick.map,
-    bumpMap: brick.bumpMap,
-    bumpScale: 0.03,
-    roughness: 0.85,
-    metalness: 0.05
+    ...pbrBrick,
+    color: 0xcab8b0,
+    normalScale: new THREE.Vector2(0.9, 0.9),
+    roughness: 1.0,
+    metalness: 0.02
   });
 
-  const matPlaster = new THREE.MeshStandardMaterial({ color: 0x262934, roughness: 0.85, metalness: 0.05 });
-  const extStone = buildExteriorStonePair(BUILDING_WIDTH, FLOOR_HEIGHT, 3.0);
+  const pbrPlaster = loadPolyHavenPBR('beige_wall_001', { repeatX: 6, repeatY: 1.6 });
+  const matPlaster = new THREE.MeshStandardMaterial({
+    ...pbrPlaster,
+    color: 0x454957,
+    normalScale: new THREE.Vector2(0.55, 0.55),
+    roughness: 1.0,
+    metalness: 0.02
+  });
+  const pbrGranite = loadPolyHavenPBR('granite_tile_02', { repeatX: 8, repeatY: 1.6 });
   const matExteriorStone = new THREE.MeshStandardMaterial({
-    map: extStone.map,
-    bumpMap: extStone.bumpMap,
-    bumpScale: 0.025,
-    roughness: 0.82,
+    ...pbrGranite,
+    color: 0xa4aab3,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    roughness: 1.0,
     metalness: 0.06
   });
   const sideWinTex = buildSideWindowTexture();
@@ -70,25 +103,77 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     roughness: 0.25
   });
   lighting.registerEmissive(matSideWindow, { dayIntensity: 0.35, nightIntensity: 1.25 });
-  const matDivider = new THREE.MeshStandardMaterial({ color: 0x2a2d38, roughness: 0.78, metalness: 0.06 });
-  const matTeak = new THREE.MeshStandardMaterial({
-    map: buildTeakDeckTexture(26, 16, 2.2),
-    roughness: 0.62,
-    metalness: 0.05
+  const matDivider = new THREE.MeshStandardMaterial({
+    ...pbrPlaster,
+    color: 0x4b4f5e,
+    normalScale: new THREE.Vector2(0.45, 0.45),
+    roughness: 1.0,
+    metalness: 0.02
   });
-  const matWoodDark = new THREE.MeshStandardMaterial({ color: 0x3b2418, roughness: 0.5, metalness: 0.08 });
-  const matWoodOak = new THREE.MeshStandardMaterial({ color: 0x7a5436, roughness: 0.55, metalness: 0.05 });
+  const pbrPlanks = loadPolyHavenPBR('brown_planks_03', { repeatX: 6, repeatY: 4 });
+  const matTeak = new THREE.MeshStandardMaterial({
+    ...pbrPlanks,
+    color: 0xd8c3b0,
+    normalScale: new THREE.Vector2(0.75, 0.75),
+    roughness: 1.0,
+    metalness: 0.04
+  });
+  const matWoodDark = new THREE.MeshStandardMaterial({ color: 0x3b2418, roughness: 0.48, metalness: 0.08 });
+  const matWoodOak = new THREE.MeshStandardMaterial({
+    ...loadPolyHavenPBR('brown_planks_03', { repeatX: 2, repeatY: 1 }),
+    color: 0xd9bf9f,
+    roughness: 0.88,
+    metalness: 0.04
+  });
   const matCopper = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.28, metalness: 0.88 });
   const matBrass = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.25, metalness: 0.9 });
   const matChrome = new THREE.MeshStandardMaterial({ color: 0xd4d8df, roughness: 0.18, metalness: 0.92 });
   const matSteel = new THREE.MeshStandardMaterial({ color: 0x1e222b, roughness: 0.45, metalness: 0.75 });
-  const matEmeraldVelvet = new THREE.MeshStandardMaterial({ color: 0x0b5340, roughness: 0.92, metalness: 0.02 });
-  const matCrimsonVelvet = new THREE.MeshStandardMaterial({ color: 0x781424, roughness: 0.9, metalness: 0.04 });
+  const pbrVelvet = loadPolyHavenPBR('velour_velvet', { repeatX: 2, repeatY: 2 });
+  const matEmeraldVelvet = new THREE.MeshStandardMaterial({
+    ...pbrVelvet,
+    color: 0x10785a,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    roughness: 1.0,
+    metalness: 0.02
+  });
+  const matCrimsonVelvet = new THREE.MeshStandardMaterial({
+    ...pbrVelvet,
+    color: 0xa61d34,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    roughness: 1.0,
+    metalness: 0.02
+  });
   const matCharcoalLinen = new THREE.MeshStandardMaterial({ color: 0x2a2d36, roughness: 0.92, metalness: 0.02 });
   const matCreamLinen = new THREE.MeshStandardMaterial({ color: 0xe7e1d6, roughness: 0.88, metalness: 0.02 });
-  const matCognacLeather = new THREE.MeshStandardMaterial({ color: 0x7c3e20, roughness: 0.48, metalness: 0.08 });
-  const matBlackLeather = new THREE.MeshStandardMaterial({ color: 0x16171c, roughness: 0.36, metalness: 0.14 });
+  const pbrLeather = loadPolyHavenPBR('fabric_leather_02', { repeatX: 2, repeatY: 2 });
+  const matCognacLeather = new THREE.MeshStandardMaterial({
+    ...pbrLeather,
+    color: 0x9c532d,
+    normalScale: new THREE.Vector2(0.65, 0.65),
+    roughness: 0.9,
+    metalness: 0.05
+  });
+  const matBlackLeather = new THREE.MeshStandardMaterial({
+    ...pbrLeather,
+    color: 0x262830,
+    normalScale: new THREE.Vector2(0.65, 0.65),
+    roughness: 0.85,
+    metalness: 0.08
+  });
   const matMirror = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.04, metalness: 0.98 });
+  const matMoulding = new THREE.MeshStandardMaterial({ color: 0xc2bdae, roughness: 0.72, metalness: 0.02 });
+  const contactShadowTex = buildContactShadowTexture();
+  const matContactShadow = new THREE.MeshBasicMaterial({
+    map: contactShadowTex,
+    transparent: true,
+    opacity: 0.68,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1
+  });
+  const matArt1 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(1), roughness: 0.35, metalness: 0.04 });
+  const matArt2 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(2), roughness: 0.35, metalness: 0.04 });
   const matGlass = new THREE.MeshPhysicalMaterial({
     color: 0xa5f3fc,
     roughness: 0.08,
@@ -132,9 +217,6 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     emissiveIntensity: 1.8
   });
   lighting.registerEmissive(matNeonCyan, { dayIntensity: 0.3, nightIntensity: 2.0 });
-
-  const matPlant = new THREE.MeshStandardMaterial({ color: 0x1b5e38, roughness: 0.75 });
-  const matTerracotta = new THREE.MeshStandardMaterial({ color: 0x9c4c33, roughness: 0.85 });
 
   // Helper to add shadows & mesh cleanly
   function box(parent, w, h, d, x, y, z, mat, cast = true, receive = true) {
@@ -200,6 +282,75 @@ export function buildSanctuaryArchitecture(scene, lighting) {
         box(group, 1.3, 0.16, 0.4, 11.4, sy, sz, matWoodOak);
       }
     }
+
+    // Architectural Baseboards, Crown Mouldings & Pilasters (4.9m height scale cues)
+    box(group, BUILDING_WIDTH - 0.3, 0.14, 0.06, 0, 0.07, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 + 0.16, matWoodDark, false, true);
+    box(group, 0.06, 0.14, BUILDING_DEPTH - 0.3, -BUILDING_WIDTH / 2 + 0.16, 0.07, BUILDING_CENTER_Z, matWoodDark, false, true);
+    box(group, 0.06, 0.14, BUILDING_DEPTH - 0.3, BUILDING_WIDTH / 2 - 0.16, 0.07, BUILDING_CENTER_Z, matWoodDark, false, true);
+    box(group, BUILDING_WIDTH - 0.3, 0.12, 0.16, 0, FLOOR_HEIGHT - 0.09, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 + 0.2, matMoulding, false, false);
+    box(group, 0.16, 0.12, BUILDING_DEPTH - 0.3, -BUILDING_WIDTH / 2 + 0.2, FLOOR_HEIGHT - 0.09, BUILDING_CENTER_Z, matMoulding, false, false);
+    box(group, 0.16, 0.12, BUILDING_DEPTH - 0.3, BUILDING_WIDTH / 2 - 0.2, FLOOR_HEIGHT - 0.09, BUILDING_CENTER_Z, matMoulding, false, false);
+    for (const px of [-10.5, -5.0, 0.2, 4.4, 9.6]) {
+      box(group, 0.28, FLOOR_HEIGHT, 0.12, px, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 + 0.18, matMoulding, false, true);
+    }
+  }
+
+  function addContactShadow(parent, x, z, radiusX = 0.75, radiusZ = 0.75, y = 0.015) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(radiusX * 2, radiusZ * 2), matContactShadow);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, y, z);
+    m.userData.hideOnDepthPass = true;
+    parent.add(m);
+    return m;
+  }
+
+  function placeGLTFModel(parent, modelId, targetHeight, x, y, z, rotYRad = 0, { addShadow = true, customArtMat = null } = {}) {
+    loadCachedGLTF(modelId).then((gltf) => {
+      const obj = gltf.scene.clone(true);
+      obj.rotation.set(0, rotYRad, 0);
+      obj.updateMatrixWorld(true);
+
+      const b0 = new THREE.Box3().setFromObject(obj);
+      const size0 = new THREE.Vector3();
+      b0.getSize(size0);
+      const scale = targetHeight / Math.max(0.05, size0.y);
+      obj.scale.multiplyScalar(scale);
+      obj.updateMatrixWorld(true);
+
+      const b1 = new THREE.Box3().setFromObject(obj);
+      const center1 = new THREE.Vector3();
+      const size1 = new THREE.Vector3();
+      b1.getCenter(center1);
+      b1.getSize(size1);
+
+      obj.position.set(x - center1.x, y - b1.min.y, z - center1.z);
+      obj.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (customArtMat && child.material) {
+            const matName = String(child.material.name || '').toLowerCase();
+            if (matName.includes('artwork')) {
+              child.material = customArtMat;
+            } else if (matName.includes('glass')) {
+              child.material = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                roughness: 0.06,
+                metalness: 0.05,
+                transparent: true,
+                opacity: 0.1,
+                depthWrite: false
+              });
+            }
+          }
+          if (child.material?.aoMap) child.material.aoMap.channel = 0;
+        }
+      });
+      parent.add(obj);
+      if (addShadow) {
+        addContactShadow(parent, x, z, Math.max(0.32, size1.x * 0.58), Math.max(0.32, size1.z * 0.58), y + 0.014);
+      }
+    }).catch((err) => console.warn('[PolyHaven GLTF]', modelId, err));
   }
 
   function addCandle(parent, x, y, z, withLight = false) {
@@ -217,16 +368,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   }
 
   function addPlantPot(parent, x, y, z, scale = 1.0) {
-    cyl(parent, 0.32 * scale, 0.24 * scale, 0.55 * scale, 12, x, y + 0.275 * scale, z, matTerracotta);
-    for (let i = 0; i < 6; i++) {
-      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.22 * scale, 0.7 * scale, 5), matPlant);
-      const a = (i / 6) * Math.PI * 2;
-      leaf.position.set(x + Math.cos(a) * 0.18 * scale, y + 0.72 * scale, z + Math.sin(a) * 0.18 * scale);
-      leaf.rotation.z = -Math.cos(a) * 0.45;
-      leaf.rotation.x = Math.sin(a) * 0.45;
-      leaf.castShadow = true;
-      parent.add(leaf);
-    }
+    placeGLTFModel(parent, 'potted_plant_04', 1.35 * scale, x, y, z, x * 0.35, { addShadow: true });
   }
 
   function addChair(parent, x, y, z, rotY = 0, seatMat = matWoodDark) {
@@ -422,6 +564,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const matCafeSign = new THREE.MeshStandardMaterial({ map: cafeSignTex, emissiveMap: cafeSignTex, emissive: new THREE.Color(0xffdfa8), emissiveIntensity: 1.0 });
   lighting.registerEmissive(matCafeSign, { dayIntensity: 0.3, nightIntensity: 1.2 });
   box(p1, 4.4, 0.8, 0.1, -0.5, 3.1, -14.2, matCafeSign, false);
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.35, -6.2, 1.85, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.35, 5.2, 1.85, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(p1, 'coffee_table_round_01', 0.72, -5.8, 0, -4.0, 0.26, { addShadow: true });
+  placeGLTFModel(p1, 'coffee_table_round_01', 0.72, 6.0, 0, -4.2, -0.44, { addShadow: true });
+  placeGLTFModel(p1, 'ArmChair_01', 0.88, -6.9, 0, -4.0, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p1, 'ArmChair_01', 0.88, 7.1, 0, -4.2, -Math.PI / 2, { addShadow: true });
 
   // 4 Carrara Bistro Tables + Thonet Chairs
   for (const [tx, tz] of [[-5.8, -4.0], [-2.0, -3.5], [2.2, -3.8], [6.0, -4.2]]) {
@@ -458,6 +606,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   // East divider at X = +4.4 (wide archway Z = -9.5..-2.0)
   box(p2, 0.16, FLOOR_HEIGHT, 4.8, 4.4, FLOOR_HEIGHT / 2, -12.0, matDivider);
   box(p2, 0.16, FLOOR_HEIGHT, 3.4, 4.4, FLOOR_HEIGHT / 2, -0.2, matDivider);
+  for (const dx of [-4.75, 4.15, -12.65]) {
+    cyl(p2, 0.22, 0.22, 4.75, 12, dx, 2.38, 1.15, matCrimsonVelvet);
+  }
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, 2.4, 1.95, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, -2.8, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
 
   // ZONE 1: TOCADOR VANITY & VESTIDOR (Center North Z: -14.2..-8.5)
   box(p2, 3.2, 0.08, 0.85, -0.4, 0.78, -13.2, matWoodDark);
@@ -466,21 +619,30 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     cyl(p2, 0.035, 0.025, 0.74, 10, lx, 0.37, -13.5, matBrass);
     cyl(p2, 0.035, 0.025, 0.74, 10, lx, 0.37, -12.9, matBrass);
   }
-  // Circular Vanity Mirror + 12 Glowing Bulbs
+  // Real-Time Planar Reflector Mirror + Depth Fallback Disc + Brass Rim + 12 Bulbs
   const mirrorDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.04, 36), matMirror);
   mirrorDisc.rotation.x = Math.PI / 2;
   mirrorDisc.position.set(-0.4, 1.65, -13.58);
   p2.add(mirrorDisc);
+  const mirrorReflector = new Reflector(new THREE.CircleGeometry(0.74, 36), {
+    clipBias: 0.003,
+    textureWidth: 512,
+    textureHeight: 512,
+    color: 0x9aa4b2
+  });
+  mirrorReflector.position.set(-0.4, 1.65, -13.55);
+  mirrorReflector.userData.hideOnDepthPass = true;
+  p2.add(mirrorReflector);
   const mirrorFrame = new THREE.Mesh(new THREE.TorusGeometry(0.79, 0.035, 14, 48), matBrass);
-  mirrorFrame.position.set(-0.4, 1.65, -13.56);
+  mirrorFrame.position.set(-0.4, 1.65, -13.545);
   p2.add(mirrorFrame);
   for (let b = 0; b < 12; b++) {
     const ba = (b / 12) * Math.PI * 2;
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.038, 10, 10), matWarmBulb);
-    bulb.position.set(-0.4 + Math.cos(ba) * 0.78, 1.65 + Math.sin(ba) * 0.78, -13.52);
+    bulb.position.set(-0.4 + Math.cos(ba) * 0.78, 1.65 + Math.sin(ba) * 0.78, -13.505);
     p2.add(bulb);
   }
-  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brush Cup, Emerald Stool)
+  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brush Cup, Sculpted Tufted Ottoman_01)
   const matAmberGlass = new THREE.MeshPhysicalMaterial({ color: 0xd97706, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.85 });
   cyl(p2, 0.045, 0.045, 0.14, 12, 0.35, 0.89, -13.1, matAmberGlass);
   cyl(p2, 0.02, 0.02, 0.04, 10, 0.35, 0.98, -13.1, matBrass);
@@ -488,7 +650,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   cyl(p2, 0.015, 0.015, 0.08, 10, 0.22, 0.86, -13.05, matBrass); // Lipstick tube
   cyl(p2, 0.012, 0.012, 0.04, 10, 0.22, 0.91, -13.05, matCrimsonVelvet);
   cyl(p2, 0.045, 0.04, 0.12, 12, -1.05, 0.88, -13.1, matCreamLinen); // Brush cup
-  cyl(p2, 0.34, 0.34, 0.48, 22, -0.4, 0.24, -12.1, matEmeraldVelvet); // Vanity Stool
+  placeGLTFModel(p2, 'Ottoman_01', 0.48, -0.4, 0, -12.05, -0.26, { addShadow: true });
 
   // Walk-In Wardrobe Rack (West of Vanity)
   box(p2, 1.6, 0.06, 0.65, -3.5, 0.03, -13.2, matWoodDark);
@@ -576,22 +738,22 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     box(p2, 0.72, 0.14, 0.44, px, 0.66, -3.95, matCreamLinen);
   }
   box(p2, 2.45, 1.22, 0.18, -0.5, 0.61, -4.4, matEmeraldVelvet);
-  // 2 Bedside Nightstands + Lamps
-  for (const nx of [-2.05, 1.05]) {
-    box(p2, 0.55, 0.52, 0.48, nx, 0.26, -4.15, matWoodDark);
-    cyl(p2, 0.04, 0.08, 0.24, 12, nx, 0.64, -4.15, matBrass);
-    cyl(p2, 0.14, 0.2, 0.22, 16, nx, 0.84, -4.15, matWarmBulb);
+  // 2 Sculpted Bedside Nightstands (ClassicNightstand_01) + Lamps
+  for (const nx of [-2.15, 1.15]) {
+    placeGLTFModel(p2, 'ClassicNightstand_01', 0.58, nx, 0, -4.15, 0, { addShadow: true });
+    cyl(p2, 0.04, 0.08, 0.24, 12, nx, 0.70, -4.15, matBrass);
+    cyl(p2, 0.14, 0.2, 0.22, 16, nx, 0.90, -4.15, matWarmBulb);
   }
   const suiteLight = new THREE.PointLight(0xffb870, 8.5, 12, 1.4);
   suiteLight.position.set(-0.5, 1.45, -3.6);
   p2.add(suiteLight);
   lighting.registerLight(suiteLight, { dayIntensity: 1.5, nightIntensity: 8.5 });
 
-  // Eixample Balcony Railing + Bistro Table + Wine Glass
+  // Eixample Balcony Railing + Sculpted Coffee Table + Accent ArmChair
   box(p2, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
   box(p2, BUILDING_WIDTH - 2.6, 0.06, 0.14, -1.2, 0.97, 1.48, matSteel);
-  cyl(p2, 0.4, 0.4, 0.04, 18, 2.4, 0.72, 0.8, matWhiteMarble);
-  cyl(p2, 0.04, 0.18, 0.7, 10, 2.4, 0.35, 0.8, matSteel);
+  placeGLTFModel(p2, 'coffee_table_round_01', 0.65, 2.5, 0, 0.65, 0, { addShadow: true });
+  placeGLTFModel(p2, 'ArmChair_01', 0.88, -3.3, 0, -1.5, -0.66, { addShadow: true });
 
   // =========================================================================
   // NIVEL 3 (PISO 3): THE MIND SANCTUARY (PODCAST & CLÍNICA + BOUDOIR SSC)
@@ -605,6 +767,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p3, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
   // Center divider separating Podcast/Clinical (West) from Sensory Boudoir (East)
   box(p3, 0.18, FLOOR_HEIGHT, 9.0, 0.2, FLOOR_HEIGHT / 2, -9.8, matDivider);
+  for (const dx of [-12.6, -0.1, 9.6]) {
+    cyl(p3, 0.22, 0.22, 4.75, 12, dx, 2.38, 1.15, matEmeraldVelvet);
+  }
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, -4.8, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, 4.8, 2.45, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
 
   // WEST WING: PODCAST STUDIO + CLINICAL LIBRARY
   box(p3, 3.2, 0.08, 1.35, -4.8, 0.8, -10.5, matWoodDark);
@@ -633,9 +800,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
       box(p3, 0.32, 0.36, 0.18, -12.35, shelfY, bz, bm);
     }
   }
-  // Black Leather Psychoanalytic Divan
-  box(p3, 2.3, 0.38, 0.95, -5.5, 0.25, -4.2, matBlackLeather);
-  box(p3, 0.45, 0.32, 0.95, -6.45, 0.52, -4.2, matBlackLeather);
+  // Sculpted Leather/Velvet Psychoanalytic Sofa (Sofa_01)
+  placeGLTFModel(p3, 'Sofa_01', 0.88, -5.5, 0, -4.2, -1.48, { addShadow: true });
 
   const podcastLight = new THREE.PointLight(0xffb86c, 15.0, 18, 1.3);
   podcastLight.position.set(-4.8, 2.95, -9.2);
@@ -720,9 +886,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     addPlantPot(p4, px, 0, pz, 1.25);
   }
 
+  addPlantPot(p2, -11.6, 0, -5.8, 1.0);
   return {
     floorGroups,
     waterMeshes,
-    frontGlassPanels
+    frontGlassPanels,
+    mirrorReflector
   };
 }

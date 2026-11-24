@@ -266,3 +266,52 @@ export function buildSideWindowTexture() {
 
   return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
 }
+
+const pbrTexLoader = new THREE.TextureLoader();
+
+export function loadPolyHavenPBR(polyId, { repeatX = 1, repeatY = 1, includeAO = true } = {}) {
+  const base = `./polyhaven/textures/${polyId}`;
+  const prep = (url, isColor) => {
+    const t = pbrTexLoader.load(url);
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeatX, repeatY);
+    t.anisotropy = 8;
+    t.colorSpace = isColor ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    if (!isColor && url.endsWith('ao.jpg')) t.channel = 0;
+    return t;
+  };
+  return {
+    map: prep(`${base}/diffuse.jpg`, true),
+    normalMap: prep(`${base}/nor_gl.jpg`, false),
+    roughnessMap: prep(`${base}/rough.jpg`, false),
+    aoMap: includeAO ? prep(`${base}/ao.jpg`, false) : undefined
+  };
+}
+
+export function buildContactShadowTexture() {
+  const [c, ctx] = makeCanvas(128);
+  const g = ctx.createRadialGradient(64, 64, 8, 64, 64, 62);
+  g.addColorStop(0, 'rgba(0, 0, 0, 0.56)');
+  g.addColorStop(0.55, 'rgba(0, 0, 0, 0.25)');
+  g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
+}
+
+export function buildGalleryArtTexture(variant = 1) {
+  const [c, ctx] = makeCanvas(256);
+  ctx.fillStyle = variant === 1 ? '#12141a' : '#181014';
+  ctx.fillRect(0, 0, 256, 256);
+  const grad = ctx.createRadialGradient(128, 120, 12, 128, 128, 110);
+  grad.addColorStop(0, variant === 1 ? '#d18447' : '#bf2e4c');
+  grad.addColorStop(0.55, variant === 1 ? '#1a735c' : '#dbba6b');
+  grad.addColorStop(1, 'rgba(18, 20, 26, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(16, 16, 224, 224);
+  ctx.strokeStyle = '#e5dfd3';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5, 5, 246, 246);
+  return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
+}

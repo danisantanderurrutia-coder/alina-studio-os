@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { buildContactShadowTexture } from './textures.js';
 
 export class AlinaAvatarController {
   constructor(scene) {
@@ -40,6 +41,23 @@ export class AlinaAvatarController {
     }
 
     this.scene.add(this.root);
+
+    // Soft contact shadow directly under Alina's feet (hidden during Depth Pass)
+    const shadowTex = buildContactShadowTexture();
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: shadowTex,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1
+    });
+    const shadowQuad = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.15), shadowMat);
+    shadowQuad.rotation.x = -Math.PI / 2;
+    shadowQuad.position.y = 0.015;
+    shadowQuad.userData.hideOnDepthPass = true;
+    this.root.add(shadowQuad);
+
     this.loaded = true;
     this.playAnimation('Idle');
     return Object.keys(this.actions);

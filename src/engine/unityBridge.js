@@ -12,6 +12,7 @@ export class UnityWebGLBridge {
     this.loadStartMs = 0;
     this.loadDurationMs = null;
     this.pendingState = null;
+    this.lastCameraTelemetry = null;
 
     window.AlinaUnityCallbacks = {
       onReady: () => {
@@ -26,6 +27,11 @@ export class UnityWebGLBridge {
       },
       onDepthScreenshot: (base64Png) => {
         if (this.onDepthScreenshot) this.onDepthScreenshot(base64Png);
+      },
+      onCameraTelemetry: (telemetry) => {
+        if (telemetry && telemetry.position && telemetry.target) {
+          this.lastCameraTelemetry = { ...telemetry, approximate: false };
+        }
       },
       onFps: (fps) => {
         if (this.onFps) this.onFps(fps);
@@ -156,5 +162,14 @@ export class UnityWebGLBridge {
 
   requestDepthScreenshot916() {
     this._send('CaptureDepth916');
+  }
+
+  requestCameraTelemetry() {
+    this._send('RequestCameraTelemetry');
+  }
+
+  flyCameraTo(position, target) {
+    if (!position || !target) return;
+    this._send('FlyCameraToJson', JSON.stringify({ position, target }));
   }
 }

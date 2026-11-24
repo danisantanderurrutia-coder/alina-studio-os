@@ -13,6 +13,7 @@ import {
   buildHiggsfieldMotionFromCapture,
   describeCaptureFraming
 } from './engine/promptBuilder.js';
+import { deleteShotFromDB, loadShotsFromDB, saveShotToDB } from './engine/shotsStorage.js';
 
 const state = {
   activeEngine: 'threejs', // 'threejs' | 'unity'
@@ -410,6 +411,9 @@ function getCurrentCameraSnapshot() {
   if (state.activeEngine === 'threejs' && camCtrl) {
     return { ...camCtrl.getCameraTelemetry(), approximate: false };
   }
+  if (state.activeEngine === 'unity' && unityBridge?.lastCameraTelemetry) {
+    return { ...unityBridge.lastCameraTelemetry, approximate: false };
+  }
   const s = state.activeSpot;
   const presetPos =
     state.activeCamPreset === 'macro'
@@ -426,6 +430,15 @@ function getCurrentCameraSnapshot() {
 
 function getSelectedShot() {
   return state.shots.find((s) => s.id === state.selectedShotId) || null;
+}
+
+let saveShotTimer = null;
+function scheduleSaveShot(shot) {
+  if (!shot) return;
+  clearTimeout(saveShotTimer);
+  saveShotTimer = setTimeout(() => {
+    saveShotToDB(shot);
+  }, 220);
 }
 
 function updateShotsBadge() {
@@ -505,8 +518,12 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
   };
 
   state.shots.unshift(shot);
-  if (state.shots.length > 10) state.shots.pop();
+  if (state.shots.length > 24) {
+    const oldest = state.shots.pop();
+    if (oldest?.id) deleteShotFromDB(oldest.id);
+  }
   state.selectedShotId = shot.id;
+  saveShotToDB(shot);
 
   updateShotsBadge();
   renderShotsPanel();
@@ -548,6 +565,7 @@ function attachDepthToSelectedShot() {
   if (state.activeEngine === 'threejs') {
     shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, true);
     regenerateShotPrompts(shot, { onlyFluxIfClean: true });
+    saveShotToDB(shot);
     renderShotsPanel();
     setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura actual.</span>');
     return;
@@ -694,6 +712,8 @@ function restoreShotToViewport(shot) {
 
   if (state.activeEngine === 'threejs' && shot.camera?.position && shot.camera?.target) {
     camCtrl?.flyTo(shot.camera.position, shot.camera.target);
+  } else if (!shot.camera?.approximate && shot.camera?.position && shot.camera?.target) {
+    unityBridge?.flyCameraTo(shot.camera.position, shot.camera.target);
   } else {
     unityBridge?.sendCameraAngle(shot.camPreset || '85mm');
   }
@@ -871,19 +891,26 @@ function bindUIEvents() {
   document.getElementById('btn-capture-shot').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: false }));
   document.getElementById('btn-capture-shot-depth').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: true }));
 
-  // Edición e interacción sobre la captura seleccionada
+  // Edición e interacción sobre la captura seleccionada (con persistencia IndexedDB)
   document.getElementById('shotFluxPrompt').addEventListener('input', (e) => {
     const s = getSelectedShot();
-    if (s) s.fluxPrompt = e.target.value;
+    if (s) {
+      s.fluxPrompt = e.target.value;
+      scheduleSaveShot(s);
+    }
   });
   document.getElementById('shotMotionPrompt').addEventListener('input', (e) => {
     const s = getSelectedShot();
-    if (s) s.motionPrompt = e.target.value;
+    if (s) {
+      s.motionPrompt = e.target.value;
+      scheduleSaveShot(s);
+    }
   });
   document.getElementById('btn-shot-regen').addEventListener('click', () => {
     const s = getSelectedShot();
     if (!s) return;
     regenerateShotPrompts(s);
+    saveShotToDB(s);
     renderShotsPanel();
     setStatusText('↻ <span class="text-[#f29979]">Prompts regenerados desde la telemetría de la captura.</span>');
   });
@@ -901,8 +928,10 @@ function bindUIEvents() {
   document.getElementById('btn-shot-package').addEventListener('click', exportSelectedShotPackage);
   document.getElementById('btn-shot-delete').addEventListener('click', () => {
     if (!state.selectedShotId) return;
-    state.shots = state.shots.filter((s) => s.id !== state.selectedShotId);
+    const deletedId = state.selectedShotId;
+    state.shots = state.shots.filter((s) => s.id !== deletedId);
     state.selectedShotId = state.shots[0]?.id ?? null;
+    deleteShotFromDB(deletedId);
     updateShotsBadge();
     renderShotsPanel();
   });
@@ -962,6 +991,7 @@ function bindUIEvents() {
           cinemaMoveLabel: s.cinemaMoveLabel
         });
         document.getElementById('shotMotionPrompt').value = s.motionPrompt;
+        saveShotToDB(s);
       }
     });
   });
@@ -980,6 +1010,7 @@ function bindUIEvents() {
         cinemaMoveLabel: s.cinemaMoveLabel
       });
       document.getElementById('shotMotionPrompt').value = s.motionPrompt;
+      scheduleSaveShot(s);
     }
   });
 
@@ -1067,23 +1098,6 @@ async function init() {
   camCtrl = new CameraAndExportController(container, scene, renderer, lighting);
   alina = new AlinaAvatarController(scene);
 
-  cinema = new CinemaDirector({
-    scene, renderer, lighting, camCtrl, alina, unityBridge,
-    getSpot: (id) => (id ? findSpotById(id) : state.activeSpot),
-    prepareSpot: prepareSpotForCinema,
-    getBaseMode: () => state.lightingMode
-  });
-  cinemaUI = mountCinemaPanel(document.getElementById('cinema-panel'), {
-    director: cinema,
-    getSpot: findSpotById,
-    getActiveSpot: () => state.activeSpot,
-    setActiveSpot: prepareSpotForCinema,
-    getAnim: () => state.activeAnim,
-    renderer, camCtrl,
-    download: { dataUrl: downloadDataUrl, json: downloadJson },
-    setStatus: setStatusText
-  });
-
   unityBridge = new UnityWebGLBridge(
     document.getElementById('unity-canvas'),
     (pct) => {
@@ -1093,6 +1107,7 @@ async function init() {
     (loadMs) => {
       if (loadMs != null) state.unityLoadMs = loadMs;
       document.getElementById('unity-loading-overlay').classList.add('hidden');
+      unityBridge.requestCameraTelemetry();
       updatePerfBadge();
       updateViewportHud();
     },
@@ -1129,6 +1144,7 @@ async function init() {
         if (target) {
           target.depthImage = depthUrl;
           regenerateShotPrompts(target, { onlyFluxIfClean: true });
+          saveShotToDB(target);
           renderShotsPanel();
           setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map Unity 1080×1920 adjuntado a la captura.</span>');
         }
@@ -1139,6 +1155,7 @@ async function init() {
         const target = state.shots.find((s) => s.id === pending.shotId);
         if (target) {
           target.depthImage = depthUrl;
+          saveShotToDB(target);
           renderShotsPanel();
         }
         downloadDataUrl(depthUrl, `${pending.baseName}_depth_1080x1920.png`);
@@ -1148,6 +1165,33 @@ async function init() {
       setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Depth Map 1080×1920 PNG descargada.</span>');
     }
   );
+
+  cinema = new CinemaDirector({
+    scene, renderer, lighting, camCtrl, alina, unityBridge,
+    getSpot: (id) => (id ? findSpotById(id) : state.activeSpot),
+    prepareSpot: prepareSpotForCinema,
+    getBaseMode: () => state.lightingMode
+  });
+  cinemaUI = mountCinemaPanel(document.getElementById('cinema-panel'), {
+    director: cinema,
+    getSpot: findSpotById,
+    getActiveSpot: () => state.activeSpot,
+    setActiveSpot: prepareSpotForCinema,
+    getAnim: () => state.activeAnim,
+    renderer, camCtrl,
+    download: { dataUrl: downloadDataUrl, json: downloadJson },
+    setStatus: setStatusText
+  });
+
+  // Restaurar capturas y prompts guardados en IndexedDB de sesiones anteriores
+  loadShotsFromDB(findSpotById).then((savedShots) => {
+    if (savedShots.length > 0 && state.shots.length === 0) {
+      state.shots = savedShots;
+      state.selectedShotId = savedShots[0].id;
+      updateShotsBadge();
+      renderShotsPanel();
+    }
+  });
 
   // Immediately render Floor 2 UI + spots so pills never wait on network
   selectFloor(2);

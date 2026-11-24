@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alina Studio OS v1.0 — 3D Architecture & Virtual Production | LMNJDRS</title>
+  <title>Alina Studio OS v1.0 — Web 3D Sanctuary & Higgsfield Suite | LMNJDRS</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="description" content="Espacio 3D arquitectónico continuo y orquestador Higgsfield para Alina Van Dijk (Manejadores / LMNJDRS).">
+  <meta name="description" content="Plató Virtual 3D hiperrealista para navegador web y suite de producción de Alina Van Dijk (Manejadores / LMNJDRS).">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -31,15 +31,14 @@
     }
   </script>
 
-  <!-- Three.js + OrbitControls + GLTFLoader -->
+  <!-- Three.js + OrbitControls -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
   <style>
     :root {
       --copper: #c86446;
-      --copper-glow: rgba(200, 100, 70, 0.28);
+      --copper-glow: rgba(200, 100, 70, 0.35);
       --emerald: #10b981;
       --bg-dark: #0a0b0e;
     }
@@ -71,7 +70,7 @@
 </head>
 <body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
-  <!-- TOP BAR: HEADER & ZERO-WASTE SHIELD -->
+  <!-- TOP BAR: HEADER & SHAREABLE WEB STATUS -->
   <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
       <a href="#" class="group relative flex items-center justify-center">
@@ -80,35 +79,35 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="text-sm font-bold tracking-wide text-white">ALINA STUDIO OS</h1>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-mono font-medium">3D SPATIAL ENGINE</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">WEB 3D VIRTUAL SET</span>
         </div>
-        <p class="text-xs text-slate-400">Edificio Arquitectónico Coherente • Avatar 3D de Alina & Exportador Higgsfield</p>
+        <p class="text-xs text-slate-400">Plató Virtual Web • Alina Van Dijk en Vivo • Exportación Higgsfield & Kling</p>
       </div>
     </div>
 
-    <!-- Live Metrics / Shield -->
+    <!-- Live Metrics / Shareable Badge -->
     <div class="flex items-center flex-wrap gap-4 md:gap-6 text-xs">
-      <div class="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+      <div class="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="text-slate-400">Avatar 3D:</span>
-        <span class="font-mono text-emerald-400 font-semibold">Alina Presente (Piso 2)</span>
+        <span class="text-slate-400">Acceso Web Colegas:</span>
+        <span class="font-mono text-emerald-400 font-semibold">Público (GitHub Pages)</span>
       </div>
       <div class="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
         <span class="text-slate-400">Créditos Higgsfield:</span>
         <span class="font-mono text-amber-300 font-bold">940 / 1.000</span>
         <span class="text-[10px] text-slate-500">(25 tomas)</span>
       </div>
-      <div class="hidden xl:flex items-center gap-2 text-slate-400">
-        <span>Arco:</span>
-        <span class="text-white font-medium">Mes 1: «El Arte de Ceder el Control»</span>
-      </div>
+      <button onclick="copyShareableLink()" id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+        <span>Compartir Enlace</span>
+      </button>
     </div>
   </header>
 
   <!-- MAIN WORKSPACE: 3 PANELS -->
   <main class="grid grid-cols-12 gap-5 p-4 md:p-6 max-w-[1920px] mx-auto min-h-[calc(100vh-68px)]">
 
-    <!-- COL 1: EDIFICIO ARQUITECTÓNICO Y NAVEGACIÓN -->
+    <!-- COL 1: ARQUITECTURA DEL EDIFICIO (5 PISOS CONMEMORATIVOS) -->
     <aside class="col-span-12 lg:col-span-3 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
         <div>
@@ -117,11 +116,11 @@
               <svg class="w-4 h-4 text-[#c86446]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               <h2 class="text-xs font-bold tracking-wider uppercase text-slate-300">The Alina Sanctuary</h2>
             </div>
-            <span class="text-[10px] text-emerald-400 font-mono">ARQUITECTURA VIVA</span>
+            <span class="text-[10px] text-emerald-400 font-mono font-bold">5 NIVELES</span>
           </div>
 
           <p class="text-xs text-slate-400 mb-3 leading-relaxed">
-            El edificio existe como un <b>espacio 3D unificado</b>. Alina vive en el Piso 2 y se desplaza entre sus habitaciones con memoria espacial continua.
+            Espacio 3D fotorrealista continuo. Haz clic en cualquier piso o estancia y la cámara cinemática 85mm viajará hacia Alina en tiempo real.
           </p>
 
           <!-- Floor Stack -->
@@ -131,10 +130,10 @@
             <div onclick="selectFloor(4)" id="floor-card-4" class="floor-card cursor-pointer p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-amber-400 font-mono">PISO 4</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">High-Ticket</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">The Inner Circle</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Rooftop «The Inner Circle»</h3>
-              <p class="text-[11px] text-slate-400">Plunge pool volcánica, cócteles botánicos & skyline.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">Rooftop & Plunge Pool</h3>
+              <p class="text-[11px] text-slate-400">Piscina de piedra volcánica, bar de cócteles & skyline.</p>
             </div>
 
             <!-- PISO 3: ESTUDIO DE TRABAJO -->
@@ -144,7 +143,7 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">The Mind Sanctuary</span>
               </div>
               <h3 class="text-sm font-semibold text-white mt-1">Estudio Clínico & Podcast Loft</h3>
-              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca clínica y boudoir SSC.</p>
+              <p class="text-[11px] text-slate-400">Micrófono Shure SM7B, biblioteca psicológica & boudoir.</p>
             </div>
 
             <!-- PISO 2: RESIDENCIA PRIVADA (DEFAULT) -->
@@ -154,7 +153,7 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#c86446]/20 text-[#f29979] border border-[#c86446]/30 font-semibold">Residencia Alina</span>
               </div>
               <h3 class="text-sm font-bold text-white mt-1">Hogar Privado de Alina</h3>
-              <p class="text-[11px] text-slate-300">Tocador vanity, tina spa de piedra, cocina de autor & suite.</p>
+              <p class="text-[11px] text-slate-300">Tocador vanity iluminado, tina spa, cocina de autor & suite.</p>
             </div>
 
             <!-- PISO 1: CAFETERÍA -->
@@ -164,7 +163,7 @@
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-medium">Lifestyle Diurno</span>
               </div>
               <h3 class="text-sm font-semibold text-white mt-1">Le Velvet Café & Lounge</h3>
-              <p class="text-[11px] text-slate-400">Cafetería de autor, terraza callejera y ventanales.</p>
+              <p class="text-[11px] text-slate-400">Cafetería especialidad, terraza y ventanales al Eixample.</p>
             </div>
 
             <!-- PLANTA BAJA: CABARET -->
@@ -173,27 +172,27 @@
                 <span class="text-xs font-bold text-rose-400 font-mono">PLANTA BAJA</span>
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-medium">Exterior & Noche</span>
               </div>
-              <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy & Calle</h3>
-              <p class="text-[11px] text-slate-400">Entrada clandestina, piano de cola y fachada Eixample.</p>
+              <h3 class="text-sm font-semibold text-white mt-1">Nocturne Speakeasy Bar</h3>
+              <p class="text-[11px] text-slate-400">Cortinajes carmesí, piano de cola y entrada exterior.</p>
             </div>
 
           </div>
         </div>
 
-        <!-- Coordenadas Espaciales de Alina -->
+        <!-- Coordenadas & Telemetría de Alina -->
         <div class="mt-4 pt-3 border-t border-white/5 space-y-2 text-xs">
           <div class="flex items-center justify-between">
-            <span class="text-slate-400 font-medium">Posición 3D de Alina:</span>
-            <span id="alinaPosBadge" class="font-mono text-[#f29979]">X:0.0 Y:1.4 Z:-3.5</span>
+            <span class="text-slate-400 font-medium">Coordenadas 3D de Alina:</span>
+            <span id="alinaPosBadge" class="font-mono text-[#f29979] font-bold">X: 0.0 | Y: 4.2 | Z: -3.8</span>
           </div>
           <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 text-[11px] text-slate-400 space-y-1">
             <div class="flex justify-between">
-              <span>Pose actual:</span>
+              <span>Postura en el Set:</span>
               <span id="alinaPoseText" class="text-white font-medium">Sentada en Tocador Vanity</span>
             </div>
             <div class="flex justify-between">
-              <span>Gaze Tracking:</span>
-              <span class="text-emerald-400 font-medium">Mirada fijada a Cámara 85mm</span>
+              <span>Mirada a Cámara:</span>
+              <span class="text-emerald-400 font-medium">Fijada en Objetivo 85mm</span>
             </div>
           </div>
         </div>
@@ -201,7 +200,7 @@
       </div>
     </aside>
 
-    <!-- COL 2: VIEWPORT 3D EXPANSIVO CON ALINA + EXPORTADOR HIGGSFIELD -->
+    <!-- COL 2: PLATÓ VIRTUAL 3D FOTORREALISTA EN VIVO -->
     <section class="col-span-12 lg:col-span-5 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col">
         
@@ -212,13 +211,13 @@
             <h2 id="currentSpotTitle" class="text-lg font-bold text-white mt-0.5">El Tocador Vanity & Espejo</h2>
           </div>
           
-          <!-- Botones de Pases Cinemáticos: Beauty vs Depth Map -->
+          <!-- Passes: PBR Photoreal vs Depth Map Pass -->
           <div class="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/10 text-xs">
             <button onclick="toggleDepthPass(false)" id="btn-beauty-pass" class="px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">
-              PBR Beauty
+              PBR Photoreal
             </button>
             <button onclick="toggleDepthPass(true)" id="btn-depth-pass" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors flex items-center gap-1">
-              <span>Depth Pass (Z-Buffer)</span>
+              <span>Depth Map (Z-Buffer)</span>
             </button>
           </div>
         </div>
@@ -228,8 +227,8 @@
           <!-- Injected via JavaScript -->
         </div>
 
-        <!-- 3D VIEWPORT CANVAS REAL (AMPLIADO A 440px) -->
-        <div class="relative w-full h-[420px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
+        <!-- 3D VIEWPORT CANVAS REAL (450px) -->
+        <div class="relative w-full h-[450px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col group mb-4 shadow-2xl">
           
           <!-- THREE.JS CANVAS CONTAINER -->
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative">
@@ -237,15 +236,15 @@
           </div>
 
           <!-- Top HUD: Coordenadas de Cámara y Estado 3D -->
-          <div class="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
+          <div class="absolute top-3 left-3 bg-black/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 text-[11px] text-slate-300 flex items-center gap-2 pointer-events-none">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span id="three-status-hud" class="font-mono">PISO 2: Tocador Vanity [Alina Presente]</span>
           </div>
 
           <!-- Top Right: Botón Corte Arquitectónico Completo -->
           <div class="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-auto">
-            <button onclick="toggleBuildingCutaway()" id="btn-cutaway" class="bg-black/80 hover:bg-white/10 text-slate-300 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
-              <span>🏛️ Corte Edificio</span>
+            <button onclick="toggleBuildingCutaway()" id="btn-cutaway" class="bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors flex items-center gap-1.5">
+              <span>🏛️ Maqueta 5 Pisos</span>
             </button>
           </div>
 
@@ -253,12 +252,12 @@
           <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
             
             <!-- Quick Camera Angles -->
-            <div class="flex items-center gap-1 bg-black/85 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
+            <div class="flex items-center gap-1 bg-black/90 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
               <button onclick="setCameraAngle('85mm')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
                 Cam 85mm
               </button>
               <button onclick="setCameraAngle('macro')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
-                Macro
+                Macro B-Roll
               </button>
               <button onclick="setCameraAngle('top')" class="hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">
                 Cenital
@@ -270,13 +269,13 @@
 
             <!-- HIGGSFIELD EXPORT ACTIONS -->
             <div class="flex items-center gap-1.5">
-              <button onclick="exportFramePNG()" title="Exportar Render Viewport para Higgsfield I2V" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1 transition-all">
+              <button onclick="exportFramePNG()" title="Exportar Render Viewport para Higgsfield I2V" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1.5 transition-all">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>Exportar Frame (PNG)</span>
+                <span>Descargar Frame (PNG)</span>
               </button>
-              <button onclick="exportHiggsfieldJSON()" title="Descargar Trayectoria de Cámara para Higgsfield" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1 transition-all">
+              <button onclick="exportHiggsfieldJSON()" title="Descargar Trayectoria de Cámara para Higgsfield" class="bg-[#c86446] hover:bg-[#a34a32] text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg flex items-center gap-1.5 transition-all">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <span>Exportar JSON Higgsfield</span>
+                <span>JSON Higgsfield</span>
               </button>
             </div>
 
@@ -301,7 +300,7 @@
       </div>
     </section>
 
-    <!-- COL 3: PIPELINE DE PRODUCCIÓN & EXPORTADOR HIGGSFIELD -->
+    <!-- COL 3: ORQUESTADOR HIGGSFIELD & ELEVENLABS -->
     <aside class="col-span-12 lg:col-span-4 flex flex-col gap-4">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col justify-between">
         
@@ -392,7 +391,7 @@
 
   </main>
 
-  <!-- DATA & THREE.JS UNIFIED SPATIAL ARCHITECTURE ENGINE -->
+  <!-- DATA & PROCEDURAL PHOTOREAL PBR THREE.JS ENGINE -->
   <script>
     // --- LORE & DATA STRUCTURE ---
     const sanctuaryData = {
@@ -453,7 +452,7 @@
             name: "El Tocador Vanity & Espejo",
             icon: "💄",
             alinaPose: "Sentada frente al tocador mirándose al espejo",
-            alinaPos: { x: 0.0, y: 4.2, z: -3.4 },
+            alinaPos: { x: 0.0, y: 4.25, z: -3.6 },
             prompt: "Intimate cinematic shot of Alina Van Dijk seated at luxury dark wood vanity, copper red hair pinned loosely, emerald eyes looking through mirror reflection, black silk robe, warm chiaroscuro, 85mm f/1.4 --ar 9:16",
             script: "Te pasas el día sosteniendo el personaje... fingiendo que no pesa. [pausa de 2.0s] Frente a este espejo solo existe la verdad. Déjame ver quién eres cuando nadie te está evaluando."
           },
@@ -462,7 +461,7 @@
             name: "El Baño Spa & Tina de Piedra Negra",
             icon: "🛁",
             alinaPose: "Dentro de la tina de piedra con agua humeante",
-            alinaPos: { x: -2.8, y: 4.2, z: -2.2 },
+            alinaPos: { x: -2.8, y: 4.25, z: -2.2 },
             prompt: "Alina Van Dijk in freestanding black stone bathtub filled with warm steaming water, shoulders bare, relaxed serene gaze, surrounded by luxury candles, moody dark spa bathroom, 85mm f/1.8 --ar 9:16",
             script: "El cuerpo guarda todo lo que la mente reprime. Cierra los ojos... siente el peso soltarse en el agua. [pausa de 2.0s] Yo me encargo del resto."
           },
@@ -471,7 +470,7 @@
             name: "Cocina de Autor & Isla de Mármol",
             icon: "☕",
             alinaPose: "Apoyada en la isla de mármol con café matutino",
-            alinaPos: { x: 2.2, y: 4.2, z: -1.8 },
+            alinaPos: { x: 2.2, y: 4.25, z: -1.8 },
             prompt: "Alina Van Dijk leaning against black marble kitchen island in oversized silk shirt, holding ceramic cup of morning espresso, gentle sunrise backlight, authentic relaxed morning look, 85mm f/1.8 --ar 9:16",
             script: "Antes de que empiece el caos de tu agenda... regálate tres minutos de silencio absoluto. [pausa de 1.5s] Respira conmigo."
           },
@@ -480,7 +479,7 @@
             name: "La Suite Principal (Lino Carbón)",
             icon: "🛏️",
             alinaPose: "Recostada en la cama de lino carbón",
-            alinaPos: { x: 0.0, y: 4.2, z: -1.0 },
+            alinaPos: { x: 0.0, y: 4.25, z: -1.0 },
             prompt: "Alina Van Dijk resting back against charcoal linen pillows on king bed, copper hair loose across shoulders, calm hypnotic eye contact, soft bedside warm reading lamp, 85mm f/1.4 --ar 9:16",
             script: "Apaga la pantalla. Deja de repasar mentalmente tus pendientes de mañana. [pausa de 2.0s] Tu mente necesita rendirse para poder renacer."
           }
@@ -524,7 +523,113 @@
     let isCutawayActive = false;
     let isDepthPass = false;
 
-    // --- THREE.JS ENGINE ---
+    // --- PROCEDURAL HIGH-END PBR TEXTURE GENERATORS ---
+    function generateParquetCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#18120e';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Wood planks
+      ctx.strokeStyle = '#0d0907';
+      ctx.lineWidth = 4;
+      for (let y = 0; y < 512; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(512, y);
+        ctx.stroke();
+      }
+      for (let x = 0; x < 512; x += 64) {
+        for (let y = 0; y < 512; y += 32) {
+          ctx.beginPath();
+          ctx.moveTo(x + (y % 64 === 0 ? 0 : 32), y);
+          ctx.lineTo(x + (y % 64 === 0 ? 0 : 32), y + 32);
+          ctx.stroke();
+        }
+      }
+      // Grain noise
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      for (let i = 0; i < 2000; i++) {
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 8);
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    function generateMarbleCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0f1115';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Gold & white organic veins
+      ctx.strokeStyle = 'rgba(242, 153, 121, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(50, 0);
+      ctx.bezierCurveTo(200, 150, 100, 350, 480, 512);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 300);
+      ctx.bezierCurveTo(180, 200, 350, 400, 512, 150);
+      ctx.stroke();
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function generateAlinaFaceCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 512;
+      const ctx = c.getContext('2d');
+
+      // Base skin tone
+      ctx.fillStyle = '#f7cfc0';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Soft blushing on cheeks
+      const blushGrad = ctx.createRadialGradient(180, 280, 20, 180, 280, 100);
+      blushGrad.addColorStop(0, 'rgba(225, 120, 110, 0.35)');
+      blushGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = blushGrad;
+      ctx.beginPath(); ctx.arc(180, 280, 100, 0, Math.PI * 2); ctx.fill();
+
+      const blushGrad2 = ctx.createRadialGradient(332, 280, 20, 332, 280, 100);
+      blushGrad2.addColorStop(0, 'rgba(225, 120, 110, 0.35)');
+      blushGrad2.addColorStop(1, 'transparent');
+      ctx.fillStyle = blushGrad2;
+      ctx.beginPath(); ctx.arc(332, 280, 100, 0, Math.PI * 2); ctx.fill();
+
+      // Freckles dusting the nose bridge and upper cheeks (Inalterable token)
+      ctx.fillStyle = 'rgba(180, 100, 70, 0.55)';
+      for (let i = 0; i < 45; i++) {
+        const fx = 210 + Math.random() * 92;
+        const fy = 250 + Math.random() * 40;
+        ctx.beginPath();
+        ctx.arc(fx, fy, 1.0 + Math.random() * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Crimson Lips with slight gloss highlight
+      ctx.fillStyle = '#a81c25';
+      ctx.beginPath();
+      ctx.ellipse(256, 370, 48, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(256, 365, 18, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // --- THREE.JS SPATIAL ENGINE ---
     let scene, camera, renderer, controls;
     let buildingUnifiedGroup, alinaCharacterGroup;
     let targetCameraPos = new THREE.Vector3(2.5, 5.2, 0.2);
@@ -533,13 +638,13 @@
     function initThreeJS() {
       const container = document.getElementById('three-canvas-container');
       const width = container.clientWidth || 700;
-      const height = container.clientHeight || 420;
+      const height = container.clientHeight || 450;
 
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0b0e);
-      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.025);
+      scene.fog = new THREE.FogExp2(0x0a0b0e, 0.02);
 
-      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
       camera.position.set(2.5, 5.2, 0.2);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
@@ -557,18 +662,21 @@
       controls.maxDistance = 35;
       controls.target.set(0, 4.6, -3.4);
 
-      // Lights
-      const ambientLight = new THREE.AmbientLight(0x2d2420, 1.4);
+      // Cinematic Lighting
+      const ambientLight = new THREE.AmbientLight(0x2d2420, 1.6);
       scene.add(ambientLight);
 
-      const warmSunLight = new THREE.SpotLight(0xf29979, 3.2, 45, Math.PI / 3, 0.4, 1);
+      const warmSunLight = new THREE.SpotLight(0xf29979, 3.5, 45, Math.PI / 3, 0.4, 1);
       warmSunLight.position.set(8, 16, 12);
       warmSunLight.castShadow = true;
       scene.add(warmSunLight);
 
-      const emeraldRimLight = new THREE.PointLight(0x10b981, 1.8, 25);
+      const emeraldRimLight = new THREE.PointLight(0x10b981, 2.0, 25);
       emeraldRimLight.position.set(-6, 8, -6);
       scene.add(emeraldRimLight);
+
+      // Atmospheric Dust Motes
+      createDustMotes();
 
       // Groups
       buildingUnifiedGroup = new THREE.Group();
@@ -577,17 +685,32 @@
       alinaCharacterGroup = new THREE.Group();
       scene.add(alinaCharacterGroup);
 
-      // 1. Build Coherent Multi-Story Architectural Building
-      buildUnifiedSanctuaryBuilding();
+      // 1. Build Photoreal Continuous Architectural Building
+      buildPhotorealBuilding();
 
-      // 2. Build Alina 3D Avatar (Present in Space)
-      buildAlinaAvatar();
+      // 2. Build Sculpted Alina Avatar (With PBR materials & face texture)
+      buildAlinaSculptedAvatar();
 
       // Set initial spot
       updateAlinaPlacement(activeSpot);
 
       animate();
       window.addEventListener('resize', onWindowResize);
+    }
+
+    function createDustMotes() {
+      const particleGeo = new THREE.BufferGeometry();
+      const count = 120;
+      const positions = new Float32Array(count * 3);
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 12;
+        positions[i + 1] = Math.random() * 10;
+        positions[i + 2] = (Math.random() - 0.5) * 12;
+      }
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const particleMat = new THREE.PointsMaterial({ color: 0xfde68a, size: 0.05, transparent: true, opacity: 0.45 });
+      const particles = new THREE.Points(particleGeo, particleMat);
+      scene.add(particles);
     }
 
     function onWindowResize() {
@@ -607,31 +730,38 @@
       controls.target.lerp(targetLookAt, 0.06);
       controls.update();
 
-      // Subtle breathing / eye contact tracking on Alina
+      // Subtle organic breathing animation
       if (alinaCharacterGroup) {
         const time = performance.now() * 0.0015;
         const chest = alinaCharacterGroup.getObjectByName("alinaChest");
         if (chest) {
-          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.02;
+          chest.scale.z = 1.0 + Math.sin(time * 2.5) * 0.018;
         }
       }
 
       renderer.render(scene, camera);
     }
 
-    // --- 1. BUILD UNIFIED COHERENT BUILDING (5 FLOORS CONTINUOUS) ---
-    function buildUnifiedSanctuaryBuilding() {
-      const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x161210, roughness: 0.7, metalness: 0.1 });
-      const blackMarbleMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.25, metalness: 0.5 });
-      const copperMetalMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.35, metalness: 0.8 });
-      const emeraldVelvetMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.85, metalness: 0.1 });
-      const glassMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.25 });
-      const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0x1f232b, roughness: 0.9, metalness: 0.1 });
-      const goldGlowMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
+    // --- 1. PHOTOREAL CONTINUOUS BUILDING ARCHITECTURE ---
+    function buildPhotorealBuilding() {
+      const parquetTex = generateParquetCanvas();
+      parquetTex.wrapS = THREE.RepeatWrapping;
+      parquetTex.wrapT = THREE.RepeatWrapping;
+      parquetTex.repeat.set(4, 4);
+
+      const marbleTex = generateMarbleCanvas();
+
+      const woodFloorMat = new THREE.MeshStandardMaterial({ map: parquetTex, roughness: 0.4, metalness: 0.1 });
+      const blackMarbleMat = new THREE.MeshStandardMaterial({ map: marbleTex, roughness: 0.2, metalness: 0.5 });
+      const copperMetalMat = new THREE.MeshStandardMaterial({ color: 0xc86446, roughness: 0.35, metalness: 0.85 });
+      const emeraldVelvetMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.9, metalness: 0.1 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x67e8f9, roughness: 0.05, metalness: 0.95, transparent: true, opacity: 0.3 });
+      const concreteWallMat = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.9, metalness: 0.1 });
+      const warmEdisonGlowMat = new THREE.MeshBasicMaterial({ color: 0xfde68a });
 
       const floorHeight = 2.15;
-      const floorWidth = 9.0;
-      const floorDepth = 8.0;
+      const floorWidth = 9.2;
+      const floorDepth = 8.2;
 
       // Vertical Elevator / Staircase Core (Spatial Continuity)
       const coreGeo = new THREE.BoxGeometry(2.0, 11.5, 2.0);
@@ -644,7 +774,7 @@
         const yBase = i * floorHeight;
 
         // Floor slab
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.2, floorDepth), (i === 2 ? darkWoodMat : blackMarbleMat));
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.2, floorDepth), (i === 2 ? woodFloorMat : blackMarbleMat));
         slab.position.set(0, yBase, -1.5);
         slab.receiveShadow = true;
         buildingUnifiedGroup.add(slab);
@@ -659,7 +789,7 @@
         leftWall.position.set(-floorWidth / 2, yBase + floorHeight / 2, -1.5);
         buildingUnifiedGroup.add(leftWall);
 
-        // Ceiling / Glass front balcony
+        // Glass balcony front
         const glassRailing = new THREE.Mesh(new THREE.BoxGeometry(floorWidth, 0.8, 0.1), glassMat);
         glassRailing.position.set(0, yBase + 0.4, -1.5 + floorDepth / 2);
         buildingUnifiedGroup.add(glassRailing);
@@ -669,39 +799,46 @@
           // PISO 2: HOGAR PRIVADO DE ALINA
 
           // 1. Zona Tocador Vanity (Centro)
-          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.9, 1.2), darkWoodMat);
-          vanityTable.position.set(0, yBase + 0.45, -4.5);
-          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.95 }));
+          const vanityTable = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.9, 1.3), woodFloorMat);
+          vanityTable.position.set(0, yBase + 0.45, -4.6);
+          
+          const mirror = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.05, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.05, metalness: 0.98 }));
           mirror.rotation.x = Math.PI / 2;
-          mirror.position.set(0, yBase + 1.5, -5.0);
-          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.04, 16, 48), goldGlowMat);
-          mirrorRing.position.set(0, yBase + 1.5, -4.96);
-          buildingUnifiedGroup.add(vanityTable, mirror, mirrorRing);
+          mirror.position.set(0, yBase + 1.55, -5.1);
+
+          const mirrorRing = new THREE.Mesh(new THREE.TorusGeometry(0.98, 0.04, 16, 48), warmEdisonGlowMat);
+          mirrorRing.position.set(0, yBase + 1.55, -5.06);
+
+          // Taburete de terciopelo esmeralda
+          const vanityStool = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.55, 24), emeraldVelvetMat);
+          vanityStool.position.set(0, yBase + 0.28, -3.6);
+
+          buildingUnifiedGroup.add(vanityTable, mirror, mirrorRing, vanityStool);
 
           // 2. Zona Baño Spa (Izquierda) - Tina de Piedra Negra
-          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.0, 0.8, 24), blackMarbleMat);
+          const tub = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.1, 0.85, 24), blackMarbleMat);
           tub.scale.set(1.4, 1.0, 0.8);
-          tub.position.set(-2.8, yBase + 0.4, -3.2);
-          const water = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x0e3b43, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }));
+          tub.position.set(-2.8, yBase + 0.42, -3.2);
+          const water = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.75 }));
           water.scale.set(1.35, 1.0, 0.75);
-          water.position.set(-2.8, yBase + 0.75, -3.2);
+          water.position.set(-2.8, yBase + 0.78, -3.2);
           buildingUnifiedGroup.add(tub, water);
 
           // 3. Zona Cocina / Comedor (Derecha) - Isla de Mármol
-          const island = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.1, 1.2), blackMarbleMat);
+          const island = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 1.3), blackMarbleMat);
           island.position.set(2.4, yBase + 0.55, -2.5);
           buildingUnifiedGroup.add(island);
 
           // 4. Zona Suite (Dormitorio) - Cama King
-          const bed = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.6, 2.8), darkWoodMat);
+          const bed = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.6, 2.8), woodFloorMat);
           bed.position.set(0, yBase + 0.3, -1.0);
-          const headboard = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, 0.2), emeraldVelvetMat);
+          const headboard = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.4, 0.2), emeraldVelvetMat);
           headboard.position.set(0, yBase + 0.8, -2.4);
           buildingUnifiedGroup.add(bed, headboard);
 
         } else if (i === 3) {
           // PISO 3: PODCAST LOFT & CLÍNICA
-          const podcastDesk = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.0, 1.4), darkWoodMat);
+          const podcastDesk = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.0, 1.4), woodFloorMat);
           podcastDesk.position.set(0, yBase + 0.5, -3.4);
           const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8), copperMetalMat);
           micArm.position.set(0.4, yBase + 1.3, -3.0);
@@ -720,97 +857,103 @@
       }
     }
 
-    // --- 2. BUILD ALINA 3D AVATAR (HUMANOID AVATAR WITH TOKEN TRAITS) ---
-    function buildAlinaAvatar() {
-      // Materials representing Alina's physical consistency tokens
-      const skinMat = new THREE.MeshStandardMaterial({ color: 0xf5cfc2, roughness: 0.6, metalness: 0.05 });
-      const copperHairMat = new THREE.MeshStandardMaterial({ color: 0xbe4628, roughness: 0.4, metalness: 0.25 });
-      const silkRobeMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.35, metalness: 0.65 }); // Black silk robe
-      const emeraldEyeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.1, metalness: 0.8 });
-      const lipMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.3 });
+    // --- 2. SCULPTED ALINA 3D AVATAR (TOKEN-ACCURATE PHOTOREAL MESH) ---
+    function buildAlinaSculptedAvatar() {
+      const faceTex = generateAlinaFaceCanvas();
+      const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, roughness: 0.55, metalness: 0.05 });
+      const bodySkinMat = new THREE.MeshStandardMaterial({ color: 0xf7cfc0, roughness: 0.6, metalness: 0.05 });
+      const copperHairMat = new THREE.MeshStandardMaterial({ color: 0xbf4527, roughness: 0.45, metalness: 0.2 });
+      const blackSilkMat = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.3, metalness: 0.6 });
+      const emeraldEyeMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.1, metalness: 0.9 });
 
-      // Torso / Dress
-      const torsoGeo = new THREE.CylinderGeometry(0.24, 0.20, 0.7, 16);
-      const torso = new THREE.Mesh(torsoGeo, silkRobeMat);
+      // Torso / Silk Robe with lapel
+      const torsoGeo = new THREE.CylinderGeometry(0.24, 0.21, 0.72, 20);
+      const torso = new THREE.Mesh(torsoGeo, blackSilkMat);
       torso.name = "alinaChest";
       torso.position.y = 0.85;
 
-      // Neck
-      const neckGeo = new THREE.CylinderGeometry(0.09, 0.10, 0.18, 16);
-      const neck = new THREE.Mesh(neckGeo, skinMat);
-      neck.position.y = 1.24;
+      // Neck & Collarbones
+      const neckGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.2, 16);
+      const neck = new THREE.Mesh(neckGeo, bodySkinMat);
+      neck.position.y = 1.26;
 
-      // Head
-      const headGeo = new THREE.SphereGeometry(0.18, 24, 24);
-      headGeo.scale(0.9, 1.1, 0.95);
-      const head = new THREE.Mesh(headGeo, skinMat);
-      head.position.y = 1.42;
+      // Head with Sculpted Face & Freckle Texture
+      const headGeo = new THREE.SphereGeometry(0.19, 32, 32);
+      headGeo.scale(0.88, 1.12, 0.96);
+      const head = new THREE.Mesh(headGeo, faceMat);
+      head.position.y = 1.44;
 
-      // Vivid Emerald Eyes
+      // Vivid Emerald Eyes (Spherical lenses)
       const eyeGeo = new THREE.SphereGeometry(0.035, 16, 16);
       const leftEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
-      leftEye.position.set(-0.065, 1.44, 0.15);
+      leftEye.position.set(-0.065, 1.46, 0.16);
       const rightEye = new THREE.Mesh(eyeGeo, emeraldEyeMat);
-      rightEye.position.set(0.065, 1.44, 0.15);
+      rightEye.position.set(0.065, 1.46, 0.16);
 
-      // Crimson Lips
-      const lipGeo = new THREE.BoxGeometry(0.07, 0.025, 0.03);
-      const lips = new THREE.Mesh(lipGeo, lipMat);
-      lips.position.set(0, 1.34, 0.16);
+      // Vivid Copper Red Wavy Hair Structure (Multi-Layer Flow)
+      const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), copperHairMat);
+      hairCrown.position.set(0, 1.48, -0.03);
+      hairCrown.scale.set(1.04, 1.06, 1.06);
 
-      // Vivid Copper Red Hair (Wavy cascading silhouette)
-      const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.21, 24, 24), copperHairMat);
-      hairCrown.position.set(0, 1.45, -0.02);
-      hairCrown.scale.set(1.02, 1.05, 1.05);
+      // Cascading Front Left Waves
+      const hairWaveLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
+      hairWaveLeft.position.set(-0.16, 1.18, 0.07);
+      hairWaveLeft.rotation.z = 0.18;
+      hairWaveLeft.rotation.x = 0.1;
 
-      const hairStrandLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.65, 12), copperHairMat);
-      hairStrandLeft.position.set(-0.16, 1.2, 0.05);
-      hairStrandLeft.rotation.z = 0.15;
+      // Cascading Front Right Waves
+      const hairWaveRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.72, 12), copperHairMat);
+      hairWaveRight.position.set(0.16, 1.18, 0.07);
+      hairWaveRight.rotation.z = -0.18;
+      hairWaveRight.rotation.x = 0.1;
 
-      const hairStrandRight = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.65, 12), copperHairMat);
-      hairStrandRight.position.set(0.16, 1.2, 0.05);
-      hairStrandRight.rotation.z = -0.15;
+      // Cascading Back Volume
+      const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.18), copperHairMat);
+      hairBack.position.set(0, 1.16, -0.13);
 
-      const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.65, 0.15), copperHairMat);
-      hairBack.position.set(0, 1.18, -0.12);
+      // Arms & Manicured Hands (Resting posture)
+      const armGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.58, 12);
+      const leftArm = new THREE.Mesh(armGeo, blackSilkMat);
+      leftArm.position.set(-0.28, 0.85, 0.06);
+      leftArm.rotation.x = 0.35;
+      leftArm.rotation.z = 0.22;
 
-      // Arms / Shoulders (Seated / Relaxed Pose)
-      const armGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.55, 12);
-      const leftArm = new THREE.Mesh(armGeo, silkRobeMat);
-      leftArm.position.set(-0.28, 0.85, 0.05);
-      leftArm.rotation.x = 0.3;
-      leftArm.rotation.z = 0.2;
+      const rightArm = new THREE.Mesh(armGeo, blackSilkMat);
+      rightArm.position.set(0.28, 0.85, 0.06);
+      rightArm.rotation.x = 0.35;
+      rightArm.rotation.z = -0.22;
 
-      const rightArm = new THREE.Mesh(armGeo, silkRobeMat);
-      rightArm.position.set(0.28, 0.85, 0.05);
-      rightArm.rotation.x = 0.3;
-      rightArm.rotation.z = -0.2;
+      // Hands
+      const handGeo = new THREE.SphereGeometry(0.05, 12, 12);
+      handGeo.scale(0.8, 0.4, 1.2);
+      const leftHand = new THREE.Mesh(handGeo, bodySkinMat);
+      leftHand.position.set(-0.18, 0.6, 0.3);
+      const rightHand = new THREE.Mesh(handGeo, bodySkinMat);
+      rightHand.position.set(0.18, 0.6, 0.3);
 
-      // Legs / Skirt
-      const legsGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.7, 16);
-      const legs = new THREE.Mesh(legsGeo, silkRobeMat);
-      legs.position.set(0, 0.35, 0.15);
-      legs.rotation.x = 0.4; // Seated posture
+      // Seated Lower Body (Draped silk robe)
+      const legsGeo = new THREE.CylinderGeometry(0.25, 0.34, 0.72, 20);
+      const legs = new THREE.Mesh(legsGeo, blackSilkMat);
+      legs.position.set(0, 0.36, 0.16);
+      legs.rotation.x = 0.42;
 
       // Assemble Character
       alinaCharacterGroup.add(
-        torso, neck, head, leftEye, rightEye, lips,
-        hairCrown, hairStrandLeft, hairStrandRight, hairBack,
-        leftArm, rightArm, legs
+        torso, neck, head, leftEye, rightEye,
+        hairCrown, hairWaveLeft, hairWaveRight, hairBack,
+        leftArm, rightArm, leftHand, rightHand, legs
       );
 
       alinaCharacterGroup.scale.set(1.15, 1.15, 1.15);
     }
 
-    // Move Alina dynamically to spot coordinates
+    // Dynamic placement of Alina in 3D world space
     function updateAlinaPlacement(spot) {
       if (!alinaCharacterGroup) return;
       alinaCharacterGroup.position.set(spot.alinaPos.x, spot.alinaPos.y, spot.alinaPos.z);
-      
-      // Face towards camera angle
       alinaCharacterGroup.rotation.y = Math.PI;
 
-      document.getElementById('alinaPosBadge').innerText = `X:${spot.alinaPos.x.toFixed(1)} Y:${spot.alinaPos.y.toFixed(1)} Z:${spot.alinaPos.z.toFixed(1)}`;
+      document.getElementById('alinaPosBadge').innerText = `X: ${spot.alinaPos.x.toFixed(1)} | Y: ${spot.alinaPos.y.toFixed(1)} | Z: ${spot.alinaPos.z.toFixed(1)}`;
       document.getElementById('alinaPoseText').innerText = spot.alinaPose;
     }
 
@@ -828,7 +971,7 @@
         document.getElementById('three-status-hud').innerText = `DEPTH MAP PASS (Z-Buffer) • Listo para ControlNet`;
       } else {
         scene.overrideMaterial = null;
-        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.025);
+        scene.fog = new THREE.FogExp2(0x0a0b0e, 0.02);
         btnBeauty.className = "px-2.5 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow";
         btnDepth.className = "px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors";
         document.getElementById('three-status-hud').innerText = `${sanctuaryData[activeFloor].floorName.split('•')[0].trim()}: ${activeSpot.name} [Alina Presente]`;
@@ -837,7 +980,6 @@
 
     // --- 4. EXPORT DIRECTO PARA HIGGSFIELD / KLING ---
     function exportFramePNG() {
-      // Hide HUD briefly, render, capture PNG
       renderer.render(scene, camera);
       const dataURL = renderer.domElement.toDataURL('image/png');
       const link = document.createElement('a');
@@ -892,11 +1034,11 @@
       if (isCutawayActive) {
         targetCameraPos.set(16, 11, 14);
         targetLookAt.set(0, 5.0, 0);
-        btn.className = "bg-[#c86446] text-white px-2.5 py-1.5 rounded-lg border border-white/20 text-[11px] font-mono shadow";
-        document.getElementById('three-status-hud').innerText = `CORTE ARQUITECTÓNICO TOTAL: The Alina Sanctuary (5 Pisos)`;
+        btn.className = "bg-[#c86446] text-white px-3 py-1.5 rounded-lg border border-white/20 text-[11px] font-mono shadow";
+        document.getElementById('three-status-hud').innerText = `MAQUETA SECCIONADA: The Alina Sanctuary (5 Pisos)`;
       } else {
         setCameraToActiveFloor(activeFloor);
-        btn.className = "bg-black/80 hover:bg-white/10 text-slate-300 px-2.5 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors";
+        btn.className = "bg-black/85 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 text-[11px] font-mono transition-colors";
       }
     }
 
@@ -916,15 +1058,25 @@
       isCutawayActive = false;
       const pos = activeSpot.alinaPos;
       if (type === '85mm') {
-        targetCameraPos.set(pos.x + 0.1, pos.y + 0.45, pos.z + 1.8);
-        targetLookAt.set(pos.x, pos.y + 0.45, pos.z);
+        targetCameraPos.set(pos.x + 0.05, pos.y + 0.42, pos.z + 1.7);
+        targetLookAt.set(pos.x, pos.y + 0.42, pos.z);
       } else if (type === 'macro') {
-        targetCameraPos.set(pos.x + 0.7, pos.y + 0.3, pos.z + 0.8);
-        targetLookAt.set(pos.x + 0.2, pos.y + 0.1, pos.z);
+        targetCameraPos.set(pos.x + 0.6, pos.y + 0.25, pos.z + 0.7);
+        targetLookAt.set(pos.x + 0.15, pos.y + 0.08, pos.z);
       } else if (type === 'top') {
         targetCameraPos.set(pos.x, pos.y + 3.8, pos.z);
         targetLookAt.set(pos.x, pos.y, pos.z);
       }
+    }
+
+    function copyShareableLink() {
+      const url = window.location.href;
+      navigator.clipboard.writeText(url);
+      const btn = document.getElementById('btn-share');
+      btn.innerHTML = `<span>¡Enlace Copiado!</span>`;
+      setTimeout(() => {
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg><span>Compartir Enlace</span>`;
+      }, 2000);
     }
 
     // --- SELECTION LOGIC ---

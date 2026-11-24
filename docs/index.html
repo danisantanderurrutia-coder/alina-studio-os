@@ -87,7 +87,7 @@
       box-shadow: 0 0 0 1px rgba(200, 100, 70, 0.35);
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-BvCbCL0F.js"></script>
+  <script type="module" crossorigin src="./assets/index-L0x4pIvI.js"></script>
 </head>
 <body class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
@@ -136,6 +136,10 @@
       <button id="btn-prompts-toggle" aria-pressed="false" aria-controls="col-prompts" class="bg-white/5 hover:bg-[#c86446]/25 text-slate-100 hover:text-white px-3 py-1.5 rounded-lg border border-[#c86446]/40 font-semibold transition-all flex items-center gap-1.5">
         <span>✨ Prompts Higgsfield</span>
         <span id="shotsCountBadge" class="hidden text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#c86446] text-white">0</span>
+      </button>
+
+      <button id="btn-docs-modal" class="bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-2.5 py-1.5 rounded-lg border border-white/10 font-semibold transition-all flex items-center gap-1.5" title="Arquitectura del Motor y Guía del Sistema 3D-to-AI">
+        <span>📐 Motor & Docs</span>
       </button>
 
       <button id="btn-share" class="bg-[#c86446]/20 hover:bg-[#c86446] text-[#f29979] hover:text-white border border-[#c86446]/30 px-2.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5">
@@ -485,6 +489,229 @@
     </aside>
 
   </main>
+
+  <!-- MODAL DE ARQUITECTURA & CÓMO FUNCIONA EL MOTOR -->
+  <div id="docs-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 transition-opacity" role="dialog" aria-modal="true" aria-labelledby="docs-modal-title">
+    <div class="bg-[#12141a] border border-white/15 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3 bg-black/40">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">📐</span>
+          <div>
+            <h2 id="docs-modal-title" class="text-sm font-bold text-white tracking-wide">THE ALINA SANCTUARY 3D · ARQUITECTURA & MOTOR</h2>
+            <p class="text-[11px] text-slate-400">Pipeline de Producción 3D-to-AI Zero-Waste · Three.js + Unity 6 URP 1:1</p>
+          </div>
+        </div>
+        <button id="btn-docs-close" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 text-lg transition-colors" aria-label="Cerrar modal">✕</button>
+      </div>
+
+      <!-- Segmented Tabs Navigation -->
+      <div class="flex items-center gap-1 p-2 bg-black/60 border-b border-white/5 overflow-x-auto custom-scrollbar text-xs">
+        <button data-tab="docs-1" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0">🏛️ Espacio & Dual-Engine</button>
+        <button data-tab="docs-2" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎬 Director & Óptica 35mm</button>
+        <button data-tab="docs-3" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎮 Controles & Cámaras</button>
+        <button data-tab="docs-4" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎛️ Pases AI & ControlNet</button>
+        <button data-tab="docs-5" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🌿 Bokeh & Regla 1:2</button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs leading-relaxed text-slate-300 flex-1">
+        
+        <!-- PESTAÑA 1: ESPACIO & DUAL-ENGINE -->
+        <div id="pane-docs-1" class="docs-pane space-y-4">
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Espacio Arquitectónico Métrico 1:1</h3>
+            <p>
+              El santuario está modelado como un edificio real de <strong>26 m de ancho × 16 m de profundidad</strong>, compuesto por <strong>5 plantas de 4.90 m de altura libre</strong> cada una (desde la Planta Baja en <code class="text-emerald-400 font-mono">Y = 0</code> hasta el Rooftop en <code class="text-emerald-400 font-mono">Y = 19.6 m</code>).
+            </p>
+            <p>
+              Cada rincón del edificio corresponde a uno de los <strong>12 spots canónicos</strong> con coordenadas exactas compartidas entre ambos motores: Suite Privada, Tocador Vanity con espejo planar, Baño Spa, Cocina Gourmet, Estudio de Podcast, Boudoir SSC, Piscina Infinity, Cocktail Bar, Café Bistro, Pasarela y Cabaret.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 bg-black/40 border border-emerald-500/20 rounded-xl space-y-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <h4 class="font-bold text-white">⚡ Motor A: Three.js WebGL</h4>
+              </div>
+              <p class="text-slate-400 text-[11px]">
+                Motor nativo en JavaScript de carga ultrarrápida e instantánea en el navegador. Incorpora texturas escaneadas PBR de Poly Haven (1K), iluminación física con sombras dinámicas de contacto, corte frontal automático (*open-side south*) y generación de animatics WebM en tiempo real.
+              </p>
+            </div>
+
+            <div class="p-3.5 bg-black/40 border border-[#c86446]/30 rounded-xl space-y-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#c86446]"></span>
+                <h4 class="font-bold text-white">🎮 Motor B: Unity 6 URP WebGL</h4>
+              </div>
+              <p class="text-slate-400 text-[11px]">
+                Motor compilado a WebAssembly (WebAssembly 9.9 MB + Data 82 MB) con shaders URP nativos. Proporciona fidelidad visual de videojuego AAA, post-procesado con perfil de volumen (*Bokeh Depth of Field*, *Bloom*, *Vignette*, *ACES tonemapping*) y puente bidireccional mediante <code class="text-[#f29979] font-mono">AlinaSanctuaryBridge.cs</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-black/50 border border-white/5 rounded-xl text-[11px] text-slate-400">
+            💡 <strong>Corte Casa de Muñecas (Sliced):</strong> El botón <code class="text-white font-mono">🔪 Corte Sliced</code> expone la sección frontal del edificio y oculta los techos superiores para que la cámara pueda encuadrar cualquier habitación sin colisiones de geometría.
+          </div>
+        </div>
+
+        <!-- PESTAÑA 2: DIRECTOR & ÓPTICA 35MM -->
+        <div id="pane-docs-2" class="docs-pane hidden space-y-4">
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Óptica Real Full Frame 35mm Rotada a 9:16</h3>
+            <p>
+              El campo de visión vertical (<code class="text-emerald-400 font-mono">vFOV</code>) no se ajusta de forma arbitraria; se calcula trigonométricamente sobre un sensor vertical de <strong>20.25 × 36.0 mm</strong>:
+            </p>
+            <div class="p-2.5 bg-black/60 rounded-lg font-mono text-[11px] text-center text-amber-300">
+              vFOV = 2 · arctan(36.0 / (2 · focal_mm))
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-[11px]">
+              <thead>
+                <tr class="border-b border-white/10 text-slate-400 font-mono">
+                  <th class="py-1.5 px-2">Focal</th>
+                  <th class="py-1.5 px-2">vFOV</th>
+                  <th class="py-1.5 px-2">Apertura</th>
+                  <th class="py-1.5 px-2">Distancia</th>
+                  <th class="py-1.5 px-2">Uso Característico</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5 font-mono">
+                <tr><td class="py-1 px-2 text-[#f29979] font-bold">24 mm</td><td class="py-1 px-2">73.7°</td><td class="py-1 px-2">f/2.8</td><td class="py-1 px-2">3.0–9.5 m</td><td class="py-1 px-2 font-sans text-slate-300">Inmersión angular Lubezki & Arquitectura</td></tr>
+                <tr><td class="py-1 px-2 text-[#f29979] font-bold">35 mm</td><td class="py-1 px-2">54.4°</td><td class="py-1 px-2">f/2.0</td><td class="py-1 px-2">3.5–5.5 m</td><td class="py-1 px-2 font-sans text-slate-300">Plano medio fluido Wong Kar-wai</td></tr>
+                <tr><td class="py-1 px-2 text-[#f29979] font-bold">50 mm</td><td class="py-1 px-2">39.6°</td><td class="py-1 px-2">f/1.4</td><td class="py-1 px-2">2.6–3.8 m</td><td class="py-1 px-2 font-sans text-slate-300">Retrato editorial & Plano sobre hombro (OTS)</td></tr>
+                <tr><td class="py-1 px-2 text-[#f29979] font-bold">85 mm</td><td class="py-1 px-2">23.9°</td><td class="py-1 px-2">f/1.4</td><td class="py-1 px-2">1.8–2.8 m</td><td class="py-1 px-2 font-sans text-slate-300">Primer plano de autoridad Fincher / Terapia</td></tr>
+                <tr><td class="py-1 px-2 text-[#f29979] font-bold">100 mm</td><td class="py-1 px-2">20.4°</td><td class="py-1 px-2">f/2.8</td><td class="py-1 px-2">0.6–1.2 m</td><td class="py-1 px-2 font-sans text-slate-300">B-Roll Macro Zero-Face (accesorios, copas)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h4 class="font-bold text-white text-xs">8 Escuelas de Dirección & Iluminación Kelvin Aditiva</h4>
+            <p class="text-slate-400 text-[11px]">
+              El catálogo incluye las firmas de <strong>David Fincher</strong> (precisión milimétrica y luz cenital de quirófano), <strong>Wong Kar-wai</strong> (neon noir y desenfoque sensual), <strong>Denis Villeneuve</strong> (monumentalidad y luz motivada única), <strong>Greta Gerwig</strong> (calidez dorada), <strong>Luca Guadagnino</strong> (luz mediterránea e intimidad física), <strong>Christopher Nolan</strong> (escala épica y sombras duras), <strong>Nicolas Winding Refn</strong> (contraste cian/magenta) y <strong>Emmanuel Lubezki</strong> (movimiento fluido en mano a 24mm).
+            </p>
+            <p class="text-slate-400 text-[11px]">
+              Cada esquema lumínico posiciona dos fuentes dedicadas en tiempo real (<strong>Key Light</strong> y <strong>Rim Light</strong>) con temperaturas Kelvin físicas (desde 2700K cálido tungsteno hasta 6500K luz diurna) que se suman al entorno sin hornear ni destruir los lightmaps existentes.
+            </p>
+          </div>
+        </div>
+
+        <!-- PESTAÑA 3: CONTROLES & CÁMARAS -->
+        <div id="pane-docs-3" class="docs-pane hidden space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+              <h4 class="font-bold text-white text-xs">Navegación con Ratón / Trackpad</h4>
+              <ul class="space-y-1.5 text-slate-400 text-[11px]">
+                <li>🖱️ <strong class="text-slate-200">Click izquierdo + arrastrar:</strong> Órbita 360° fluida alrededor del sujeto o prop activo.</li>
+                <li>🖱️ <strong class="text-slate-200">Click derecho (o rueda pulsada):</strong> Paneo vertical y horizontal amortiguado.</li>
+                <li>📜 <strong class="text-slate-200">Rueda del ratón / pellizco:</strong> Zoom óptico elástico con límites de seguridad (no atraviesa paredes ni traspasa al avatar).</li>
+                <li>🎯 <strong class="text-emerald-400">Inercia cinemática:</strong> El controlador aplica un damping factor de 0.06 para evitar frenazos secos.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+              <h4 class="font-bold text-white text-xs">Presets Rápidos Flotantes (En el Visor)</h4>
+              <ul class="space-y-1.5 text-slate-400 text-[11px]">
+                <li><code class="text-[#f29979] font-mono">Cam 85mm</code>: Encuadre retrato clásico a la altura de los ojos (1.56 m).</li>
+                <li><code class="text-[#f29979] font-mono">Macro</code>: Vuelo inmediato al accesorio más cercano del spot (copa, perfume, micrófono).</li>
+                <li><code class="text-[#f29979] font-mono">Cenital</code>: Cámara aérea cenital a +72° mirando directamente hacia abajo.</li>
+                <li><code class="text-[#f29979] font-mono">Centrar</code>: Re-alinea el objetivo si te has desplazado explorando la sala.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h4 class="font-bold text-white text-xs">Desenganche Suave al Control Manual (*No Snap-Back*)</h4>
+            <p class="text-slate-400 text-[11px]">
+              Tanto en Three.js como en Unity 6 URP, si la cámara está reproduciendo un movimiento cinematográfico o un vuelo y tú tocas el ratón, <strong>la cámara se detiene de inmediato y te cede el control libre</strong>, recalculando la distancia orbital desde la posición exacta donde la dejaste.
+            </p>
+          </div>
+        </div>
+
+        <!-- PESTAÑA 4: PASES AI & CONTROLNET -->
+        <div id="pane-docs-4" class="docs-pane hidden space-y-4">
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Pases de Utilidad de Control para ComfyUI</h3>
+            <p>
+              El motor genera paquetes completos con proporciones 9:16 nativas (1080×1920) para alimentar los modelos generativos sin alucinaciones de composición:
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
+              <h5 class="font-bold text-white text-xs">1. Beauty Pass (Color PBR)</h5>
+              <p class="text-slate-400 text-[11px]">
+                Imagen a color con iluminación, reflejos, sombras suaves y texturas completas. Sirve como referencia estética y fijación de estilo para IP-Adapter o denoising ligero.
+              </p>
+            </div>
+
+            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
+              <h5 class="font-bold text-white text-xs">2. Linear Depth Pass (16-bit Z-Buffer)</h5>
+              <p class="text-slate-400 text-[11px]">
+                Mapa en escala de grises calibrado dinámicamente con la distancia focal de la toma (<code class="text-emerald-400 font-mono">Near = dist × 0.28</code>, <code class="text-emerald-400 font-mono">Far = dist × 2.8</code>). Esencial para <strong>ControlNet Depth</strong>.
+              </p>
+            </div>
+
+            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
+              <h5 class="font-bold text-white text-xs">3. Camera Normals Pass (Normales)</h5>
+              <p class="text-slate-400 text-[11px]">
+                Vectores de superficie orientados al espacio de cámara codificados en RGB (<code class="text-emerald-400 font-mono">N_view · 0.5 + 0.5</code>). Preserva pliegues, volúmenes corporales y detalles arquitectónicos en <strong>ControlNet Normal</strong>.
+              </p>
+            </div>
+
+            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
+              <h5 class="font-bold text-white text-xs">4. Material Segmentation Mask</h5>
+              <p class="text-slate-400 text-[11px]">
+                Máscara cromática determinista por material (Piel, Ojos, Cabello, Ropa) sobre fondo negro, lista para <strong>FaceDetailer</strong> e *Inpainting Regional* en ComfyUI.
+              </p>
+            </div>
+          </div>
+
+          <div class="p-3 bg-black/50 border border-white/5 rounded-xl text-[11px] text-slate-400">
+            🤖 <strong>Sincronización Automática de Prompts:</strong> El botón <code class="text-white font-mono">Copiar</code> ensambla en vivo el prompt para <strong>Flux.1 Dev</strong> (con token-lock del personaje, lente, apertura, dirección de luz y descriptores analizados de luminosidad) y el prompt de movimiento para <strong>Higgsfield / Kling</strong> calibrado con el <code class="text-amber-400 font-mono">Motion Strength (2.0–3.5)</code>.
+          </div>
+        </div>
+
+        <!-- PESTAÑA 5: BOKEH & REGLA 1:2 -->
+        <div id="pane-docs-5" class="docs-pane hidden space-y-4">
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Salto 3: Foreground Framing (Bokeh f/1.4)</h3>
+            <p>
+              El modo de primer término coloca deliberadamente un objeto 3D real a <strong>0.46–0.55 m de la lente</strong> (hojas de monstera, frascos de tocador en latón, copas de cristal o micrófonos de estudio) mientras la cámara enfoca al sujeto o al espejo a 2.5–7.8 m con apertura <strong>f/1.4</strong>.
+            </p>
+            <p class="text-slate-400 text-[11px]">
+              Esto produce un desenfoque óptico orgánico en el render y una capa blanca pura en el mapa de profundidad que obliga a ControlNet a generar una separación de planos cinematográfica (Foreground, Midground, Background) sin gastar cómputo en postproducción.
+            </p>
+          </div>
+
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h4 class="font-bold text-white text-xs">Fórmula Zero-Waste 1:2 (0% Fallo Facial)</h4>
+            <p class="text-slate-400 text-[11px]">
+              Para garantizar que los vídeos generados mantengan una consistencia de identidad perfecta sin deformaciones en el rostro:
+            </p>
+            <ul class="space-y-1.5 text-slate-400 text-[11px] list-disc list-inside">
+              <li>Por cada <strong>1 plano A-Roll</strong> (rostro humano de Alina hablando o mirando a cámara), se incluyen al menos <strong>2 planos B-Roll</strong> (macro de manos, cóctel, texturas arquitectónicas o detalles ambientales).</li>
+              <li><strong>Duración máxima por toma:</strong> ≤ 4.0 segundos (y ≤ 3.0 segundos en movimientos rápidos).</li>
+              <li><strong>Ángulo de giro seguro:</strong> Rotación de cámara y de cabeza ≤ 25° para no perder el ángulo ciego del LoRA.</li>
+              <li><strong>Tope de Motion Strength:</strong> Entre 2.0 y 3.5 en tomas faciales para evitar morphing en Higgsfield / Kling.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between text-[11px] text-slate-400">
+        <span class="font-mono text-slate-400">The Alina Sanctuary 3D · v2.0 Dual-Engine Ready</span>
+        <button id="btn-docs-close-footer" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#c86446] hover:text-white text-slate-200 font-semibold transition-colors">Entendido</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

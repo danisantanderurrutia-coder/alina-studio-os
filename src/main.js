@@ -950,8 +950,42 @@ function bindUIEvents() {
   document.getElementById('btn-dollhouse').addEventListener('click', () => setCameraPreset('dollhouse'));
   document.getElementById('btn-overview').addEventListener('click', () => setCameraPreset('overview'));
   document.getElementById('btn-fullscreen').addEventListener('click', () => toggleTheaterMode());
+
+  // Modal de Arquitectura & Motor (5 pestañas)
+  const docsModal = document.getElementById('docs-modal');
+  const setDocsModalOpen = (open) => {
+    if (!docsModal) return;
+    docsModal.classList.toggle('hidden', !open);
+  };
+  document.getElementById('btn-docs-modal')?.addEventListener('click', () => setDocsModalOpen(true));
+  document.getElementById('btn-docs-close')?.addEventListener('click', () => setDocsModalOpen(false));
+  document.getElementById('btn-docs-close-footer')?.addEventListener('click', () => setDocsModalOpen(false));
+  docsModal?.addEventListener('click', (e) => {
+    if (e.target === docsModal) setDocsModalOpen(false);
+  });
+  document.querySelectorAll('.docs-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.dataset.tab;
+      document.querySelectorAll('.docs-tab-btn').forEach((b) => {
+        const isActive = b.dataset.tab === targetTab;
+        b.className = isActive
+          ? 'docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0'
+          : 'docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0';
+      });
+      document.querySelectorAll('.docs-pane').forEach((pane) => {
+        pane.classList.toggle('hidden', pane.id !== `pane-${targetTab}`);
+      });
+    });
+  });
+
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && state.theaterMode) toggleTheaterMode(false);
+    if (e.key === 'Escape') {
+      if (docsModal && !docsModal.classList.contains('hidden')) {
+        setDocsModalOpen(false);
+        return;
+      }
+      if (state.theaterMode) toggleTheaterMode(false);
+    }
   });
 
   document.getElementById('btn-guide-916').addEventListener('click', () => {

@@ -42,8 +42,59 @@ export class CinemaDirector {
     this.keyLight = mk(true);
     this.rimLight = mk(false);
 
+    // Salto 3: Foreground Framing (Props reales en primer término con desenfoque / bokeh)
+    this.foregroundGroup = new THREE.Group();
+    this.foregroundGroup.name = 'CinemaForegroundPropGroup';
+    this.foregroundGroup.visible = false;
+    this.scene.add(this.foregroundGroup);
+    this._initForegroundMeshes();
+
     // El usuario toma el control → cancelar movimiento.
     camCtrl.controls.addEventListener('start', () => { if (this.playing) this.stop(false); });
+  }
+
+  _initForegroundMeshes() {
+    // 1. Hoja Tropical Monstera (plano curvado con textura o color verde profundo)
+    const leafGeo = new THREE.CylinderGeometry(0.005, 0.35, 0.85, 12, 4, true, 0, Math.PI);
+    const leafMat = new THREE.MeshStandardMaterial({
+      color: 0x145a32,
+      roughness: 0.38,
+      metalness: 0.05,
+      side: THREE.DoubleSide
+    });
+    const leafMesh = new THREE.Mesh(leafGeo, leafMat);
+    leafMesh.rotation.z = Math.PI / 4;
+    leafMesh.castShadow = true;
+
+    // 2. Copa de Cristal / Refractiva
+    const glassGeo = new THREE.CylinderGeometry(0.12, 0.08, 0.32, 16);
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.08,
+      metalness: 0.1,
+      transmission: 0.88,
+      transparent: true,
+      opacity: 0.72,
+      ior: 1.5
+    });
+    const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+
+    // 3. Micrófono Shure Studio
+    const micGroup = new THREE.Group();
+    const micBody = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.32, 16), new THREE.MeshStandardMaterial({ color: 0x212529, roughness: 0.6 }));
+    const micGrille = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshStandardMaterial({ color: 0x495057, metalness: 0.8, roughness: 0.3 }));
+    micGrille.position.y = 0.18;
+    micGroup.add(micBody, micGrille);
+
+    // 4. Frasco Perfume de Tocador en Latón
+    const flaconMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.26, 16), new THREE.MeshStandardMaterial({ color: 0xc8963e, metalness: 0.75, roughness: 0.25 }));
+
+    this.foregroundMeshes = {
+      monstera_leaf: leafMesh,
+      crystal_glass: glassMesh,
+      vintage_microphone: micGroup,
+      perfume_bottle: flaconMesh
+    };
   }
 
   // ---------- estado base ----------
@@ -83,6 +134,7 @@ export class CinemaDirector {
     this.keyLight.visible = false;
     this.rimLight.visible = false;
     this.keyLight.intensity = this.rimLight.intensity = 0;
+    this.foregroundGroup.visible = false;
     this._restoreBase();
     const spot = this.getSpot();
     if (spot) this.alina?.placeAtSpot(spot);
@@ -137,8 +189,27 @@ export class CinemaDirector {
     }
 
     this._setCamera(0, 0);
+    this._updateForegroundProp(p.foregroundProp);
     this.unityBridge?.applyCinemaShot(p);
     return p;
+  }
+
+  _updateForegroundProp(propData) {
+    while (this.foregroundGroup.children.length > 0) {
+      this.foregroundGroup.remove(this.foregroundGroup.children[0]);
+    }
+    if (!propData) {
+      this.foregroundGroup.visible = false;
+      return;
+    }
+    const baseMesh = this.foregroundMeshes[propData.propId] || this.foregroundMeshes.monstera_leaf;
+    if (baseMesh) {
+      const clone = baseMesh.clone(true);
+      clone.scale.setScalar(propData.scale || 0.3);
+      this.foregroundGroup.add(clone);
+      this.foregroundGroup.position.set(propData.worldPos.x, propData.worldPos.y, propData.worldPos.z);
+      this.foregroundGroup.visible = true;
+    }
   }
 
   // ---------- cámara ----------

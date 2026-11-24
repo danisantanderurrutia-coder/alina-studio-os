@@ -21,7 +21,8 @@ export function mountCinemaPanel(root, ctx) {
   const ui = {
     directorId: 'fincher_cronenweth', shotTypeId: 'mcu_interview', moveId: 'slow_dolly_push_in',
     lightId: 'fincher_top_soft_negfill', lens: 85, aperture: 1.4, role: 'A', scene: null, sceneKey: 'auto',
-    recording: null, playingScene: false, sceneAbort: false
+    recording: null, playingScene: false, sceneAbort: false,
+    foregroundFraming: false, foregroundPropId: null
   };
 
   root.innerHTML = `
@@ -48,6 +49,21 @@ export function mountCinemaPanel(root, ctx) {
       <label class="space-y-1"><span class="text-slate-400">Rol del plano</span>
         <select id="cin-role" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">
           <option value="A">A-Roll (Alina)</option><option value="B0">B-Roll 1 (prop)</option><option value="B1">B-Roll 2 (prop)</option></select></label>
+    </div>
+
+    <!-- Salto 3: Foreground Framing (Bokeh en primer término) -->
+    <div class="flex items-center justify-between px-2.5 py-1.5 bg-black/35 rounded-lg border border-white/10 text-[11px]">
+      <label class="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" id="cin-fg-toggle" class="accent-[#c86446] rounded cursor-pointer">
+        <span class="text-slate-200 font-medium">🌿 Primer Término (Bokeh f/1.4)</span>
+      </label>
+      <select id="cin-fg-prop" class="hidden bg-black/60 border border-white/15 rounded px-1.5 py-0.5 text-[10px] text-slate-200 font-mono">
+        <option value="auto">Auto (por spot)</option>
+        <option value="monstera_leaf">Hoja Monstera</option>
+        <option value="crystal_glass">Copa Cristal</option>
+        <option value="vintage_microphone">Micrófono</option>
+        <option value="perfume_bottle">Perfume Latón</option>
+      </select>
     </div>
 
     <div class="grid grid-cols-3 gap-1.5 text-[11px]">
@@ -110,7 +126,9 @@ export function mountCinemaPanel(root, ctx) {
       durationSec: Math.min(4, mv.recommendedDurationSec),
       animation: ctx.getAnim?.() || spot.defaultAnim || 'Idle',
       focusMode: isMirror ? 'mirror_reflection_plane' : role === 'B-Roll' ? 'macro_prop_lock' : 'iris_lock',
-      mirrorShot: isMirror, motionStrength: mv.recommendedMotionStrength
+      mirrorShot: isMirror, motionStrength: mv.recommendedMotionStrength,
+      foregroundFraming: Boolean(ui.foregroundFraming),
+      foregroundPropId: ui.foregroundPropId || undefined
     };
     if (isMirror) sh.controlNetOverrides = { depthWeight: meta.specialFlags.controlNetDepthWeightOverride ?? 0.35 };
     return sh;
@@ -119,6 +137,9 @@ export function mountCinemaPanel(root, ctx) {
   function syncSelectors() {
     $('cin-dir').value = ui.directorId; $('cin-shot').value = ui.shotTypeId; $('cin-move').value = ui.moveId;
     $('cin-light').value = ui.lightId; $('cin-lens').value = String(ui.lens); $('cin-role').value = ui.role;
+    $('cin-fg-toggle').checked = Boolean(ui.foregroundFraming);
+    $('cin-fg-prop').classList.toggle('hidden', !ui.foregroundFraming);
+    if (ui.foregroundPropId) $('cin-fg-prop').value = ui.foregroundPropId;
   }
 
   function readout(p, shot) {
@@ -129,6 +150,7 @@ export function mountCinemaPanel(root, ctx) {
       ['Foco', `${p.dof.startFocusDistM}→${p.dof.endFocusDistM} m`],
       ['Duración', `${p.camera.durationSec}s · ${p.camera.easing}`],
       ['Key/Rim', `${li.realtimeKeyLight.kelvin}K / ${li.realtimeRimLight.kelvin}K · ${li.contrastRatio}`],
+      ['Primer Plano', p.foregroundProp ? `🌿 ${p.foregroundProp.name}` : 'Desactivado'],
       ['Foco en', FOCUS_MODES[shot.focusMode] || shot.focusMode],
       ['Motion', `${shot.motionStrength} (máx 3.5)`]
     ].map(([k, v]) => `<div><span class="text-slate-500">${k}</span> <span class="text-slate-200">${esc(v)}</span></div>`).join('');
@@ -161,6 +183,7 @@ export function mountCinemaPanel(root, ctx) {
     const d = ix.directors.get(e.target.value);
     ui.directorId = d.id; ui.shotTypeId = d.preferredShotTypes[0]; ui.moveId = d.preferredMoves[0];
     ui.lightId = d.defaultLightingSchemeId; ui.lens = d.defaultFocalMm; ui.aperture = d.defaultAperture; ui.role = 'A';
+    ui.foregroundFraming = d.id === 'wong_kar_wai_doyle' || d.id === 'guadagnino_mukdeeprom';
     const mapped = LENSES.reduce((a, b) => (Math.abs(b - ui.lens) < Math.abs(a - ui.lens) ? b : a));
     ui.lens = mapped; syncSelectors(); apply(currentShot());
   };
@@ -180,6 +203,15 @@ export function mountCinemaPanel(root, ctx) {
     if (ui.role !== 'A') { ui.shotTypeId = 'macro_broll_prop'; ui.lens = 100; ui.aperture = 2.8; }
     else if (ui.shotTypeId === 'macro_broll_prop') { ui.shotTypeId = ix.directors.get(ui.directorId).preferredShotTypes[0]; ui.lens = 85; ui.aperture = 1.4; }
     syncSelectors(); apply(currentShot());
+  };
+  $('cin-fg-toggle').onchange = (e) => {
+    ui.foregroundFraming = e.target.checked;
+    $('cin-fg-prop').classList.toggle('hidden', !ui.foregroundFraming);
+    apply(currentShot());
+  };
+  $('cin-fg-prop').onchange = (e) => {
+    ui.foregroundPropId = e.target.value === 'auto' ? null : e.target.value;
+    apply(currentShot());
   };
   $('cin-recipe').onclick = () => { loadRecipe(); apply(currentShot()); };
   $('cin-apply').onclick = () => apply(currentShot());

@@ -152,6 +152,8 @@
           "focusMode": "mirror_reflection_plane",
           "scriptSegment": "Te pasas el día sosteniendo el personaje...",
           "mirrorShot": true,
+          "foregroundFraming": true,
+          "foregroundPropId": "perfume_bottle",
           "motionStrength": 2.3,
           "controlNetOverrides": {
             "depthWeight": 0.35,

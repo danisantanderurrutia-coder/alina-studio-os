@@ -1593,5 +1593,47 @@
         "isLayingPosture": false
       }
     }
+  },
+  "foregroundProps": {
+    "monstera_leaf": {
+      "id": "monstera_leaf",
+      "name": "Hoja Tropical Monstera (Desenfocada)",
+      "polyhavenModelId": "potted_plant_04",
+      "distanceMeters": 0.52,
+      "lateralOffsetM": -0.19,
+      "verticalOffsetM": -0.06,
+      "scale": 0.38,
+      "promptTokens": "soft organic defocused tropical monstera leaf framing left edge in extreme shallow foreground bokeh f/1.4"
+    },
+    "crystal_glass": {
+      "id": "crystal_glass",
+      "name": "Copa de Cristal / Vaso Facetado",
+      "polyhavenModelId": "coffee_table_round_01",
+      "distanceMeters": 0.48,
+      "lateralOffsetM": 0.16,
+      "verticalOffsetM": -0.12,
+      "scale": 0.25,
+      "promptTokens": "subtle blurred rim of crystal cocktail glass with specular refraction in foreground bokeh f/1.4"
+    },
+    "vintage_microphone": {
+      "id": "vintage_microphone",
+      "name": "Micrófono Shure SM7B en Primer Plano",
+      "polyhavenModelId": "ClassicNightstand_01",
+      "distanceMeters": 0.55,
+      "lateralOffsetM": -0.19,
+      "verticalOffsetM": -0.08,
+      "scale": 0.3,
+      "promptTokens": "dark matte studio microphone chassis blurred in soft cinematic foreground framing f/1.8"
+    },
+    "perfume_bottle": {
+      "id": "perfume_bottle",
+      "name": "Frasco de Perfume de Tocador en Latón",
+      "polyhavenModelId": "Ottoman_01",
+      "distanceMeters": 0.46,
+      "lateralOffsetM": 0.15,
+      "verticalOffsetM": -0.14,
+      "scale": 0.22,
+      "promptTokens": "warm golden perfume flacon rim blurred in immediate foreground bokeh f/1.4"
+    }
   }
 }

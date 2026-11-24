@@ -164,22 +164,30 @@ function stripLensAndAr(text) {
     .trim();
 }
 
-export function assemblePrompts({ shot, spot, catalog, aspectRatio }) {
+export function selectForegroundPropId(spotId) {
+  if (spotId === 'vanity') return 'perfume_bottle';
+  if (spotId === 'podcast') return 'vintage_microphone';
+  if (['bar', 'pool', 'cabaret'].includes(spotId)) return 'crystal_glass';
+  return 'monstera_leaf';
+}
+
+export function assemblePrompts({ shot, spot, catalog, aspectRatio, foregroundProp = null }) {
   const ix = indexCatalog(catalog);
   const dir = ix.directors.get(shot.directorStyleId);
   const st = ix.shotTypes.get(shot.shotTypeId);
   const mv = ix.moves.get(shot.cameraMoveId);
   const li = ix.lights.get(shot.lightingSchemeId);
   const optics = `${shot.focalLengthMm}mm f/${shot.apertureFStop} lens`;
+  const fgTokens = foregroundProp ? foregroundProp.promptTokens : null;
   let flux;
   if (shot.shotRole === 'B-Roll') {
     const brollText = (spot.brolls?.[shot.brollIndex ?? 0] || '').replace(/^B-Roll \d+:\s*/i, '');
-    flux = [brollText, st.promptTokens, optics, li.promptLightingTokens, dir.fluxPromptTokens].filter(Boolean).join(', ');
+    flux = [brollText, fgTokens, st.promptTokens, optics, li.promptLightingTokens, dir.fluxPromptTokens].filter(Boolean).join(', ');
   } else {
     const ctx = stripLensAndAr(spot.prompt || '');
     const hasChar = /Alina Van Dijk/i.test(ctx);
     const lock = hasChar ? '' : catalog.characterReference.tokenLockPrompt;
-    flux = [lock, ctx, st.promptTokens, optics, li.promptLightingTokens, dir.fluxPromptTokens].filter(Boolean).join(', ');
+    flux = [lock, ctx, fgTokens, st.promptTokens, optics, li.promptLightingTokens, dir.fluxPromptTokens].filter(Boolean).join(', ');
   }
   flux += ` --ar ${aspectRatio}`;
   const motion = `${mv.motionPromptTokens}, ${dir.motionPromptStyle}`;
@@ -299,8 +307,39 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
     warnings.push(`Luz '${li.id}' no recomendada en modo ${baseMode}`);
   }
 
+  // Salto 3: Foreground Framing (Props reales en primer término con desenfoque / bokeh)
+  let foregroundProp = null;
+  if (shot.foregroundFraming && catalog.foregroundProps) {
+    const propId = shot.foregroundPropId || selectForegroundPropId(shot.spotId);
+    const propSpec = catalog.foregroundProps[propId] || catalog.foregroundProps.monstera_leaf;
+    if (propSpec) {
+      const camFwd = norm(sub(target, startPos));
+      const camViewRight = norm(cross(camFwd, UP));
+      const camViewUp = norm(cross(camViewRight, camFwd));
+      const propPos = add(
+        startPos,
+        add(
+          mul(camFwd, propSpec.distanceMeters),
+          add(
+            mul(camViewRight, propSpec.lateralOffsetM),
+            mul(camViewUp, propSpec.verticalOffsetM)
+          )
+        )
+      );
+      foregroundProp = {
+        propId: propSpec.id,
+        name: propSpec.name,
+        polyhavenModelId: propSpec.polyhavenModelId,
+        worldPos: r3(propPos),
+        scale: propSpec.scale,
+        distanceFromCameraM: propSpec.distanceMeters,
+        promptTokens: propSpec.promptTokens
+      };
+    }
+  }
+
   const zw = auditShot(shot, catalog);
-  const prompts = assemblePrompts({ shot, spot, catalog, aspectRatio });
+  const prompts = assemblePrompts({ shot, spot, catalog, aspectRatio, foregroundProp });
 
   return {
     shotId: shot.shotId,
@@ -308,6 +347,8 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
     baseMode,
     animation: shot.animation,
     mirrorShot: Boolean(shot.mirrorShot),
+    foregroundFraming: Boolean(shot.foregroundFraming),
+    foregroundProp,
     alinaRotY: +rotY.toFixed(4),
     camera: {
       startPos: r3(startPos), startTarget: r3(target),

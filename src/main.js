@@ -5,6 +5,8 @@ import { buildSanctuaryArchitecture } from './engine/buildingBuilder.js';
 import { AlinaAvatarController } from './engine/alinaLoader.js';
 import { CameraAndExportController } from './engine/cameraAndExport.js';
 import { UnityWebGLBridge } from './engine/unityBridge.js';
+import { CinemaDirector } from './engine/cinemaDirector.js';
+import { mountCinemaPanel } from './engine/cinemaUI.js';
 
 const state = {
   activeEngine: 'threejs', // 'threejs' | 'unity'
@@ -22,7 +24,7 @@ const state = {
   unityFps: null
 };
 
-let scene, renderer, lighting, arch, alina, camCtrl, unityBridge;
+let scene, renderer, lighting, arch, alina, camCtrl, unityBridge, cinema, cinemaUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -194,6 +196,32 @@ function selectSpot(spot) {
   unityBridge?.sendAnimation(spot.defaultAnim || 'Idle');
 
   updateViewportHud();
+  cinemaUI?.onSpotChanged();
+}
+
+function findSpotById(spotId) {
+  for (const f of Object.values(SANCTUARY_FLOORS)) {
+    const sp = f.spots.find((x) => x.id === spotId);
+    if (sp) return sp;
+  }
+  return null;
+}
+
+/** Posiciona piso/spot/Alina para un plano de cine SIN mover la cámara (la mueve el Director). */
+function prepareSpotForCinema(spotId) {
+  const spot = findSpotById(spotId);
+  if (!spot || (state.activeSpot && state.activeSpot.id === spot.id && state.activeFloor === spot.floor)) return;
+  state.activeFloor = spot.floor;
+  state.activeSpot = spot;
+  document.getElementById('currentFloorTag').textContent = SANCTUARY_FLOORS[spot.floor].floorName;
+  updateFloorCardStyles();
+  applyThreeJSSlicing();
+  renderSpotPills();
+  document.getElementById('currentSpotTitle').textContent = spot.name;
+  document.getElementById('fluxPromptBox').textContent = spot.prompt;
+  document.getElementById('alinaPosBadge').textContent =
+    `X: ${spot.alinaPos.x.toFixed(1)} Y: ${spot.alinaPos.y.toFixed(1)} Z: ${spot.alinaPos.z.toFixed(1)}`;
+  alina?.placeAtSpot(spot);
 }
 
 function updateViewportHud() {
@@ -207,6 +235,7 @@ function setLightingMode(mode) {
   state.lightingMode = mode;
   lighting?.setMode(mode);
   unityBridge?.sendLightingMode(mode);
+  cinemaUI?.onModeChanged();
 
   const btnDay = document.getElementById('btn-mode-day');
   const btnNight = document.getElementById('btn-mode-night');
@@ -508,6 +537,23 @@ async function init() {
   camCtrl = new CameraAndExportController(container, scene, renderer, lighting);
   alina = new AlinaAvatarController(scene);
 
+  cinema = new CinemaDirector({
+    scene, renderer, lighting, camCtrl, alina, unityBridge,
+    getSpot: (id) => (id ? findSpotById(id) : state.activeSpot),
+    prepareSpot: prepareSpotForCinema,
+    getBaseMode: () => state.lightingMode
+  });
+  cinemaUI = mountCinemaPanel(document.getElementById('cinema-panel'), {
+    director: cinema,
+    getSpot: findSpotById,
+    getActiveSpot: () => state.activeSpot,
+    setActiveSpot: prepareSpotForCinema,
+    getAnim: () => state.activeAnim,
+    renderer, camCtrl,
+    download: { dataUrl: downloadDataUrl, json: downloadJson },
+    setStatus: setStatusText
+  });
+
   unityBridge = new UnityWebGLBridge(
     document.getElementById('unity-canvas'),
     (pct) => {
@@ -560,6 +606,7 @@ async function init() {
       for (const wm of arch.waterMeshes) {
         wm.position.y = (wm.userData.baseY ?? (wm.userData.baseY = wm.position.y)) + Math.sin(elapsed * 2.2) * 0.012;
       }
+      cinema?.update();
       camCtrl.update();
       camCtrl.render();
 

@@ -140,6 +140,16 @@ export class UnityWebGLBridge {
     this._send('SetAnimation', animName);
   }
 
+  applyCinemaShot(shotPayload) {
+    const jsonStr = typeof shotPayload === 'string' ? shotPayload : JSON.stringify(shotPayload);
+    this._send('ApplyCinemaShot', jsonStr);
+  }
+
+  playCameraMove(shotPayload) {
+    const jsonStr = typeof shotPayload === 'string' ? shotPayload : JSON.stringify(shotPayload);
+    this._send('PlayCameraMove', jsonStr);
+  }
+
   requestScreenshot916() {
     this._send('CaptureFrame916');
   }

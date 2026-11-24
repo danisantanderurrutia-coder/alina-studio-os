@@ -1,0 +1,1597 @@
+{
+  "schemaVersion": "2.0.0",
+  "catalogId": "alina-sanctuary-cinematography-v2",
+  "compatibleBlueprint": "alina-sanctuary.blueprint.json",
+  "characterReference": {
+    "name": "Alina Van Dijk",
+    "heightMeters": 1.72,
+    "eyeHeightM": 1.56,
+    "mouthHeightM": 1.5,
+    "chestHeightM": 1.3,
+    "waistHeightM": 1.06,
+    "hipsHeightM": 0.94,
+    "feetHeightM": 0.05,
+    "layingEyeHeightM": 0.24,
+    "layingChestHeightM": 0.16,
+    "allowedAnimations": [
+      "Idle",
+      "Walk",
+      "Rumba",
+      "Laying",
+      "HipHop"
+    ],
+    "tokenLockPrompt": "28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair with natural soft waves, vivid emerald green eyes, light natural freckles, crimson lips, micro-pores"
+  },
+  "sensorGates": {
+    "9:16": {
+      "sensorWidthMm": 20.25,
+      "sensorHeightMm": 36.0,
+      "description": "35mm Full Frame rotated 90 deg vertical cinema gate (portrait native)"
+    },
+    "4:5": {
+      "sensorWidthMm": 28.8,
+      "sensorHeightMm": 36.0,
+      "description": "35mm Full Frame rotated portrait editorial gate"
+    },
+    "16:9": {
+      "sensorWidthMm": 36.0,
+      "sensorHeightMm": 20.25,
+      "description": "35mm Full Frame landscape cinema gate"
+    },
+    "21:9": {
+      "sensorWidthMm": 36.0,
+      "sensorHeightMm": 15.43,
+      "description": "35mm Anamorphic 2.39:1 gate"
+    }
+  },
+  "directorStyles": [
+    {
+      "id": "fincher_cronenweth",
+      "name": "David Fincher — Control Clínico & Precisión",
+      "dp": "Jeff Cronenweth",
+      "moodTags": [
+        "clínico",
+        "autoridad",
+        "psicoanálisis",
+        "tensión controlada"
+      ],
+      "funnelStages": [
+        "Conversión Fanvue & Telegram VIP",
+        "Trabajo & Terapia"
+      ],
+      "defaultFocalMm": 50,
+      "defaultAperture": 1.8,
+      "preferredShotTypes": [
+        "mcu_interview",
+        "cu_portrait",
+        "ots_mirror",
+        "macro_broll_prop"
+      ],
+      "preferredMoves": [
+        "slow_dolly_push_in",
+        "static_breathing",
+        "rack_focus_macro_to_eyes"
+      ],
+      "defaultLightingSchemeId": "fincher_top_soft_negfill",
+      "volumeProfileGrade": {
+        "postExposure": -0.08,
+        "contrast": 18,
+        "saturation": -12,
+        "temperature": -14,
+        "tint": 6,
+        "splitShadowsHex": "#162A2C",
+        "splitHighlightsHex": "#E3C898",
+        "bloomIntensity": 0.16,
+        "vignetteIntensity": 0.28
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.08,
+        "environmentIntensityMultiplier": 0.72
+      },
+      "zeroWasteMotionRange": {
+        "min": 1.5,
+        "max": 2.6
+      },
+      "fluxPromptTokens": "David Fincher aesthetic, Jeff Cronenweth clinical cinematography, razor-sharp focus on iris, clean symmetrical composition, deep controlled shadows with subtle cyan-amber color separation, negative fill contrast, Hasselblad crispness",
+      "motionPromptStyle": "Calculated precision mechanical dolly push-in, zero handheld jitter, steady hypnotic eye lock"
+    },
+    {
+      "id": "wong_kar_wai_doyle",
+      "name": "Wong Kar-wai — Seducción Nocturna & Neón Clandestino",
+      "dp": "Christopher Doyle",
+      "moodTags": [
+        "sensual",
+        "nocturno",
+        "neón",
+        "intimidad furtiva"
+      ],
+      "funnelStages": [
+        "Mundo Exterior / Viral Dance & Reels",
+        "Conversión Fanvue & Telegram VIP"
+      ],
+      "defaultFocalMm": 35,
+      "defaultAperture": 1.4,
+      "preferredShotTypes": [
+        "mcu_interview",
+        "ots_mirror",
+        "ms_waist",
+        "macro_broll_prop"
+      ],
+      "preferredMoves": [
+        "lateral_slider_truck",
+        "subtle_parallax_arc",
+        "static_breathing"
+      ],
+      "defaultLightingSchemeId": "wong_neon_practical",
+      "volumeProfileGrade": {
+        "postExposure": 0.05,
+        "contrast": 22,
+        "saturation": 14,
+        "temperature": -6,
+        "tint": 14,
+        "splitShadowsHex": "#0E3B35",
+        "splitHighlightsHex": "#FF8C66",
+        "bloomIntensity": 0.42,
+        "vignetteIntensity": 0.34
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.24,
+        "environmentIntensityMultiplier": 0.9
+      },
+      "zeroWasteMotionRange": {
+        "min": 2.0,
+        "max": 3.0
+      },
+      "fluxPromptTokens": "Wong Kar-wai and Christopher Doyle cinematography, lush sensual 35mm anamorphic bokeh, rich emerald and crimson neon practical glow, soft foreground framing blur, poetic nocturnal Hong Kong speakeasy mood, 35mm film grain texture",
+      "motionPromptStyle": "Languid drifting lateral glide, soft candle and neon shimmer, dreamy slow tempo"
+    },
+    {
+      "id": "villeneuve_deakins",
+      "name": "Denis Villeneuve — Monumentalidad & Luz Motivada Única",
+      "dp": "Roger Deakins",
+      "moodTags": [
+        "arquitectónico",
+        "contemplativo",
+        "agua",
+        "lujo silencioso"
+      ],
+      "funnelStages": [
+        "High-Ticket / Membresía Anual",
+        "Top-Funnel / Intimidad Cotidiana"
+      ],
+      "defaultFocalMm": 40,
+      "defaultAperture": 2.0,
+      "preferredShotTypes": [
+        "ws_architectural",
+        "ms_waist",
+        "fs_full_body",
+        "top_down_zenital"
+      ],
+      "preferredMoves": [
+        "pedestal_reveal_up",
+        "slow_dolly_push_in",
+        "slow_dolly_pull_out"
+      ],
+      "defaultLightingSchemeId": "deakins_single_window",
+      "volumeProfileGrade": {
+        "postExposure": -0.04,
+        "contrast": 20,
+        "saturation": -8,
+        "temperature": 8,
+        "tint": -2,
+        "splitShadowsHex": "#1B2838",
+        "splitHighlightsHex": "#F5D0A9",
+        "bloomIntensity": 0.24,
+        "vignetteIntensity": 0.26
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.12,
+        "environmentIntensityMultiplier": 0.85
+      },
+      "zeroWasteMotionRange": {
+        "min": 1.6,
+        "max": 2.5
+      },
+      "fluxPromptTokens": "Roger Deakins and Denis Villeneuve cinematography, monumental architectural symmetry, single motivated natural light source casting clean geometric shadows, delicate atmospheric mist, tactile basalt stone and water reflections",
+      "motionPromptStyle": "Solemn slow architectural pedestal rise, serene minimal subject motion, meditative stillness"
+    },
+    {
+      "id": "guadagnino_mukdeeprom",
+      "name": "Luca Guadagnino — Sensorialidad Táctil & Luz Mediterránea",
+      "dp": "Sayombhu Mukdeeprom",
+      "moodTags": [
+        "sensorial",
+        "diurno",
+        "espresso",
+        "táctil"
+      ],
+      "funnelStages": [
+        "Descubrimiento & Street Lifestyle",
+        "Top-Funnel / Intimidad Cotidiana"
+      ],
+      "defaultFocalMm": 50,
+      "defaultAperture": 2.0,
+      "preferredShotTypes": [
+        "ms_waist",
+        "cu_portrait",
+        "macro_broll_prop",
+        "cowboy_american"
+      ],
+      "preferredMoves": [
+        "lateral_slider_truck",
+        "slow_dolly_push_in",
+        "rack_focus_macro_to_eyes"
+      ],
+      "defaultLightingSchemeId": "guadagnino_golden_bounce",
+      "volumeProfileGrade": {
+        "postExposure": 0.12,
+        "contrast": 8,
+        "saturation": 10,
+        "temperature": 18,
+        "tint": 4,
+        "splitShadowsHex": "#3A2C24",
+        "splitHighlightsHex": "#FFE0B2",
+        "bloomIntensity": 0.26,
+        "vignetteIntensity": 0.16
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.2,
+        "environmentIntensityMultiplier": 1.05
+      },
+      "zeroWasteMotionRange": {
+        "min": 2.0,
+        "max": 3.0
+      },
+      "fluxPromptTokens": "Luca Guadagnino and Sayombhu Mukdeeprom 35mm Kodak Portra aesthetic, warm Mediterranean side-window daylight, tactile marble copper and linen textures, intimate unhurried sensual realism, golden warm skin bounce",
+      "motionPromptStyle": "Gentle organic push-in and tactile macro slider glide, relaxed natural breathing"
+    },
+    {
+      "id": "kubrick_alcott",
+      "name": "Stanley Kubrick — Simetría Hipnótica & Luz de Velas",
+      "dp": "John Alcott",
+      "moodTags": [
+        "dominación",
+        "simetría",
+        "tenebrismo",
+        "velas 2200K"
+      ],
+      "funnelStages": [
+        "Conversión Fanvue & Telegram VIP",
+        "Top-Funnel / Intimidad Cotidiana"
+      ],
+      "defaultFocalMm": 35,
+      "defaultAperture": 1.4,
+      "preferredShotTypes": [
+        "low_angle_authority",
+        "ws_architectural",
+        "cu_portrait",
+        "top_down_zenital"
+      ],
+      "preferredMoves": [
+        "slow_dolly_push_in",
+        "static_breathing",
+        "slow_dolly_pull_out"
+      ],
+      "defaultLightingSchemeId": "kubrick_candlelight_2200k",
+      "volumeProfileGrade": {
+        "postExposure": -0.1,
+        "contrast": 26,
+        "saturation": 4,
+        "temperature": 22,
+        "tint": 2,
+        "splitShadowsHex": "#140F14",
+        "splitHighlightsHex": "#FFB76B",
+        "bloomIntensity": 0.34,
+        "vignetteIntensity": 0.38
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.15,
+        "environmentIntensityMultiplier": 0.65
+      },
+      "zeroWasteMotionRange": {
+        "min": 1.4,
+        "max": 2.4
+      },
+      "fluxPromptTokens": "Stanley Kubrick and John Alcott Barry Lyndon candlelight aesthetic, one-point perspective symmetry, subtle low-angle dominance, ultra-fast f/1.4 practical 2200K flickering candlelight, rich chiaroscuro velvet and brass",
+      "motionPromptStyle": "Hypnotic locked symmetrical forward tracking glide, commanding stationary posture"
+    },
+    {
+      "id": "lubezki_natural",
+      "name": "Emmanuel Lubezki — Inmersión Fluida & Contraluz Natural",
+      "dp": "Emmanuel Lubezki",
+      "moodTags": [
+        "walking",
+        "dinámico",
+        "espontáneo",
+        "contraluz"
+      ],
+      "funnelStages": [
+        "Descubrimiento & Street Lifestyle",
+        "Mundo Exterior / Viral Dance & Reels"
+      ],
+      "defaultFocalMm": 24,
+      "defaultAperture": 2.4,
+      "preferredShotTypes": [
+        "ms_waist",
+        "cowboy_american",
+        "fs_full_body",
+        "low_angle_authority"
+      ],
+      "preferredMoves": [
+        "handheld_walking_lubezki",
+        "subtle_parallax_arc",
+        "pedestal_reveal_up"
+      ],
+      "defaultLightingSchemeId": "lubezki_ambient_backlight",
+      "volumeProfileGrade": {
+        "postExposure": 0.08,
+        "contrast": 12,
+        "saturation": 6,
+        "temperature": 12,
+        "tint": 0,
+        "splitShadowsHex": "#202A38",
+        "splitHighlightsHex": "#FFD29D",
+        "bloomIntensity": 0.3,
+        "vignetteIntensity": 0.18
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.18,
+        "environmentIntensityMultiplier": 1.1
+      },
+      "zeroWasteMotionRange": {
+        "min": 2.4,
+        "max": 3.2
+      },
+      "fluxPromptTokens": "Emmanuel Lubezki wide-angle 24mm immersive proximity, natural golden or streetlamp rim backlight catching copper red hair strands, realistic environmental depth, candid living movement, sharp foreground subject",
+      "motionPromptStyle": "Fluid 1.7Hz handheld walking presence, gentle parallax wrap, strict 3.0s clip limit"
+    },
+    {
+      "id": "refn_neon_noir",
+      "name": "Nicolas Winding Refn — Neon Noir & Contraste Cromático",
+      "dp": "Natasha Braier / Darius Khondji",
+      "moodTags": [
+        "cabaret",
+        "baile",
+        "magenta-cian",
+        "hipnótico"
+      ],
+      "funnelStages": [
+        "Mundo Exterior / Viral Dance & Reels",
+        "High-Ticket / Membresía Anual"
+      ],
+      "defaultFocalMm": 50,
+      "defaultAperture": 1.6,
+      "preferredShotTypes": [
+        "fs_full_body",
+        "cowboy_american",
+        "ecu_eyes",
+        "low_angle_authority"
+      ],
+      "preferredMoves": [
+        "static_breathing",
+        "slow_dolly_push_in",
+        "subtle_parallax_arc"
+      ],
+      "defaultLightingSchemeId": "wong_neon_practical",
+      "volumeProfileGrade": {
+        "postExposure": -0.05,
+        "contrast": 30,
+        "saturation": 22,
+        "temperature": -10,
+        "tint": 18,
+        "splitShadowsHex": "#101A36",
+        "splitHighlightsHex": "#FF4FA3",
+        "bloomIntensity": 0.48,
+        "vignetteIntensity": 0.36
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.22,
+        "environmentIntensityMultiplier": 0.78
+      },
+      "zeroWasteMotionRange": {
+        "min": 2.0,
+        "max": 3.0
+      },
+      "fluxPromptTokens": "Nicolas Winding Refn neon noir cinematography, sculptural magenta and cyan split lighting, specular reflections on black marble, bold geometric framing, magnetic hypnotic poise",
+      "motionPromptStyle": "Locked vertical tripod or ultra-slow push-in, rhythmic center-of-mass stability, feet anchored"
+    },
+    {
+      "id": "coppola_intimate",
+      "name": "Sofia Coppola — Intimidad Suave & Susurro Editorial",
+      "dp": "Philippe Le Sourd",
+      "moodTags": [
+        "íntimo",
+        "spa",
+        "tocador",
+        "susurro ASMR"
+      ],
+      "funnelStages": [
+        "Top-Funnel / Intimidad Cotidiana",
+        "Conversión Fanvue & Telegram VIP"
+      ],
+      "defaultFocalMm": 85,
+      "defaultAperture": 1.4,
+      "preferredShotTypes": [
+        "cu_portrait",
+        "ecu_eyes",
+        "ots_mirror",
+        "top_down_zenital"
+      ],
+      "preferredMoves": [
+        "static_breathing",
+        "slow_dolly_push_in",
+        "rack_focus_macro_to_eyes"
+      ],
+      "defaultLightingSchemeId": "coppola_soft_window_spa",
+      "volumeProfileGrade": {
+        "postExposure": 0.1,
+        "contrast": 6,
+        "saturation": -4,
+        "temperature": 10,
+        "tint": 8,
+        "splitShadowsHex": "#2C2538",
+        "splitHighlightsHex": "#FCE2C4",
+        "bloomIntensity": 0.32,
+        "vignetteIntensity": 0.22
+      },
+      "threeJsGrade": {
+        "toneMappingExposure": 1.16,
+        "environmentIntensityMultiplier": 0.95
+      },
+      "zeroWasteMotionRange": {
+        "min": 1.5,
+        "max": 2.4
+      },
+      "fluxPromptTokens": "Sofia Coppola and Philippe Le Sourd delicate editorial portrait, soft diffused window light, creamy 85mm f/1.4 shallow depth of field, intimate serene vulnerability, refined porcelain and silk atmosphere",
+      "motionPromptStyle": "Whisper-quiet slow push-in or gentle rack focus from reflection/prop to emerald eyes"
+    }
+  ],
+  "shotTypes": [
+    {
+      "id": "ecu_eyes",
+      "label": "Primerísimo Primer Plano (ECU Ojos / Labios)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "eyes",
+      "targetHeightM": 1.56,
+      "layingHeightOverrideM": 0.24,
+      "defaultFocalMm": 100,
+      "defaultAperture": 1.8,
+      "distanceM": 1.25,
+      "azimuthOffsetDeg": 4,
+      "elevationDeg": 0,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 12,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "extreme close-up portrait framing emerald eyes and subtle smirk, 100mm f/1.8 macro depth of field, hyper-detailed corneal reflection and natural nasal bridge freckles"
+    },
+    {
+      "id": "cu_portrait",
+      "label": "Primer Plano (CU Rostro & Hombros)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "eyes",
+      "targetHeightM": 1.52,
+      "layingHeightOverrideM": 0.22,
+      "defaultFocalMm": 85,
+      "defaultAperture": 1.4,
+      "distanceM": 1.8,
+      "azimuthOffsetDeg": 8,
+      "elevationDeg": 2,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 18,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "intimate close-up portrait from collarbone to crown, 85mm f/1.4 prime lens, creamy bokeh background separation, crisp iris focus"
+    },
+    {
+      "id": "mcu_interview",
+      "label": "Plano Medio Corto (MCU Podcast / Confesionario)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "chest",
+      "targetHeightM": 1.42,
+      "layingHeightOverrideM": 0.2,
+      "defaultFocalMm": 85,
+      "defaultAperture": 1.4,
+      "distanceM": 2.45,
+      "azimuthOffsetDeg": 10,
+      "elevationDeg": 2,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 20,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "medium close-up chest-up framing, 85mm f/1.4 portrait lens, clinical poise, balanced headroom in 4.9m architectural room"
+    },
+    {
+      "id": "ms_waist",
+      "label": "Plano Medio (MS Cintura & Manos Ancladas)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "waist",
+      "targetHeightM": 1.24,
+      "layingHeightOverrideM": 0.18,
+      "defaultFocalMm": 50,
+      "defaultAperture": 1.8,
+      "distanceM": 2.3,
+      "azimuthOffsetDeg": 12,
+      "elevationDeg": 1,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 22,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "waist-up medium shot, 50mm f/1.8 standard lens, hands calmly resting on table or waist, clear spatial context"
+    },
+    {
+      "id": "cowboy_american",
+      "label": "Plano Americano (3/4 Muslos a Cabeza)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "hips",
+      "targetHeightM": 1.06,
+      "layingHeightOverrideM": 0.16,
+      "defaultFocalMm": 50,
+      "defaultAperture": 2.0,
+      "distanceM": 2.9,
+      "azimuthOffsetDeg": 14,
+      "elevationDeg": 0,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 22,
+      "zeroWasteRisk": "Medio-Bajo",
+      "promptTokens": "three-quarter American shot from mid-thigh up, 50mm f/2.0 lens, confident posture and surrounding luxury interior"
+    },
+    {
+      "id": "fs_full_body",
+      "label": "Plano Entero (FS Cuerpo Completo 9:16)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "hips",
+      "targetHeightM": 0.94,
+      "layingHeightOverrideM": 0.15,
+      "defaultFocalMm": 50,
+      "defaultAperture": 1.8,
+      "distanceM": 3.4,
+      "azimuthOffsetDeg": 8,
+      "elevationDeg": 1,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 20,
+      "zeroWasteRisk": "Medio",
+      "promptTokens": "full body vertical 9:16 shot from shoes to crown, 50mm f/1.8 lens, feet firmly grounded on floor, full architectural floor-to-ceiling height"
+    },
+    {
+      "id": "ws_architectural",
+      "label": "Plano General Arquitectónico (WS 4.9m)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "chest",
+      "targetHeightM": 1.25,
+      "layingHeightOverrideM": 0.2,
+      "defaultFocalMm": 35,
+      "defaultAperture": 2.8,
+      "distanceM": 4.2,
+      "azimuthOffsetDeg": 16,
+      "elevationDeg": 2,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 24,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "wide architectural shot showcasing 4.9m ceiling moldings, curtains, and volumetric lighting around Alina, 35mm f/2.8 cinema lens"
+    },
+    {
+      "id": "ots_mirror",
+      "label": "Sobre el Hombro con Espejo Planar (OTS Mirror, cámara a espaldas)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "eyes",
+      "targetHeightM": 1.48,
+      "layingHeightOverrideM": 0.24,
+      "defaultFocalMm": 50,
+      "defaultAperture": 1.4,
+      "distanceM": 3.6,
+      "azimuthOffsetDeg": 160,
+      "elevationDeg": 3,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 22,
+      "zeroWasteRisk": "Medio-Bajo",
+      "promptTokens": "cinematic over-the-shoulder composition framing Alina and her crisp reflection in illuminated vanity mirror, soft shoulder foreground blur, 50mm f/1.4"
+    },
+    {
+      "id": "low_angle_authority",
+      "label": "Contrapicado de Autoridad (+11 deg)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "chest",
+      "targetHeightM": 1.38,
+      "layingHeightOverrideM": 0.2,
+      "defaultFocalMm": 35,
+      "defaultAperture": 1.8,
+      "distanceM": 2.5,
+      "azimuthOffsetDeg": 8,
+      "elevationDeg": -11,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 18,
+      "zeroWasteRisk": "Bajo",
+      "promptTokens": "subtle heroic low-angle shot looking slightly upward at Alina against tall 4.9m luxury architecture, projecting effortless dominance and poise, 35mm f/1.8"
+    },
+    {
+      "id": "top_down_zenital",
+      "label": "Picado Alto / Cenital (Spa & Suite)",
+      "shotRoleDefault": "A-Roll",
+      "targetAnchor": "chest",
+      "targetHeightM": 1.1,
+      "layingHeightOverrideM": 0.18,
+      "defaultFocalMm": 35,
+      "defaultAperture": 2.0,
+      "distanceM": 2.65,
+      "azimuthOffsetDeg": 12,
+      "elevationDeg": 66,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 15,
+      "zeroWasteRisk": "Medio-Bajo",
+      "promptTokens": "high-angle architectural top-down composition looking down over basalt bathtub or charcoal linen king bed, sculptural candlelight shadows, 35mm f/2.0"
+    },
+    {
+      "id": "macro_broll_prop",
+      "label": "B-Roll Macro de Prop / Bodegón (Zero-Face)",
+      "shotRoleDefault": "B-Roll",
+      "targetAnchor": "prop",
+      "targetHeightM": 0.9,
+      "layingHeightOverrideM": 0.4,
+      "defaultFocalMm": 100,
+      "defaultAperture": 2.8,
+      "distanceM": 1.35,
+      "azimuthOffsetDeg": 15,
+      "elevationDeg": 10,
+      "rollDeg": 0,
+      "maxSafeHeadYawDeg": 0,
+      "zeroWasteRisk": "Zero",
+      "promptTokens": "100mm macro f/2.8 tactile close-up B-roll insert of luxury prop with shallow bokeh, zero human face, rich PBR specular highlights"
+    }
+  ],
+  "cameraMoves": [
+    {
+      "id": "static_breathing",
+      "label": "Estático + Micro-Respiración (Lock Tripod)",
+      "startOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": 0.0
+      },
+      "endOffsetLocal": {
+        "right": 0.0,
+        "up": 0.008,
+        "forward": -0.02
+      },
+      "arcDegrees": 0,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4.0,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.0,
+      "motionPromptTokens": "steady locked tripod shot, ultra-subtle chest breathing, calm blinking, zero camera drift --motion 2"
+    },
+    {
+      "id": "slow_dolly_push_in",
+      "label": "Dolly Push-In Quirúrgico (25cm hacia iris)",
+      "startOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": 0.14
+      },
+      "endOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": -0.14
+      },
+      "arcDegrees": 0,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4.0,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.2,
+      "motionPromptTokens": "very subtle slow dolly push-in 25cm toward emerald eyes, steady subject posture, smooth mechanical rail --motion 2"
+    },
+    {
+      "id": "slow_dolly_pull_out",
+      "label": "Dolly Pull-Out (Revelado de Escenario 4.9m)",
+      "startOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": -0.15
+      },
+      "endOffsetLocal": {
+        "right": 0.0,
+        "up": 0.06,
+        "forward": 0.25
+      },
+      "arcDegrees": 0,
+      "easing": "easeOutCubic",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4.0,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.4,
+      "motionPromptTokens": "slow graceful dolly pull-out revealing surrounding architectural room, serene poised subject --motion 2"
+    },
+    {
+      "id": "subtle_parallax_arc",
+      "label": "Arco Parallax Acotado (14 deg Zero-Waste Safe)",
+      "startOffsetLocal": {
+        "right": -0.26,
+        "up": 0.0,
+        "forward": 0.05
+      },
+      "endOffsetLocal": {
+        "right": 0.26,
+        "up": 0.02,
+        "forward": 0.0
+      },
+      "arcDegrees": 14,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4.0,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.6,
+      "motionPromptTokens": "gentle 14-degree lateral parallax camera glide keeping subject face within front quadrant, smooth background depth shift --motion 2.5"
+    },
+    {
+      "id": "pedestal_reveal_up",
+      "label": "Pedestal Reveal Vertical (9:16 Ascendente)",
+      "startOffsetLocal": {
+        "right": 0.0,
+        "up": -0.24,
+        "forward": 0.05
+      },
+      "endOffsetLocal": {
+        "right": 0.0,
+        "up": 0.14,
+        "forward": -0.05
+      },
+      "arcDegrees": 0,
+      "easing": "easeInOutCubic",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4.0,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.5,
+      "motionPromptTokens": "smooth vertical pedestal rise revealing posture and architecture upward, poised stillness --motion 2.5"
+    },
+    {
+      "id": "lateral_slider_truck",
+      "label": "Slider Lateral (B-Roll Bodegón / Café)",
+      "startOffsetLocal": {
+        "right": -0.32,
+        "up": 0.0,
+        "forward": 0.0
+      },
+      "endOffsetLocal": {
+        "right": 0.32,
+        "up": 0.0,
+        "forward": 0.0
+      },
+      "arcDegrees": 4,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 2.5,
+      "maxDurationSec": 3.5,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.8,
+      "motionPromptTokens": "silky lateral tabletop slider pan across prop textures, specular reflections gliding across surface --motion 2.8"
+    },
+    {
+      "id": "handheld_walking_lubezki",
+      "label": "Handheld Orgánico Caminando (1.7 Hz · Máx 3.0s)",
+      "startOffsetLocal": {
+        "right": 0.08,
+        "up": 0.02,
+        "forward": 0.12
+      },
+      "endOffsetLocal": {
+        "right": -0.04,
+        "up": 0.0,
+        "forward": -0.28
+      },
+      "arcDegrees": 6,
+      "easing": "linear",
+      "recommendedDurationSec": 3.0,
+      "maxDurationSec": 3.0,
+      "handheldHz": 1.7,
+      "handheldAmpM": 0.022,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 3.0,
+      "motionPromptTokens": "natural front-camera handheld walking presence, subtle 1.7Hz breathing bob, copper hair catching breeze, strict 3 seconds max --motion 3"
+    },
+    {
+      "id": "rack_focus_macro_to_eyes",
+      "label": "Rack Focus Cinemático (Primer Término → Iris / Prop)",
+      "startOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": 0.08
+      },
+      "endOffsetLocal": {
+        "right": 0.0,
+        "up": 0.0,
+        "forward": -0.06
+      },
+      "arcDegrees": 0,
+      "easing": "easeInOutCubic",
+      "recommendedDurationSec": 2.5,
+      "maxDurationSec": 3.5,
+      "handheldHz": 0.0,
+      "handheldAmpM": 0.0,
+      "focusTransition": "rack_near_to_subject",
+      "recommendedMotionStrength": 2.2,
+      "motionPromptTokens": "smooth optical rack focus pulling smoothly from foreground bokeh edge onto crisp sharp subject detail --motion 2.2"
+    }
+  ],
+  "lightingSchemes": [
+    {
+      "id": "rembrandt_chiaroscuro",
+      "label": "Rembrandt Chiaroscuro (45° Key + Rim Cobre)",
+      "compatibleBaseModes": [
+        "night",
+        "day"
+      ],
+      "contrastRatio": "4:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 42,
+        "elevationDeg": 28,
+        "distanceM": 2.6,
+        "kelvin": 2900,
+        "colorHex": "#FFC285",
+        "intensity": 5.5,
+        "spotAngleDeg": 52,
+        "purpose": "Sculptural 45-degree warm key forming soft cheek shadow triangle"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -142,
+        "elevationDeg": 34,
+        "distanceM": 2.4,
+        "kelvin": 5400,
+        "colorHex": "#B8D6FF",
+        "intensity": 3.2,
+        "spotAngleDeg": 46,
+        "purpose": "Cool edge separation on copper hair and shoulders"
+      },
+      "ambientMultiplier": 0.85,
+      "reflectionMultiplier": 0.9,
+      "fogDensityOverride": 0.0085,
+      "promptLightingTokens": "Rembrandt chiaroscuro 2900K warm key light with soft cheek shadow triangle, subtle 5400K rim separation on copper hair"
+    },
+    {
+      "id": "fincher_top_soft_negfill",
+      "label": "Fincher Top-Soft + Negative Fill (4:1 Clínico)",
+      "compatibleBaseModes": [
+        "night",
+        "day"
+      ],
+      "contrastRatio": "4:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 28,
+        "elevationDeg": 48,
+        "distanceM": 2.4,
+        "kelvin": 3400,
+        "colorHex": "#FFD9B3",
+        "intensity": 4.8,
+        "spotAngleDeg": 48,
+        "purpose": "Controlled overhead soft source preserving deep eye sockets and crisp jawline"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -155,
+        "elevationDeg": 26,
+        "distanceM": 2.3,
+        "kelvin": 5800,
+        "colorHex": "#99D6EA",
+        "intensity": 2.6,
+        "spotAngleDeg": 42,
+        "purpose": "Cool steel rim separating silhouette against dark walnut bookshelves"
+      },
+      "ambientMultiplier": 0.65,
+      "reflectionMultiplier": 0.78,
+      "fogDensityOverride": 0.007,
+      "promptLightingTokens": "Fincher top-soft key light 3400K with deep negative fill on shadow side, cool cyan rim separation, clinical contrast"
+    },
+    {
+      "id": "wong_neon_practical",
+      "label": "Wong / Refn Dual Gel (Ámbar Práctico + Neón Magenta/Esmeralda)",
+      "compatibleBaseModes": [
+        "night"
+      ],
+      "contrastRatio": "6:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 55,
+        "elevationDeg": 16,
+        "distanceM": 2.2,
+        "kelvin": 2400,
+        "colorHex": "#FF9B5C",
+        "intensity": 5.2,
+        "spotAngleDeg": 56,
+        "purpose": "Warm tungsten practical spill on cheekbones"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -125,
+        "elevationDeg": 20,
+        "distanceM": 2.5,
+        "kelvin": 6500,
+        "colorHex": "#FF3D9A",
+        "intensity": 4.4,
+        "spotAngleDeg": 58,
+        "purpose": "Clandestine magenta-crimson neon edge kicker"
+      },
+      "ambientMultiplier": 0.75,
+      "reflectionMultiplier": 1.15,
+      "fogDensityOverride": 0.011,
+      "promptLightingTokens": "dual-tone neon noir lighting, warm 2400K tungsten key against saturated magenta-cyan rim practicals, lush specular highlights"
+    },
+    {
+      "id": "deakins_single_window",
+      "label": "Deakins Single-Source (Luz Direccional Motivada + Haze)",
+      "compatibleBaseModes": [
+        "day",
+        "night"
+      ],
+      "contrastRatio": "5:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 72,
+        "elevationDeg": 22,
+        "distanceM": 3.4,
+        "kelvin": 4600,
+        "colorHex": "#FFE3C4",
+        "intensity": 6.0,
+        "spotAngleDeg": 64,
+        "purpose": "Broad directional single-source key wrapping cleanly across form"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -160,
+        "elevationDeg": 18,
+        "distanceM": 3.0,
+        "kelvin": 6200,
+        "colorHex": "#88B4E6",
+        "intensity": 1.8,
+        "spotAngleDeg": 54,
+        "purpose": "Subtle ambient sky bounce on opposite contour"
+      },
+      "ambientMultiplier": 0.72,
+      "reflectionMultiplier": 0.95,
+      "fogDensityOverride": 0.009,
+      "promptLightingTokens": "Roger Deakins single motivated lateral light source wrapping softly across face and stone architecture, delicate atmospheric haze"
+    },
+    {
+      "id": "guadagnino_golden_bounce",
+      "label": "Guadagnino Golden Bounce (Luz Lateral 4500K + Rebote Cálido 2:1)",
+      "compatibleBaseModes": [
+        "day"
+      ],
+      "contrastRatio": "2:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 52,
+        "elevationDeg": 24,
+        "distanceM": 2.9,
+        "kelvin": 4500,
+        "colorHex": "#FFE1B8",
+        "intensity": 4.6,
+        "spotAngleDeg": 68,
+        "purpose": "Soft Mediterranean daylight grazing marble and linen"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -138,
+        "elevationDeg": 32,
+        "distanceM": 2.7,
+        "kelvin": 3800,
+        "colorHex": "#FFD29E",
+        "intensity": 2.8,
+        "spotAngleDeg": 60,
+        "purpose": "Warm golden sun halo in copper red waves"
+      },
+      "ambientMultiplier": 1.05,
+      "reflectionMultiplier": 1.0,
+      "fogDensityOverride": 0.0045,
+      "promptLightingTokens": "soft 4500K Mediterranean window side-light with warm 2:1 natural bounce fill, luminous skin tones and golden copper hair halo"
+    },
+    {
+      "id": "kubrick_candlelight_2200k",
+      "label": "Kubrick / Alcott Candlelight (2200K Íntimo + Penumbra 8:1)",
+      "compatibleBaseModes": [
+        "night"
+      ],
+      "contrastRatio": "8:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 24,
+        "elevationDeg": 8,
+        "distanceM": 1.9,
+        "kelvin": 2200,
+        "colorHex": "#FF9840",
+        "intensity": 5.8,
+        "spotAngleDeg": 58,
+        "purpose": "Low candle-level warm glow casting dramatic upward and lateral chiaroscuro"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -150,
+        "elevationDeg": 26,
+        "distanceM": 2.5,
+        "kelvin": 3200,
+        "colorHex": "#E6A96E",
+        "intensity": 1.6,
+        "spotAngleDeg": 48,
+        "purpose": "Faint antique brass specular contour"
+      },
+      "ambientMultiplier": 0.55,
+      "reflectionMultiplier": 0.8,
+      "fogDensityOverride": 0.01,
+      "promptLightingTokens": "intimate 2200K practical candlelight chiaroscuro, deep velvet shadows, warm amber specular highlights in eyes"
+    },
+    {
+      "id": "lubezki_ambient_backlight",
+      "label": "Lubezki Natural Backlight (Contraluz Envolvente + Fill Frontal)",
+      "compatibleBaseModes": [
+        "day",
+        "night"
+      ],
+      "contrastRatio": "3:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": -162,
+        "elevationDeg": 30,
+        "distanceM": 3.2,
+        "kelvin": 4200,
+        "colorHex": "#FFD494",
+        "intensity": 6.2,
+        "spotAngleDeg": 62,
+        "purpose": "Strong motivated rim/backlight haloing hair and silhouette"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": 25,
+        "elevationDeg": 16,
+        "distanceM": 2.4,
+        "kelvin": 5000,
+        "colorHex": "#FFF1DF",
+        "intensity": 2.4,
+        "spotAngleDeg": 72,
+        "purpose": "Gentle ambient frontal fill preserving clean facial detail against backlight"
+      },
+      "ambientMultiplier": 1.0,
+      "reflectionMultiplier": 1.05,
+      "fogDensityOverride": 0.0055,
+      "promptLightingTokens": "luminous natural backlight haloing copper hair with soft balanced frontal bounce fill, authentic environmental depth"
+    },
+    {
+      "id": "coppola_soft_window_spa",
+      "label": "Coppola Soft Diffused Glow (Suave 3800K + Destello Espejo/Agua)",
+      "compatibleBaseModes": [
+        "day",
+        "night"
+      ],
+      "contrastRatio": "2:1",
+      "realtimeKeyLight": {
+        "azimuthDeg": 34,
+        "elevationDeg": 20,
+        "distanceM": 2.4,
+        "kelvin": 3600,
+        "colorHex": "#FFE0C8",
+        "intensity": 4.2,
+        "spotAngleDeg": 70,
+        "purpose": "Diffused flattering vanity/spa frontal-side wash"
+      },
+      "realtimeRimLight": {
+        "azimuthDeg": -132,
+        "elevationDeg": 24,
+        "distanceM": 2.4,
+        "kelvin": 4800,
+        "colorHex": "#D4E8FF",
+        "intensity": 2.2,
+        "spotAngleDeg": 55,
+        "purpose": "Gentle cool shimmer separating silk and skin from dark stone"
+      },
+      "ambientMultiplier": 0.92,
+      "reflectionMultiplier": 1.1,
+      "fogDensityOverride": 0.0065,
+      "promptLightingTokens": "soft diffused flattering editorial glow, delicate reflection highlights in mirror and eyes, low-contrast intimate warmth"
+    }
+  ],
+  "spotCinematographyMap": {
+    "cabaret": {
+      "floor": 0,
+      "funnelStage": "Mundo Exterior / Viral Dance & Reels",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "refn_neon_noir",
+        "wong_kar_wai_doyle",
+        "lubezki_natural"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "refn_neon_noir",
+        "shotTypeId": "fs_full_body",
+        "cameraMoveId": "static_breathing",
+        "lightingSchemeId": "wong_neon_practical"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Teclas Piano de Cola",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Copa & Vela Mesa Cóctel",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "parking": {
+      "floor": 0,
+      "funnelStage": "Mundo Exterior / Viral Dance & Reels",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "lubezki_natural",
+        "wong_kar_wai_doyle",
+        "refn_neon_noir"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "lubezki_natural",
+        "shotTypeId": "cowboy_american",
+        "cameraMoveId": "handheld_walking_lubezki",
+        "lightingSchemeId": "wong_neon_practical"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Reflejo Neón sobre Capó",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 85,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Postes Dorados & Terciopelo VIP",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "pedestal_reveal_up",
+          "targetPropIndex": 1,
+          "focalMm": 85,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "none",
+        "foregroundPropReady": true,
+        "isExterior": true,
+        "isLayingPosture": false
+      }
+    },
+    "cafe": {
+      "floor": 1,
+      "funnelStage": "Descubrimiento & Street Lifestyle",
+      "recommendedBaseMode": "day",
+      "recommendedDirectors": [
+        "guadagnino_mukdeeprom",
+        "coppola_intimate",
+        "fincher_cronenweth"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "guadagnino_mukdeeprom",
+        "shotTypeId": "ms_waist",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "guadagnino_golden_bounce"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Extracción Espresso La Marzocco",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Mesa Carrara junto al Ventanal",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "walk_cafe": {
+      "floor": 1,
+      "funnelStage": "Descubrimiento & Street Lifestyle",
+      "recommendedBaseMode": "day",
+      "recommendedDirectors": [
+        "lubezki_natural",
+        "guadagnino_mukdeeprom"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "lubezki_natural",
+        "shotTypeId": "ms_waist",
+        "cameraMoveId": "handheld_walking_lubezki",
+        "lightingSchemeId": "lubezki_ambient_backlight"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Hojas Monstera & Luz Balcón",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "subtle_parallax_arc",
+          "targetPropIndex": 0,
+          "focalMm": 85,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Vitrina Repostería Artesanal",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "vanity": {
+      "floor": 2,
+      "funnelStage": "Top-Funnel / Intimidad Cotidiana",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "wong_kar_wai_doyle",
+        "coppola_intimate",
+        "fincher_cronenweth"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "wong_kar_wai_doyle",
+        "shotTypeId": "ots_mirror",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "coppola_soft_window_spa"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Macro Labial Carmesí & Perfume Ámbar",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Aro Bombillas Reflejado en Espejo",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 85,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": true,
+        "controlNetDepthWeightOverride": 0.35,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false,
+        "mirrorCenter": {
+          "x": -0.4,
+          "yOffset": 1.65,
+          "z": -13.55
+        }
+      }
+    },
+    "bath": {
+      "floor": 2,
+      "funnelStage": "Top-Funnel / Intimidad Cotidiana",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "villeneuve_deakins",
+        "coppola_intimate",
+        "kubrick_alcott"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "villeneuve_deakins",
+        "shotTypeId": "top_down_zenital",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "kubrick_candlelight_2200k"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Velas Reflejadas en Piedra Basáltica",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "static_breathing",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Bandeja de Teca & Sales Minerales",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": true,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": true
+      }
+    },
+    "kitchen": {
+      "floor": 2,
+      "funnelStage": "Top-Funnel / Intimidad Cotidiana",
+      "recommendedBaseMode": "day",
+      "recommendedDirectors": [
+        "guadagnino_mukdeeprom",
+        "fincher_cronenweth"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "guadagnino_mukdeeprom",
+        "shotTypeId": "ms_waist",
+        "cameraMoveId": "subtle_parallax_arc",
+        "lightingSchemeId": "guadagnino_golden_bounce"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Vapor Espresso sobre Nero Marquina",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "static_breathing",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Lámparas Latón & Copas Suspendidas",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "pedestal_reveal_up",
+          "targetPropIndex": 1,
+          "focalMm": 85,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "suite": {
+      "floor": 2,
+      "funnelStage": "Top-Funnel / Intimidad Cotidiana",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "coppola_intimate",
+        "kubrick_alcott",
+        "wong_kar_wai_doyle"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "coppola_intimate",
+        "shotTypeId": "cu_portrait",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "kubrick_candlelight_2200k"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Luz Ámbar de Mesilla sobre Lino Carbón",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Copa Vino en Balcón Modernista",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 1,
+          "focalMm": 85,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": true
+      }
+    },
+    "podcast": {
+      "floor": 3,
+      "funnelStage": "Conversión Fanvue & Telegram VIP",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "fincher_cronenweth",
+        "villeneuve_deakins",
+        "coppola_intimate"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "fincher_cronenweth",
+        "shotTypeId": "mcu_interview",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "fincher_top_soft_negfill"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Vapor Espresso sobre Cuaderno Clínico",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Rack Focus Lomos Bataille & Foucault",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "boudoir": {
+      "floor": 3,
+      "funnelStage": "Conversión Fanvue & Telegram VIP",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "kubrick_alcott",
+        "wong_kar_wai_doyle",
+        "refn_neon_noir"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "kubrick_alcott",
+        "shotTypeId": "low_angle_authority",
+        "cameraMoveId": "slow_dolly_push_in",
+        "lightingSchemeId": "kubrick_candlelight_2200k"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Madejas Shibari Lila & Negra sobre Satén",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Micrófono Binaural 3Dio & Antifaz Cuero",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "south",
+        "foregroundPropReady": true,
+        "isExterior": false,
+        "isLayingPosture": false
+      }
+    },
+    "pool": {
+      "floor": 4,
+      "funnelStage": "High-Ticket / Membresía Anual",
+      "recommendedBaseMode": "day",
+      "recommendedDirectors": [
+        "villeneuve_deakins",
+        "guadagnino_mukdeeprom",
+        "lubezki_natural"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "villeneuve_deakins",
+        "shotTypeId": "ws_architectural",
+        "cameraMoveId": "pedestal_reveal_up",
+        "lightingSchemeId": "deakins_single_window"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Reflejos Dorados Plunge Pool Basáltica",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Tumbona Teca & Copa Tallada Atardecer",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "rack_focus_macro_to_eyes",
+          "targetPropIndex": 1,
+          "focalMm": 85,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": true,
+        "wallGuardSide": "none",
+        "foregroundPropReady": true,
+        "isExterior": true,
+        "isLayingPosture": false
+      }
+    },
+    "bar": {
+      "floor": 4,
+      "funnelStage": "High-Ticket / Membresía Anual",
+      "recommendedBaseMode": "night",
+      "recommendedDirectors": [
+        "wong_kar_wai_doyle",
+        "fincher_cronenweth",
+        "refn_neon_noir"
+      ],
+      "defaultARollPreset": {
+        "directorStyleId": "wong_kar_wai_doyle",
+        "shotTypeId": "cu_portrait",
+        "cameraMoveId": "subtle_parallax_arc",
+        "lightingSchemeId": "rembrandt_chiaroscuro"
+      },
+      "defaultBRollPresets": [
+        {
+          "label": "Botellas Ámbar Retroiluminadas en Latón",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "pedestal_reveal_up",
+          "targetPropIndex": 0,
+          "focalMm": 100,
+          "durationSec": 2.5
+        },
+        {
+          "label": "Copa Martini sobre Cobre Martillado",
+          "shotTypeId": "macro_broll_prop",
+          "cameraMoveId": "lateral_slider_truck",
+          "targetPropIndex": 1,
+          "focalMm": 100,
+          "durationSec": 2.5
+        }
+      ],
+      "specialFlags": {
+        "mirrorShot": false,
+        "waterReflections": false,
+        "wallGuardSide": "none",
+        "foregroundPropReady": true,
+        "isExterior": true,
+        "isLayingPosture": false
+      }
+    }
+  }
+}

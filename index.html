@@ -102,8 +102,10 @@
       body[data-view="cinema"][data-cinema-sub="director"] #col-director { grid-column: span 5 / span 5; }
 
       #viewport-wrapper:not(.viewport-theater) {
-        height: calc(100vh - 205px);
+        height: calc(100vh - 205px) !important;
+        max-height: calc(100vh - 205px) !important;
         min-height: 530px;
+        flex: 0 0 auto !important;
       }
       .sticky-side-panel {
         position: sticky;

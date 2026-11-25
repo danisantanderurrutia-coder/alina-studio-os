@@ -120,18 +120,15 @@ function applyThreeJSSlicing() {
   for (let floor = 0; floor <= 4; floor++) {
     const group = arch.floorGroups[floor];
     if (!group) continue;
+    group.position.y = floor * FLOOR_HEIGHT;
     if (state.sliced) {
-      if (floor > state.activeFloor) {
-        group.position.y = floor * FLOOR_HEIGHT + 16.0;
-        group.visible = false;
-      } else {
-        group.position.y = floor * FLOOR_HEIGHT;
-        group.visible = true;
-      }
+      group.visible = floor === state.activeFloor;
     } else {
-      group.position.y = floor * FLOOR_HEIGHT;
       group.visible = true;
     }
+  }
+  if (arch.mirrorReflector) {
+    arch.mirrorReflector.visible = state.activeFloor === 2 && state.sliced;
   }
 }
 

@@ -102,8 +102,10 @@
       body[data-view="cinema"][data-cinema-sub="director"] #col-director { grid-column: span 5 / span 5; }
 
       #viewport-wrapper:not(.viewport-theater) {
-        height: calc(100vh - 205px);
+        height: calc(100vh - 205px) !important;
+        max-height: calc(100vh - 205px) !important;
         min-height: 530px;
+        flex: 0 0 auto !important;
       }
       .sticky-side-panel {
         position: sticky;
@@ -130,7 +132,7 @@
       box-shadow: 0 0 0 1px rgba(200, 100, 70, 0.35);
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-NhMh0PDR.js"></script>
+  <script type="module" crossorigin src="./assets/index-CI3Stp1Z.js"></script>
 </head>
 <body data-view="plato" data-cinema-sub="chapters" class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 

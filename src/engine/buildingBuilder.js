@@ -27,6 +27,19 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const floorGroups = [];
   const waterMeshes = [];
   const frontGlassPanels = [];
+  // Keep all PointLights in an always-visible root group so toggling floorGroups[i].visible
+  // never changes Three.js #define NUM_POINT_LIGHTS (0 shader recompilations on floor switch!)
+  const lightsGroup = new THREE.Group();
+  lightsGroup.name = 'SanctuaryPersistentLights';
+  scene.add(lightsGroup);
+
+  function addPersistentPointLight(floorGroup, color, intensity, distance, decay, x, y, z, lightOpts) {
+    const pl = new THREE.PointLight(color, intensity, distance, decay);
+    pl.position.set(x, (floorGroup?.position?.y || 0) + y, z);
+    lightsGroup.add(pl);
+    if (lightOpts) lighting.registerLight(pl, lightOpts);
+    return pl;
+  }
 
   // Shared 1K CC0 Poly Haven PBR Materials
   const pbrAsphalt = loadPolyHavenPBR('asphalt_02', { repeatX: 8, repeatY: 5.5 });
@@ -180,6 +193,13 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const matArt4 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(4), roughness: 0.35, metalness: 0.04 });
   const matArt5 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(5), roughness: 0.35, metalness: 0.04 });
   const matArt6 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(6), roughness: 0.35, metalness: 0.04 });
+  const matArts = [null, matArt1, matArt2, matArt3, matArt4, matArt5, matArt6];
+  for (let v = 7; v <= 16; v++) {
+    matArts[v] = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(v), roughness: 0.34, metalness: 0.04 });
+  }
+  const matObsidianSilk = new THREE.MeshStandardMaterial({ color: 0x14161d, roughness: 0.34, metalness: 0.12 });
+  const matTerracotta = new THREE.MeshStandardMaterial({ color: 0x9c4a32, roughness: 0.78, metalness: 0.04 });
+  const matBronzePatina = new THREE.MeshStandardMaterial({ color: 0x4a3b28, roughness: 0.32, metalness: 0.84 });
 
   // Woven PBR Rug & Hydraulic Tile Materials (Production Designer Floor Zoning)
   const pbrWovenLinen = loadPolyHavenPBR('rough_linen', { repeatX: 6, repeatY: 6, includeAO: false });
@@ -354,9 +374,31 @@ export function buildSanctuaryArchitecture(scene, lighting) {
 
       const targetY = hangFromCeiling ? (y - b1.max.y) : (y - b1.min.y);
       obj.position.set(x - center1.x, targetY, z - center1.z);
+      const castShadowModels = new Set([
+        'ArmChair_01',
+        'ClassicConsole_01',
+        'ClassicNightstand_01',
+        'GothicBed_01',
+        'GothicCabinet_01',
+        'Ottoman_01',
+        'Sofa_01',
+        'bar_chair_round_01',
+        'coffee_table_round_01',
+        'dining_chair_02',
+        'gothic_statue',
+        'mid_century_lounge_chair',
+        'modern_wooden_cabinet',
+        'side_table_tall_01',
+        'street_lamp_01',
+        'vintage_day_bed',
+        'Shelf_01',
+        'steel_frame_shelves_03',
+        'wooden_display_shelves_01'
+      ]);
+      const allowMeshShadow = !hangFromCeiling && castShadowModels.has(modelId);
       obj.traverse((child) => {
         if (child.isMesh) {
-          child.castShadow = !hangFromCeiling;
+          child.castShadow = allowMeshShadow;
           child.receiveShadow = true;
           const matName = String(child.material?.name || '').toLowerCase();
           if (customArtMat && child.material) {
@@ -394,13 +436,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
       });
       parent.add(obj);
 
-      if (modelId === 'hanging_picture_frame_01' && customArtMat) {
+      if (
+        customArtMat &&
+        (modelId.startsWith('hanging_picture_frame') || modelId.startsWith('fancy_picture_frame'))
+      ) {
+        const spanW = Math.max(size1.x, size1.z);
         const canvas = new THREE.Mesh(
-          new THREE.PlaneGeometry(Math.max(0.25, size1.x * 0.80), Math.max(0.35, size1.y * 0.82)),
+          new THREE.PlaneGeometry(Math.max(0.22, spanW * 0.78), Math.max(0.28, size1.y * 0.78)),
           customArtMat
         );
         canvas.rotation.y = rotYRad;
-        const fwd = new THREE.Vector3(0, 0, 0.009).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYRad);
+        const depthHalf = Math.min(size1.x, size1.z) * 0.5 + 0.004;
+        const fwd = new THREE.Vector3(0, 0, depthHalf).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYRad);
         canvas.position.set(x + fwd.x, center1.y + targetY, z + fwd.z);
         parent.add(canvas);
       }
@@ -418,15 +465,329 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     flame.position.set(x, y + 0.2, z);
     parent.add(flame);
     if (withLight) {
-      const pl = new THREE.PointLight(0xffa94d, 5.5, 7.0, 1.5);
-      pl.position.set(x, y + 0.32, z);
-      parent.add(pl);
-      lighting.registerLight(pl, { dayIntensity: 0.8, nightIntensity: 5.5, flicker: true });
+      addPersistentPointLight(parent, 0xffa94d, 5.5, 7.0, 1.5, x, y + 0.32, z, {
+        dayIntensity: 0.8,
+        nightIntensity: 5.5,
+        flicker: true
+      });
     }
   }
 
   function addPlantPot(parent, x, y, z, scale = 1.0) {
     placeGLTFModel(parent, 'potted_plant_04', 1.35 * scale, x, y, z, x * 0.35, { addShadow: true });
+  }
+
+  // Grounded Ceramic / Basalt / Terracotta Cachepot + Lush Sculpted Foliage (Elena Vance + Mateo Santoro)
+  function addBotanicalVessel(parent, plantId, x, y, z, scale = 1.0, vesselStyle = 'basalt', rotY = 0) {
+    const potMat =
+      vesselStyle === 'terracotta'
+        ? matTerracotta
+        : vesselStyle === 'ivory'
+          ? matCreamLinen
+          : matDarkMarble;
+    const potH = 0.34 * scale;
+    const potR = 0.22 * scale;
+    cyl(parent, potR, potR * 0.76, potH, 18, x, y + potH * 0.5, z, potMat, true);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(potR * 0.99, 0.014 * scale, 8, 22), matBrass);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(x, y + potH - 0.01, z);
+    parent.add(rim);
+    cyl(parent, potR * 0.92, potR * 0.9, 0.04, 14, x, y + potH - 0.03, z, matWoodDark, false);
+    addContactShadow(parent, x, z, potR * 1.45, potR * 1.45, y + 0.014);
+    const foliageH = plantId === 'pachira_aquatica_01' ? 1.85 * scale : 0.68 * scale;
+    placeGLTFModel(parent, plantId, foliageH, x, y + potH - 0.05, z, rotY || x * 0.4, { addShadow: false });
+  }
+
+  // Planted Wooden Balcony / Terrace Trough (planter_box_01 + multi-species tropical foliage)
+  function addPlantedBox(parent, x, y, z, rotY = 0, scale = 1.0) {
+    placeGLTFModel(parent, 'planter_box_01', 0.42 * scale, x, y, z, rotY, { addShadow: true });
+    const right = new THREE.Vector3(0.24 * scale, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+    placeGLTFModel(parent, 'calathea_orbifolia_01', 0.48 * scale, x - right.x, y + 0.34 * scale, z - right.z, rotY + 0.3, { addShadow: false });
+    placeGLTFModel(parent, 'anthurium_botany_01', 0.54 * scale, x + right.x, y + 0.34 * scale, z + right.z, rotY - 0.4, { addShadow: false });
+  }
+
+  // Museum Pedestal / Plinth + Sculpted CC0 Statue (Elena Vance Vertical Scale + Mateo Santoro B-Roll)
+  function addSculpturePlinth(parent, modelId, plinthH, sculptH, x, z, rotY = 0, style = 'walnut') {
+    const bodyMat = style === 'carrara' ? matWhiteMarble : style === 'basalt' ? matDarkMarble : matWoodDark;
+    const w = modelId === 'gothic_statue' ? 0.88 : 0.58;
+    box(parent, w + 0.1, 0.08, w + 0.1, x, 0.04, z, bodyMat);
+    box(parent, w, plinthH - 0.12, w, x, 0.08 + (plinthH - 0.12) * 0.5, z, bodyMat);
+    box(parent, w + 0.08, 0.05, w + 0.08, x, plinthH - 0.025, z, matBrass);
+    addContactShadow(parent, x, z, w * 0.85, w * 0.85, 0.015);
+    placeGLTFModel(parent, modelId, sculptH, x, plinthH, z, rotY, { addShadow: false });
+  }
+
+  // Horizontal Coffee-Table Art Monograph Stack (with optional brass / sculpted topper)
+  function addBookStack(parent, x, y, z, rotY = 0, topperModel = null) {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.rotation.y = rotY;
+    const covers = [matObsidianSilk, matEmeraldVelvet, matCreamLinen, matCrimsonVelvet];
+    let curY = 0;
+    for (let i = 0; i < 3; i++) {
+      const bw = 0.30 - i * 0.025;
+      const bd = 0.22 - i * 0.018;
+      const bh = 0.034;
+      const cover = box(g, bw, bh, bd, 0, curY + bh * 0.5, 0, covers[(i + Math.abs(Math.round(x))) % covers.length]);
+      cover.rotation.y = (i - 1) * 0.09;
+      const pages = box(g, bw - 0.018, bh - 0.008, bd - 0.012, 0.004, curY + bh * 0.5, 0, matCreamLinen, false);
+      pages.rotation.y = cover.rotation.y;
+      curY += bh;
+    }
+    parent.add(g);
+    if (topperModel) {
+      placeGLTFModel(parent, topperModel, topperModel === 'carved_wooden_elephant' ? 0.13 : 0.20, x, y + curY, z, rotY + 0.35, { addShadow: false });
+    }
+  }
+
+  // Curated Architectural Bookcase (Shelf_01 / wooden_display_shelves_01 populated with books, sculptures & flora)
+  function addCuratedBookcase(parent, x, y, z, rotY = 0, shelfType = 'tall_wood') {
+    if (shelfType === 'steel_loft') {
+      placeGLTFModel(parent, 'steel_frame_shelves_03', 2.28, x, y, z, rotY, { addShadow: true });
+      const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+      for (const [sy, offX, mid, h] of [
+        [0.74, -0.55, 'book_encyclopedia_set_01', 0.32],
+        [0.74, 0.45, 'antique_ceramic_vase_01', 0.34],
+        [1.24, -0.42, 'horse_statue_01', 0.24],
+        [1.24, 0.38, 'book_encyclopedia_set_01', 0.30],
+        [1.74, -0.48, 'standing_picture_frame_02', 0.25],
+        [1.74, 0.42, 'calathea_orbifolia_01', 0.36]
+      ]) {
+        const rot = mid.startsWith('standing_picture') ? rotY - Math.PI / 2 : rotY;
+        placeGLTFModel(parent, mid, h, x + right.x * offX, y + sy, z + right.z * offX, rot, { addShadow: false });
+      }
+      return;
+    }
+    if (shelfType === 'display_console') {
+      // wooden_display_shelves_01 native wide axis is Z (1.08m), shallow is X (0.37m)
+      placeGLTFModel(parent, 'wooden_display_shelves_01', 1.56, x, y, z, rotY, { addShadow: true });
+      const along = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+      placeGLTFModel(parent, 'book_encyclopedia_set_01', 0.29, x - along.x * 0.24, y + 0.52, z - along.z * 0.24, rotY + Math.PI / 2, { addShadow: false });
+      placeGLTFModel(parent, 'carved_wooden_elephant', 0.16, x + along.x * 0.24, y + 0.52, z + along.z * 0.24, rotY + Math.PI / 2, { addShadow: false });
+      placeGLTFModel(parent, 'book_encyclopedia_set_01', 0.29, x + along.x * 0.20, y + 1.02, z + along.z * 0.20, rotY + Math.PI / 2, { addShadow: false });
+      placeGLTFModel(parent, 'horse_statue_01', 0.23, x - along.x * 0.22, y + 1.02, z - along.z * 0.22, rotY + Math.PI / 2, { addShadow: false });
+      return;
+    }
+    // Default 'tall_wood': Shelf_01 (W=1.0m along X, H=2.08m, D=0.26m along Z)
+    placeGLTFModel(parent, 'Shelf_01', 2.12, x, y, z, rotY, { addShadow: true });
+    const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+    placeGLTFModel(parent, 'book_encyclopedia_set_01', 0.30, x - right.x * 0.20, y + 0.56, z - right.z * 0.20, rotY, { addShadow: false });
+    placeGLTFModel(parent, 'antique_ceramic_vase_01', 0.30, x + right.x * 0.24, y + 0.56, z + right.z * 0.24, rotY, { addShadow: false });
+    placeGLTFModel(parent, 'book_encyclopedia_set_01', 0.30, x + right.x * 0.16, y + 1.08, z + right.z * 0.16, rotY, { addShadow: false });
+    placeGLTFModel(parent, 'horse_statue_01', 0.22, x - right.x * 0.24, y + 1.08, z - right.z * 0.24, rotY, { addShadow: false });
+    placeGLTFModel(parent, 'book_encyclopedia_set_01', 0.28, x - right.x * 0.18, y + 1.58, z - right.z * 0.18, rotY, { addShadow: false });
+    placeGLTFModel(parent, 'standing_picture_frame_01', 0.22, x + right.x * 0.24, y + 1.58, z + right.z * 0.24, rotY - Math.PI / 2, { addShadow: false });
+  }
+
+  // Margaux De Vries (Dep. 02 Costume Designer) Approved Couture Garment Rack:
+  // Master Triad Fabrics (Obsidian Silk, Forest Emerald Velvet, Satin Leather, Raw Ivory Linen) + Warm Brushed Brass Hardware (0% cold chrome)
+  function addCoutureGarmentRack(parent, x, y, z, rotY = 0, collection = 'atelier') {
+    const rack = new THREE.Group();
+    rack.position.set(x, y, z);
+    rack.rotation.y = rotY;
+
+    const baseMat = collection === 'resort' ? matTeak : matWoodDark;
+    // Bevelled dark walnut / teak plinth + brushed brass trim inlay
+    box(rack, 1.66, 0.065, 0.56, 0, 0.0325, 0, baseMat);
+    box(rack, 1.70, 0.02, 0.60, 0, 0.012, 0, matBrass);
+    addContactShadow(rack, 0, 0, 0.96, 0.42, 0.008);
+
+    // Twin sculpted brushed-brass uprights + lower shoe/archive crossbar + top garment rail + finials
+    const railH = 1.94;
+    for (const sx of [-0.74, 0.74]) {
+      cyl(rack, 0.018, 0.022, railH, 12, sx, railH * 0.5, 0, matBrass);
+      cyl(rack, 0.042, 0.052, 0.05, 14, sx, 0.085, 0, matBrass);
+      const finial = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 12), matBrass);
+      finial.position.set(sx, railH + 0.025, 0);
+      rack.add(finial);
+    }
+    const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.52, 12), matBrass);
+    topRail.rotation.z = Math.PI / 2;
+    topRail.position.set(0, railH - 0.02, 0);
+    rack.add(topRail);
+
+    // Lower walnut accessory shelf: Leather Hatbox, Boutique Archive Box & Folded Belgian Linen Stack
+    cyl(rack, 0.17, 0.17, 0.21, 20, -0.44, 0.17, 0.02, matBlackLeather);
+    cyl(rack, 0.176, 0.176, 0.035, 20, -0.44, 0.265, 0.02, matCognacLeather);
+    box(rack, 0.03, 0.04, 0.02, -0.44, 0.25, 0.19, matBrass, false);
+    box(rack, 0.30, 0.13, 0.22, 0.04, 0.13, -0.02, matObsidianSilk);
+    box(rack, 0.31, 0.025, 0.23, 0.04, 0.195, -0.02, matCreamLinen);
+    box(rack, 0.28, 0.045, 0.22, 0.44, 0.088, 0.02, matCreamLinen);
+    box(rack, 0.27, 0.042, 0.21, 0.44, 0.132, 0.02, matCharcoalLinen);
+
+    // 6 Sculpted Wooden & Brushed-Brass Hangers with Organically Draped Pleated Couture Silhouettes
+    const palettes = {
+      atelier: [
+        { mat: matEmeraldVelvet, len: 1.38, w: 0.42, belt: true },
+        { mat: matObsidianSilk, len: 1.18, w: 0.38, belt: false },
+        { mat: matBlackLeather, len: 0.96, w: 0.44, belt: true },
+        { mat: matCreamLinen, len: 0.88, w: 0.40, belt: false },
+        { mat: matCharcoalLinen, len: 1.24, w: 0.39, belt: false },
+        { mat: matCrimsonVelvet, len: 1.34, w: 0.41, belt: true }
+      ],
+      boudoir: [
+        { mat: matBlackLeather, len: 1.04, w: 0.43, belt: true },
+        { mat: matEmeraldVelvet, len: 1.42, w: 0.42, belt: true },
+        { mat: matObsidianSilk, len: 1.22, w: 0.38, belt: false },
+        { mat: matCrimsonVelvet, len: 1.36, w: 0.41, belt: true },
+        { mat: matBlackLeather, len: 0.86, w: 0.42, belt: true },
+        { mat: matCharcoalLinen, len: 1.16, w: 0.39, belt: false }
+      ],
+      resort: [
+        { mat: matCreamLinen, len: 1.28, w: 0.42, belt: false },
+        { mat: matCharcoalLinen, len: 1.34, w: 0.40, belt: true },
+        { mat: matObsidianSilk, len: 1.12, w: 0.38, belt: false },
+        { mat: matCreamLinen, len: 0.86, w: 0.40, belt: false },
+        { mat: matEmeraldVelvet, len: 1.36, w: 0.41, belt: true },
+        { mat: matCognacLeather, len: 0.92, w: 0.41, belt: false }
+      ]
+    };
+    const items = palettes[collection] || palettes.atelier;
+
+    items.forEach((cfg, idx) => {
+      const gx = -0.52 + idx * 0.208;
+      const gItem = new THREE.Group();
+      gItem.position.set(gx, railH - 0.02, 0);
+      // Natural boutique angle on the rail (35°–48°) so silhouettes overlap organically
+      gItem.rotation.y = 0.68 + ((idx % 3) - 1) * 0.08;
+
+      // Curved brushed-brass hanger hook
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.0045, 8, 16, Math.PI * 1.4), matBrass);
+      hook.position.set(0, 0.028, 0);
+      hook.rotation.y = Math.PI / 2;
+      gItem.add(hook);
+      cyl(gItem, 0.0045, 0.0045, 0.045, 8, 0, -0.02, 0, matBrass, false);
+
+      // Sculpted sloped dark-walnut hanger wings
+      for (const side of [-1, 1]) {
+        const wing = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.014, cfg.w * 0.52, 10), matWoodDark);
+        wing.rotation.x = side * (Math.PI / 2 - 0.26);
+        wing.position.set(0, -0.068, side * cfg.w * 0.22);
+        wing.castShadow = true;
+        gItem.add(wing);
+      }
+
+      // Multi-pleat draped couture body (3 overlapping fluted columns + sculpted shoulders + sleeves)
+      const bodyTopY = -0.085;
+      const centerPleat = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.048, 0.072, cfg.len, 14),
+        cfg.mat
+      );
+      centerPleat.scale.set(0.68, 1.0, 2.35);
+      centerPleat.position.set(0, bodyTopY - cfg.len * 0.5, 0);
+      centerPleat.castShadow = true;
+      centerPleat.receiveShadow = true;
+      gItem.add(centerPleat);
+
+      for (const side of [-1, 1]) {
+        const sideDrape = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.038, 0.058, cfg.len * 0.97, 12),
+          cfg.mat
+        );
+        sideDrape.scale.set(0.62, 1.0, 1.65);
+        sideDrape.position.set((side * 0.008), bodyTopY - cfg.len * 0.49, side * (cfg.w * 0.28));
+        sideDrape.rotation.x = side * 0.035;
+        sideDrape.castShadow = true;
+        sideDrape.receiveShadow = true;
+        gItem.add(sideDrape);
+
+        // Tailored sleeve drape
+        const sleeve = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.036, 0.028, Math.min(0.58, cfg.len * 0.54), 10),
+          cfg.mat
+        );
+        sleeve.position.set(0, bodyTopY - 0.28, side * (cfg.w * 0.44));
+        sleeve.rotation.x = side * 0.09;
+        sleeve.castShadow = true;
+        gItem.add(sleeve);
+      }
+
+      // Optional warm brushed-brass O-ring / waist belt catchlight (Margaux Rule 03)
+      if (cfg.belt) {
+        const oRing = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0045, 8, 18), matBrass);
+        oRing.rotation.y = Math.PI / 2;
+        oRing.position.set(0.038, bodyTopY - 0.38, 0);
+        gItem.add(oRing);
+      }
+
+      rack.add(gItem);
+    });
+
+    parent.add(rack);
+    return rack;
+  }
+
+  // Sculpted Standing Valet Coat & Hat Tree (Turned Walnut + Brushed Brass Crown Hooks + Draped Coat & Fedora)
+  function addBoutiqueCoatStand(parent, x, y, z, rotY = 0, palette = 'emerald') {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.rotation.y = rotY;
+
+    // Weighted dark marble & brushed brass pedestal disc
+    cyl(g, 0.24, 0.26, 0.045, 22, 0, 0.0225, 0, matDarkMarble);
+    cyl(g, 0.20, 0.22, 0.02, 20, 0, 0.052, 0, matBrass);
+    addContactShadow(g, 0, 0, 0.36, 0.36, 0.008);
+
+    // Tapered turned walnut & brass column (H = 1.82m)
+    cyl(g, 0.024, 0.036, 1.05, 14, 0, 0.58, 0, matWoodDark);
+    cyl(g, 0.032, 0.032, 0.045, 14, 0, 1.11, 0, matBrass);
+    cyl(g, 0.019, 0.024, 0.68, 14, 0, 1.46, 0, matWoodDark);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.034, 12, 12), matBrass);
+    crown.position.set(0, 1.82, 0);
+    g.add(crown);
+
+    // 4 Curved Brushed-Brass S-Hooks
+    for (let h = 0; h < 4; h++) {
+      const ang = (h * Math.PI) / 2 + 0.35;
+      const hookWrap = new THREE.Group();
+      hookWrap.position.set(0, 1.68, 0);
+      hookWrap.rotation.y = ang;
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.007, 8, 16, Math.PI * 0.85), matBrass);
+      arc.position.set(0.085, 0.02, 0);
+      hookWrap.add(arc);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), matBrass);
+      tip.position.set(0.16, 0.055, 0);
+      hookWrap.add(tip);
+      g.add(hookWrap);
+    }
+
+    // Draped Couture Coat + Silk Stole + Sculpted Wide-Brim Hat on Crown
+    const coatMat =
+      palette === 'ivory'
+        ? matCreamLinen
+        : palette === 'leather'
+          ? matBlackLeather
+          : palette === 'crimson'
+            ? matCrimsonVelvet
+            : matEmeraldVelvet;
+    const scarfMat = palette === 'ivory' ? matCognacLeather : matCreamLinen;
+
+    const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.13, 1.08, 16), coatMat);
+    coat.scale.set(0.82, 1.0, 1.25);
+    coat.position.set(0.085, 1.13, 0.04);
+    coat.rotation.z = -0.06;
+    coat.castShadow = true;
+    coat.receiveShadow = true;
+    g.add(coat);
+
+    const stole = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.055, 0.78, 12), scarfMat);
+    stole.scale.set(0.65, 1.0, 1.15);
+    stole.position.set(-0.075, 1.27, -0.045);
+    stole.rotation.z = 0.05;
+    stole.castShadow = true;
+    g.add(stole);
+
+    // Wide-brim felt hat perched at an editorial tilt atop the brass crown
+    const hatGroup = new THREE.Group();
+    hatGroup.position.set(-0.02, 1.85, 0.02);
+    hatGroup.rotation.set(0.18, 0.25, 0.22);
+    cyl(hatGroup, 0.19, 0.20, 0.012, 22, 0, 0, 0, matObsidianSilk);
+    cyl(hatGroup, 0.095, 0.105, 0.095, 18, 0, 0.05, 0, matObsidianSilk);
+    cyl(hatGroup, 0.106, 0.107, 0.018, 18, 0, 0.016, 0, matBrass, false);
+    g.add(hatGroup);
+
+    parent.add(g);
+    return g;
   }
 
   // Production Designer Floor Zoning: Woven PBR Rugs with bevel trim (0% "empty warehouse floor")
@@ -555,10 +916,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     const zOff = tz < 10 ? 1.25 : -1.25;
     placeGLTFModel(pb, 'shrub_02', 1.10, tx, 0, tz + zOff, tx * 0.35, { addShadow: true });
   }
-  const parkingLight = new THREE.PointLight(0xffcf88, 22.0, 32, 1.3);
-  parkingLight.position.set(0, 6.2, 8.5);
-  pb.add(parkingLight);
-  lighting.registerLight(parkingLight, { dayIntensity: 1.0, nightIntensity: 22.0 });
+  addPersistentPointLight(pb, 0xffcf88, 22.0, 32, 1.3, 0, 6.2, 8.5, { dayIntensity: 1.0, nightIntensity: 22.0 });
 
   // VIP Entrance Canopy, Neon "NOCTURNE" Sign, Red Carpet & Brass Stanchions
   box(pb, 6.4, 0.24, 3.4, 0, 3.45, 3.1, matSteel);
@@ -598,12 +956,24 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   for (const cx of [-4.7, -4.0, 4.0, 4.7]) {
     addPleatedCurtain(pb, cx, -13.7, matCrimsonVelvet, FLOOR_HEIGHT - 0.12);
   }
-  // Back Brick Wall Practical Sconces & Framed Speakeasy Art
+  // Back Brick Wall Practical Sconces & Salon Gallery (Dutch Baroque + Art-Déco Frames)
   for (const sx of [-8.4, -5.6, 5.6, 8.4]) {
     addWallSconce(pb, sx, 2.35, -14.22, 0);
   }
-  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.35, -7.0, 2.1, -14.25, 0, { addShadow: false, customArtMat: matArt5 });
-  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.35, 7.0, 2.1, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(pb, 'fancy_picture_frame_02', 1.48, -7.0, 2.05, -14.22, 0, { addShadow: false });
+  placeGLTFModel(pb, 'fancy_picture_frame_01', 1.15, -9.8, 2.25, -14.22, 0, { addShadow: false });
+  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.35, 7.0, 2.05, -14.25, 0, { addShadow: false, customArtMat: matArts[13] });
+  placeGLTFModel(pb, 'hanging_picture_frame_02', 1.10, 9.5, 2.65, -14.24, 0, { addShadow: false, customArtMat: matArts[5] });
+  placeGLTFModel(pb, 'hanging_picture_frame_03', 0.95, -7.0, 3.62, -14.24, 0, { addShadow: false, customArtMat: matArts[15] });
+  placeGLTFModel(pb, 'hanging_picture_frame_03', 0.95, 7.0, 3.62, -14.24, 0, { addShadow: false, customArtMat: matArts[2] });
+  // East & West Speakeasy Brick/Plaster Salon Walls + Lion Relief Emblem
+  placeGLTFModel(pb, 'lion_head', 0.62, 0, 3.92, -14.12, 0, { addShadow: false });
+  placeGLTFModel(pb, 'fancy_picture_frame_01', 1.22, 12.78, 2.25, -3.2, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'hanging_picture_frame_02', 1.18, 12.78, 2.25, -7.8, -Math.PI / 2, { addShadow: false, customArtMat: matArts[13] });
+  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.25, -12.78, 2.35, -11.2, Math.PI / 2, { addShadow: false, customArtMat: matArts[7] });
+  // VIP Entrance Planted Troughs flanking Red Carpet Canopy
+  addPlantedBox(pb, -2.55, 0.16, 3.25, Math.PI / 2, 1.08);
+  addPlantedBox(pb, 2.55, 0.16, 3.25, -Math.PI / 2, 1.08);
 
   // West Bar Counter + Backlit Bottles + Ornate Backbar Mirror + Brass Goblets + Barstools
   box(pb, 1.6, 1.08, 7.6, -9.6, 0.54, -5.6, matDarkMarble);
@@ -662,10 +1032,21 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   }
   addPlantPot(pb, -11.4, 0, -12.6, 1.25);
   addPlantPot(pb, 9.2, 0, -10.8, 1.15);
-  const cabaretLight = new THREE.PointLight(0xff66b2, 24.0, 30, 1.3);
-  cabaretLight.position.set(0, 3.85, -6.5);
-  pb.add(cabaretLight);
-  lighting.registerLight(cabaretLight, { dayIntensity: 2.0, nightIntensity: 24.0 });
+  // Lush Speakeasy Botanical Trees, Sculptures on Plinths, VIP Bookshelves & Cloakroom Couture Racks
+  addBotanicalVessel(pb, 'pachira_aquatica_01', -9.15, 0, -13.0, 1.18, 'basalt', 0.4);
+  addBotanicalVessel(pb, 'pachira_aquatica_01', 5.55, 0, -13.1, 1.15, 'basalt', -0.35);
+  placeGLTFModel(pb, 'potted_plant_01', 1.32, -11.6, 0, -1.3, 0.5, { addShadow: true });
+  addBotanicalVessel(pb, 'anthurium_botany_01', -9.6, 1.12, -2.9, 0.58, 'terracotta', 0.2);
+  addSculpturePlinth(pb, 'gothic_statue', 0.92, 1.62, 9.55, -13.15, -0.42, 'basalt');
+  addSculpturePlinth(pb, 'horse_head', 1.12, 0.54, -8.35, -13.45, 0.35, 'basalt');
+  placeGLTFModel(pb, 'bronze_ray_statue', 0.38, 11.88, 1.85, -5.5, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'binder_notebook', 0.035, -9.55, 1.14, -3.55, 0.25, { addShadow: false });
+  addBookStack(pb, 8.05, 0.62, -5.65, 0.35, null);
+  addCuratedBookcase(pb, 12.42, 0, -8.55, Math.PI, 'display_console');
+  // VIP Cloakroom Couture Garment Rack (Emerald & Crimson Velvet Evening Gowns + Brushed Brass) & Entrance Coat Stand
+  addCoutureGarmentRack(pb, 11.55, 0, -1.65, -Math.PI / 2, 'boudoir');
+  addBoutiqueCoatStand(pb, -11.35, 0, -2.15, 0.4, 'crimson');
+  addPersistentPointLight(pb, 0xff66b2, 24.0, 30, 1.3, 0, 3.85, -6.5, { dayIntensity: 2.0, nightIntensity: 24.0 });
 
   // =========================================================================
   // NIVEL 1 (PISO 1): LE VELVET CAFÉ & LOUNGE (SET-02 EIXAMPLE MOSAIC)
@@ -748,10 +1129,43 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p1, 'fern_02', 0.85, -9.8, 0, -0.6, 0.5, { addShadow: true });
   placeGLTFModel(p1, 'fern_02', 0.85, 8.6, 0, -0.4, -0.4, { addShadow: true });
 
-  const cafeLight = new THREE.PointLight(0xffdfb0, 20.0, 28, 1.3);
-  cafeLight.position.set(0, 3.85, -5.5);
-  p1.add(cafeLight);
-  lighting.registerLight(cafeLight, { dayIntensity: 3.0, nightIntensity: 20.0 });
+  // Eixample Literary Café Expansion: Salon Galleries, Classical Busts, Bookcases, Botanicals & Parisian Coat Stands
+  addBotanicalVessel(p1, 'pachira_aquatica_01', -10.85, 0, -1.65, 1.22, 'ivory', 0.35);
+  addBotanicalVessel(p1, 'pachira_aquatica_01', 9.35, 0, -1.55, 1.18, 'terracotta', -0.45);
+  placeGLTFModel(p1, 'potted_plant_01', 1.38, -4.35, 0, -9.85, 0.25, { addShadow: true });
+  placeGLTFModel(p1, 'potted_plant_01', 1.34, 4.15, 0, -9.85, -0.35, { addShadow: true });
+  addPlantedBox(p1, -7.8, 0, 1.02, 0, 1.05);
+  addPlantedBox(p1, -4.2, 0, 1.02, 0, 1.02);
+  addPlantedBox(p1, 6.2, 0, 1.02, 0, 1.05);
+  addBotanicalVessel(p1, 'calathea_orbifolia_01', 0.95, 1.11, -9.82, 0.52, 'ivory', 0.2);
+
+  // West & East Salon Gallery Walls (Dutch & Modernist Curated Hanging)
+  placeGLTFModel(p1, 'fancy_picture_frame_01', 1.22, -12.78, 2.25, -2.4, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p1, 'fancy_picture_frame_02', 1.38, -12.78, 2.15, -6.9, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p1, 'hanging_picture_frame_02', 1.12, -12.78, 3.35, -4.6, Math.PI / 2, { addShadow: false, customArtMat: matArts[14] });
+  placeGLTFModel(p1, 'hanging_picture_frame_03', 0.96, -9.2, 3.48, -14.24, 0, { addShadow: false, customArtMat: matArts[8] });
+  placeGLTFModel(p1, 'hanging_picture_frame_02', 1.12, -3.4, 2.05, -14.24, 0, { addShadow: false, customArtMat: matArts[3] });
+  placeGLTFModel(p1, 'fancy_picture_frame_01', 1.20, 12.78, 2.25, -2.6, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.32, 12.78, 2.20, -5.6, -Math.PI / 2, { addShadow: false, customArtMat: matArts[11] });
+  placeGLTFModel(p1, 'standing_picture_frame_01', 0.25, -5.35, 0.92, -13.52, -Math.PI / 2, { addShadow: false });
+
+  // Sculptures on Marble Plinths & Credenzas
+  addSculpturePlinth(p1, 'marble_bust_01', 1.14, 0.66, -11.55, -7.85, Math.PI / 2 - 0.25, 'carrara');
+  addSculpturePlinth(p1, 'bronze_ray_statue', 1.08, 0.52, 9.45, -7.65, -0.65, 'walnut');
+  placeGLTFModel(p1, 'horse_statue_01', 0.26, -6.95, 0.92, -13.55, 0.35, { addShadow: false });
+
+  // Café Bookcases, Press Journals & Reading Stacks
+  addCuratedBookcase(p1, -12.18, 0, -10.35, Math.PI / 2, 'steel_loft');
+  addCuratedBookcase(p1, 12.48, 0, -8.35, -Math.PI / 2, 'tall_wood');
+  addBookStack(p1, -5.92, 0.72, -3.82, 0.4, null);
+  addBookStack(p1, 6.18, 0.72, -4.05, -0.3, 'carved_wooden_elephant');
+  placeGLTFModel(p1, 'binder_notebook', 0.032, 2.38, 0.78, -3.68, -0.45, { addShadow: false });
+
+  // Parisian Bistro Coat & Hat Stands (Ivory Raw-Silk & Cognac Leather Palette)
+  addBoutiqueCoatStand(p1, -9.15, 0, -13.15, 0.25, 'ivory');
+  addBoutiqueCoatStand(p1, 9.65, 0, -3.15, -0.55, 'emerald');
+
+  addPersistentPointLight(p1, 0xffdfb0, 20.0, 28, 1.3, 0, 3.85, -5.5, { dayIntensity: 3.0, nightIntensity: 20.0 });
 
   // =========================================================================
   // NIVEL 2 (PISO 2): RESIDENCIA PRIVADA DE ALINA (4 ZONAS CON TABIQUES)
@@ -819,22 +1233,20 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'brass_candleholders', 0.24, -0.92, 0.82, -13.14, 0.18, { addShadow: false });
   placeGLTFModel(p2, 'Ottoman_01', 0.48, -0.4, 0, -12.05, -0.26, { addShadow: true });
 
-  // Walk-In Wardrobe Rack (West of Vanity)
-  box(p2, 1.6, 0.06, 0.65, -3.5, 0.03, -13.2, matWoodDark);
-  cyl(p2, 0.02, 0.02, 2.0, 8, -4.2, 1.0, -13.2, matBrass);
-  cyl(p2, 0.02, 0.02, 2.0, 8, -2.8, 1.0, -13.2, matBrass);
-  const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.45, 8), matBrass);
-  rail.rotation.z = Math.PI / 2;
-  rail.position.set(-3.5, 1.98, -13.2);
-  p2.add(rail);
-  for (let gx = -4.0; gx <= -3.0; gx += 0.24) {
-    box(p2, 0.14, 1.1, 0.38, gx, 1.38, -13.2, gx % 0.48 === 0 ? matEmeraldVelvet : matBlackLeather);
-  }
+  // Walk-In Couture Wardrobe Racks & Valet Stand (Curated by Margaux De Vries — Brushed Brass + Master Triad)
+  addCoutureGarmentRack(p2, -3.45, 0, -13.22, 0.06, 'atelier');
+  addCoutureGarmentRack(p2, -4.38, 0, -7.85, Math.PI / 2, 'atelier');
+  addBoutiqueCoatStand(p2, 3.68, 0, -11.65, -0.45, 'emerald');
+  // Extra Dressing Room Art, Books & Sculptural Accents
+  placeGLTFModel(p2, 'fancy_picture_frame_01', 1.12, -2.6, 3.55, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p2, 'fancy_picture_frame_02', 1.18, 2.4, 3.52, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p2, 'hanging_picture_frame_02', 1.08, -4.88, 2.25, -6.2, Math.PI / 2, { addShadow: false, customArtMat: matArts[6] });
+  placeGLTFModel(p2, 'hanging_picture_frame_03', 0.92, 4.28, 2.25, -11.8, -Math.PI / 2, { addShadow: false, customArtMat: matArts[7] });
+  placeGLTFModel(p2, 'standing_picture_frame_01', 0.22, -0.82, 0.82, -13.22, -1.25, { addShadow: false });
+  placeGLTFModel(p2, 'horse_statue_01', 0.25, 2.85, 1.82, -13.55, -0.25, { addShadow: false });
+  addBotanicalVessel(p2, 'anthurium_botany_01', 1.65, 0, -13.35, 0.92, 'ivory', -0.3);
 
-  const vanityLight = new THREE.PointLight(0xffd7a3, 10.0, 14, 1.4);
-  vanityLight.position.set(-0.4, 1.85, -11.4);
-  p2.add(vanityLight);
-  lighting.registerLight(vanityLight, { dayIntensity: 2.5, nightIntensity: 10.0 });
+  addPersistentPointLight(p2, 0xffd7a3, 10.0, 14, 1.4, -0.4, 1.85, -11.4, { dayIntensity: 2.5, nightIntensity: 10.0 });
 
   // ZONE 2: BAÑO SPA (West X: -12.8..-5.0 — Woven Spa Mat, Lanterns, Ceramic Vases, Ferns & Art)
   addRug(p2, 3.2, 2.6, -9.0, -7.8, matRugCharcoal, 0.012, 0);
@@ -903,10 +1315,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'dining_chair_02', 0.92, 7.8, 0, -3.35, 0, { addShadow: true });
   addPlantPot(p2, 9.2, 0, -0.8, 1.15);
 
-  const kitchenLight = new THREE.PointLight(0xffd39c, 10.0, 14, 1.4);
-  kitchenLight.position.set(7.1, 2.55, -7.8);
-  p2.add(kitchenLight);
-  lighting.registerLight(kitchenLight, { dayIntensity: 2.0, nightIntensity: 10.0 });
+  addPersistentPointLight(p2, 0xffd39c, 10.0, 14, 1.4, 7.1, 2.55, -7.8, { dayIntensity: 2.0, nightIntensity: 10.0 });
 
   // ZONE 4: SUITE PRINCIPAL (Large Persian Rug + Walnut Dais + GothicBed_01 + Throw Pillows + Reading Corner)
   addRug(p2, 5.1, 4.9, -0.5, -3.2, matRugCrimson, 0.012, 0);
@@ -919,10 +1328,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     placeGLTFModel(p2, 'desk_lamp_arm_01', 0.44, nx, 0.86, -4.15, nx < 0 ? -0.44 : 0.44, { addShadow: false });
   }
   placeGLTFModel(p2, 'Chandelier_01', 1.20, -0.5, FLOOR_HEIGHT - 0.05, -3.2, 0, { addShadow: false, hangFromCeiling: true });
-  const suiteLight = new THREE.PointLight(0xffb870, 9.5, 12, 1.4);
-  suiteLight.position.set(-0.5, 1.85, -3.6);
-  p2.add(suiteLight);
-  lighting.registerLight(suiteLight, { dayIntensity: 1.5, nightIntensity: 9.5 });
+  addPersistentPointLight(p2, 0xffb870, 9.5, 12, 1.4, -0.5, 1.85, -3.6, { dayIntensity: 1.5, nightIntensity: 9.5 });
 
   // Eixample Balcony Railing + Wine Goblets Table + Mid-Century Reading Nook
   box(p2, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
@@ -932,6 +1338,32 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'mid_century_lounge_chair', 0.84, -3.35, 0, -1.55, -0.62, { addShadow: true });
   placeGLTFModel(p2, 'side_table_tall_01', 0.68, -4.05, 0, -2.35, 0, { addShadow: true });
   placeGLTFModel(p2, 'mantel_clock_01', 0.24, -4.05, 0.68, -2.35, 0.55, { addShadow: false });
+
+  // Piso 2 Full Residential Enrichment (Spa + Kitchen + Master Suite: Plants, Paintings, Sculptures, Books & Racks)
+  // Spa Zone 2 additions:
+  addBoutiqueCoatStand(p2, -5.85, 0, -13.15, 0.45, 'ivory');
+  addSculpturePlinth(p2, 'marble_bust_01', 1.06, 0.62, -11.95, -4.45, 0.65, 'basalt');
+  addBotanicalVessel(p2, 'pachira_aquatica_01', -11.95, 0, -1.25, 1.15, 'basalt', 0.4);
+  addBotanicalVessel(p2, 'calathea_orbifolia_01', -6.05, 0, -6.25, 0.88, 'terracotta', -0.35);
+  placeGLTFModel(p2, 'fancy_picture_frame_01', 1.18, -12.78, 2.25, -7.8, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p2, 'hanging_picture_frame_02', 1.10, -5.12, 2.18, -8.2, -Math.PI / 2, { addShadow: false, customArtMat: matArts[3] });
+  // Kitchen & Dining Zone 3 additions:
+  addCuratedBookcase(p2, 9.62, 0, -5.15, Math.PI, 'display_console');
+  addSculpturePlinth(p2, 'bronze_ray_statue', 1.08, 0.50, 9.35, -10.85, -0.55, 'walnut');
+  placeGLTFModel(p2, 'fancy_picture_frame_02', 1.32, 12.78, 2.18, -2.5, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p2, 'hanging_picture_frame_02', 1.15, 12.78, 2.18, -6.8, -Math.PI / 2, { addShadow: false, customArtMat: matArts[4] });
+  placeGLTFModel(p2, 'potted_plant_01', 1.32, 5.15, 0, -13.25, 0.3, { addShadow: true });
+  addPlantedBox(p2, 7.35, 0, 1.02, 0, 1.04);
+  addBookStack(p2, 7.35, 0.99, -7.35, 0.2, null);
+  // Master Suite Zone 4 additions:
+  addCuratedBookcase(p2, -4.65, 0, -5.35, Math.PI / 2, 'tall_wood');
+  addBoutiqueCoatStand(p2, 3.55, 0, -3.85, -0.6, 'ivory');
+  addSculpturePlinth(p2, 'horse_head', 1.10, 0.52, 3.55, -6.95, -0.45, 'walnut');
+  addBotanicalVessel(p2, 'pachira_aquatica_01', 3.55, 0, -1.15, 1.22, 'ivory', -0.4);
+  addPlantedBox(p2, -3.45, 0, 1.02, 0, 1.04);
+  placeGLTFModel(p2, 'binder_notebook', 0.032, -1.82, 0.86, -3.98, 0.35, { addShadow: false });
+  placeGLTFModel(p2, 'standing_picture_frame_02', 0.23, 0.88, 0.86, -3.98, -1.15, { addShadow: false });
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, 4.28, 2.25, -0.6, -Math.PI / 2, { addShadow: false, customArtMat: matArts[10] });
 
   // =========================================================================
   // NIVEL 3 (PISO 3): THE MIND SANCTUARY (PODCAST & CLÍNICA + BOUDOIR SSC)
@@ -999,10 +1431,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, -4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
   addPlantPot(p3, -11.4, 0, -2.2, 1.25);
 
-  const podcastLight = new THREE.PointLight(0xffb86c, 15.0, 18, 1.3);
-  podcastLight.position.set(-4.8, 2.95, -9.2);
-  p3.add(podcastLight);
-  lighting.registerLight(podcastLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
+  addPersistentPointLight(p3, 0xffb86c, 15.0, 18, 1.3, -4.8, 2.95, -9.2, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
   // EAST WING: SENSORY BOUDOIR SSC (SET-04 VELVET CHIAROSCURO)
   addRug(p3, 5.8, 6.8, 5.2, -9.4, matRugEmerald, 0.012, 0);
@@ -1040,6 +1469,36 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   addCandle(p3, 3.25, 0.0, -9.8, false);
   addPlantPot(p3, 8.9, 0, -2.0, 1.2);
 
+  // Piso 3 Mind Sanctuary & Boudoir Expansion: Clinical Archives, Sculptures, Dutch/Rorschach Salon & Couture Racks
+  // West Wing (Podcast & Psychoanalytic Library):
+  addCuratedBookcase(p3, -10.65, 0, -13.68, 0, 'tall_wood');
+  addCuratedBookcase(p3, -0.22, 0, -8.45, -Math.PI / 2, 'display_console');
+  placeGLTFModel(p3, 'binder_notebook', 0.034, -5.25, 0.84, -10.58, 0.18, { addShadow: false });
+  addBookStack(p3, -7.12, 0.62, -4.02, -0.35, 'carved_wooden_elephant');
+  addSculpturePlinth(p3, 'horse_head', 1.12, 0.54, -11.65, -11.65, 0.55, 'walnut');
+  addSculpturePlinth(p3, 'bronze_ray_statue', 1.04, 0.48, -1.25, -12.65, -0.45, 'basalt');
+  placeGLTFModel(p3, 'lion_head', 0.54, -5.0, 3.72, -14.15, 0, { addShadow: false });
+  placeGLTFModel(p3, 'fancy_picture_frame_02', 1.38, -7.0, 2.35, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p3, 'hanging_picture_frame_02', 1.12, -3.2, 3.55, -14.24, 0, { addShadow: false, customArtMat: matArts[9] });
+  placeGLTFModel(p3, 'hanging_picture_frame_03', 0.96, -6.8, 3.65, -14.24, 0, { addShadow: false, customArtMat: matArts[11] });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.25, 0.08, 2.25, -6.2, -Math.PI / 2, { addShadow: false, customArtMat: matArts[9] });
+  placeGLTFModel(p3, 'fancy_picture_frame_01', 1.18, -12.78, 2.35, -2.6, Math.PI / 2, { addShadow: false });
+  addBotanicalVessel(p3, 'pachira_aquatica_01', -11.55, 0, -0.65, 1.22, 'basalt', 0.4);
+  addPlantedBox(p3, -6.8, 0, 1.02, 0, 1.04);
+  addBoutiqueCoatStand(p3, -1.15, 0, -5.85, -0.4, 'leather');
+
+  // East Wing (Sensory Boudoir SSC):
+  addCoutureGarmentRack(p3, 9.25, 0, -7.55, -Math.PI / 2, 'boudoir');
+  addBoutiqueCoatStand(p3, 1.35, 0, -12.85, 0.45, 'emerald');
+  addSculpturePlinth(p3, 'gothic_statue', 0.88, 1.58, 9.35, -13.15, -0.52, 'basalt');
+  addCuratedBookcase(p3, 0.62, 0, -8.25, Math.PI / 2, 'tall_wood');
+  placeGLTFModel(p3, 'fancy_picture_frame_01', 1.20, 6.65, 3.35, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p3, 'hanging_picture_frame_02', 1.15, 0.32, 2.28, -11.4, Math.PI / 2, { addShadow: false, customArtMat: matArts[16] });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.28, 12.78, 2.25, -4.8, -Math.PI / 2, { addShadow: false, customArtMat: matArts[12] });
+  addBotanicalVessel(p3, 'pachira_aquatica_01', 11.45, 0, -1.15, 1.20, 'basalt', -0.35);
+  placeGLTFModel(p3, 'potted_plant_01', 1.34, 1.25, 0, -6.15, 0.35, { addShadow: true });
+  addPlantedBox(p3, 5.2, 0, 1.02, 0, 1.04);
+
   // =========================================================================
   // NIVEL 4 (PISO 4): PENTHOUSE ROOFTOP «THE INNER CIRCLE» (SET-03 TULUM/BCN)
   // =========================================================================
@@ -1069,14 +1528,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   for (const [lx, lz] of [[-6.95, -4.45], [0.85, -4.45], [-6.95, -9.25], [2.45, -6.85]]) {
     placeGLTFModel(p4, 'wooden_lantern_01', 0.52, lx, 0, lz, lx * 0.2, { addShadow: true });
   }
-  const poolLight = new THREE.PointLight(0x22d3ee, 18.0, 18, 1.35);
-  poolLight.position.set(-3.0, 0.85, -6.8);
-  p4.add(poolLight);
-  lighting.registerLight(poolLight, { dayIntensity: 2.5, nightIntensity: 18.0 });
-  const poolKeyLight = new THREE.PointLight(0xffd6a5, 14.0, 16, 1.4);
-  poolKeyLight.position.set(-1.6, 2.85, -0.9);
-  p4.add(poolKeyLight);
-  lighting.registerLight(poolKeyLight, { dayIntensity: 2.0, nightIntensity: 14.0 });
+  addPersistentPointLight(p4, 0x22d3ee, 18.0, 18, 1.35, -3.0, 0.85, -6.8, { dayIntensity: 2.5, nightIntensity: 18.0 });
+  addPersistentPointLight(p4, 0xffd6a5, 14.0, 16, 1.4, -1.6, 2.85, -0.9, { dayIntensity: 2.0, nightIntensity: 14.0 });
 
   // 2 Teak Sun Loungers + Cream Linen Cushions + Throw Pillows + Side Table with Brass Goblets
   for (const lz of [-8.2, -5.6]) {
@@ -1117,12 +1570,9 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   for (let sx = 3.8; sx <= 7.2; sx += 1.1) {
     placeGLTFModel(p4, 'bar_chair_round_01', 0.78, sx, 0, -8.8, Math.PI, { addShadow: true });
   }
-  const barLight = new THREE.PointLight(0xffb76b, 11.0, 15, 1.4);
-  barLight.position.set(5.5, 2.85, -9.2);
-  p4.add(barLight);
-  lighting.registerLight(barLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
+  addPersistentPointLight(p4, 0xffb76b, 11.0, 15, 1.4, 5.5, 2.85, -9.2, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
-  // Lush Botanical Rooftop Planters (potted_plant_02, potted_plant_04, shrub_02, fern_02)
+  // Lush Botanical Rooftop Planters, Sculptures, Resort Books & Poolside Cabana Garment Racks (Piso 4)
   for (const [px, pz] of [[-11.8, -13.0], [-11.8, -1.0], [11.5, -13.0], [11.5, -1.0]]) {
     const isBack = pz < -6.0;
     placeGLTFModel(p4, isBack ? 'potted_plant_02' : 'potted_plant_04', isBack ? 2.15 : 1.65, px, 0, pz, px * 0.35, { addShadow: true });
@@ -1131,6 +1581,35 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p4, 'shrub_02', 1.05, 1.4, 0, -10.4, -0.52, { addShadow: true });
   placeGLTFModel(p4, 'fern_02', 0.95, -10.8, 0, -11.2, 0.4, { addShadow: true });
   placeGLTFModel(p4, 'fern_02', 0.95, 9.8, 0, -11.2, -0.3, { addShadow: true });
+
+  // Mediterranean & Tulum Botanical Ring (Braided Pachira Trees, Terracotta Pots & 6 Planted Troughs)
+  addBotanicalVessel(p4, 'pachira_aquatica_01', -11.4, 0, -3.6, 1.28, 'terracotta', 0.35);
+  addBotanicalVessel(p4, 'pachira_aquatica_01', 11.2, 0, -6.2, 1.26, 'basalt', -0.45);
+  placeGLTFModel(p4, 'potted_plant_01', 1.42, 2.35, 0, -11.2, 0.25, { addShadow: true });
+  placeGLTFModel(p4, 'potted_plant_01', 1.38, 8.95, 0, -11.2, -0.35, { addShadow: true });
+  for (const [bx, bz, brot] of [
+    [-8.6, 0.92, 0],
+    [3.6, 0.92, 0],
+    [9.2, 0.92, 0],
+    [-4.8, -13.85, Math.PI],
+    [0.2, -13.85, Math.PI],
+    [12.25, -8.8, -Math.PI / 2]
+  ]) {
+    addPlantedBox(p4, bx, 0, bz, brot, 1.08);
+  }
+
+  // Rooftop Monumental Sculptures, Pergola Framed Art, Resort Shelving & Poolside Linen Cabana Rack
+  addSculpturePlinth(p4, 'gothic_statue', 0.88, 1.65, -9.85, -12.65, 0.48, 'basalt');
+  addSculpturePlinth(p4, 'bronze_ray_statue', 1.06, 0.56, 10.65, -4.85, -0.62, 'basalt');
+  addSculpturePlinth(p4, 'horse_head', 1.08, 0.54, 1.45, -12.55, -0.25, 'walnut');
+  placeGLTFModel(p4, 'fancy_picture_frame_01', 0.96, 4.35, 2.45, -11.14, 0, { addShadow: false });
+  placeGLTFModel(p4, 'hanging_picture_frame_02', 0.96, 6.65, 2.45, -11.14, 0, { addShadow: false, customArtMat: matArts[14] });
+  placeGLTFModel(p4, 'standing_picture_frame_01', 0.23, 7.42, 0.62, -3.05, -0.85, { addShadow: false });
+  addCuratedBookcase(p4, 8.45, 0, -9.85, Math.PI, 'display_console');
+  addBookStack(p4, 7.02, 0.62, -3.32, 0.42, 'carved_wooden_elephant');
+  placeGLTFModel(p4, 'binder_notebook', 0.032, -9.12, 0.62, -6.68, 0.3, { addShadow: false });
+  addCoutureGarmentRack(p4, -11.55, 0, -6.9, Math.PI / 2, 'resort');
+  addBoutiqueCoatStand(p4, 9.65, 0, -7.55, -0.45, 'ivory');
 
   addPlantPot(p2, -11.6, 0, -5.8, 1.0);
   return {

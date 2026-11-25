@@ -303,38 +303,159 @@ export function buildContactShadowTexture() {
 export function buildGalleryArtTexture(variant = 1) {
   const [c, ctx] = makeCanvas(512);
   const palettes = {
-    1: { bg: '#12141a', c0: '#d18447', c1: '#1a735c', frame: '#e5dfd3' },
-    2: { bg: '#181014', c0: '#bf2e4c', c1: '#dbba6b', frame: '#ded6c6' },
-    3: { bg: '#0f1715', c0: '#10b981', c1: '#c8963e', frame: '#1e222a' },
-    4: { bg: '#1d1916', c0: '#e2c799', c1: '#5c3a24', frame: '#d8cfc0' },
-    5: { bg: '#141118', c0: '#a855f7', c1: '#c86446', frame: '#242731' },
-    6: { bg: '#ebe5d8', c0: '#1f242d', c1: '#9e3d24', frame: '#181a20' }
+    // 1–4: Modernist Eixample & Editorial Copper-Emerald Abstracts
+    1:  { bg: '#12141a', c0: '#d18447', c1: '#1a735c', accent: '#f2c98a', frame: '#e5dfd3', style: 'eclipse' },
+    2:  { bg: '#181014', c0: '#bf2e4c', c1: '#dbba6b', accent: '#f7e6c4', frame: '#ded6c6', style: 'arch' },
+    3:  { bg: '#0f1715', c0: '#10b981', c1: '#c8963e', accent: '#e7e1d6', frame: '#1e222a', style: 'botanical' },
+    4:  { bg: '#1d1916', c0: '#e2c799', c1: '#5c3a24', accent: '#c86446', frame: '#d8cfc0', style: 'horizon' },
+    // 5–8: Chiaroscuro Dutch Still-Life & Classical Silhouette Studies (Alina Van Dijk Heritage)
+    5:  { bg: '#120e10', c0: '#c86446', c1: '#3b1d28', accent: '#e6be78', frame: '#242731', style: 'chiaroscuro' },
+    6:  { bg: '#ebe5d8', c0: '#1f242d', c1: '#9e3d24', accent: '#0b3b2c', frame: '#181a20', style: 'ink_study' },
+    7:  { bg: '#0d1014', c0: '#d4af37', c1: '#5c331c', accent: '#f4e7ce', frame: '#1c1917', style: 'chiaroscuro' },
+    8:  { bg: '#151c19', c0: '#c8963e', c1: '#0b3b2c', accent: '#e5dec9', frame: '#27231f', style: 'botanical' },
+    // 9–12: Psychoanalytic Ink, Architectural Monoliths & Minimalist Linen Reliefs (Piso 3 & Suite)
+    9:  { bg: '#e6dfd1', c0: '#18191f', c1: '#6b4226', accent: '#9e3d24', frame: '#221e1b', style: 'rorschach' },
+    10: { bg: '#14161d', c0: '#9e3d24', c1: '#1e293b', accent: '#d4af37', frame: '#d8cfc0', style: 'arch' },
+    11: { bg: '#ded6c6', c0: '#262932', c1: '#8c583a', accent: '#0f5132', frame: '#1b1d24', style: 'ink_study' },
+    12: { bg: '#110d12', c0: '#7e22ce', c1: '#9a3412', accent: '#eab308', frame: '#1e1b24', style: 'eclipse' },
+    // 13–16: Art-Déco Nocturne & Mediterranean Sunset Triptychs (Cabaret & Café)
+    13: { bg: '#0b0d13', c0: '#d4af37', c1: '#881337', accent: '#fde68a', frame: '#18181b', style: 'deco' },
+    14: { bg: '#f0ebe1', c0: '#b85a3a', c1: '#2a4365', accent: '#c8963e', frame: '#292524', style: 'horizon' },
+    15: { bg: '#171311', c0: '#d97706', c1: '#064e3b', accent: '#f5f0e6', frame: '#312a24', style: 'deco' },
+    16: { bg: '#191518', c0: '#be123c', c1: '#4c1d95', accent: '#f3d08a', frame: '#221f26', style: 'rorschach' }
   };
-  const p = palettes[variant] || palettes[1];
+  const idx = ((variant - 1) % 16) + 1;
+  const p = palettes[idx] || palettes[1];
   ctx.fillStyle = p.bg;
   ctx.fillRect(0, 0, 512, 512);
 
-  const grad = ctx.createRadialGradient(256, 232, 24, 256, 256, 215);
+  // Passepartout / inner museum mat border
+  ctx.strokeStyle = p.frame;
+  ctx.lineWidth = 28;
+  ctx.strokeRect(14, 14, 484, 484);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(36, 36, 440, 440);
+  ctx.clip();
+
+  const grad = ctx.createRadialGradient(256, 224, 18, 256, 256, 240);
   grad.addColorStop(0, p.c0);
-  grad.addColorStop(0.58, p.c1);
-  grad.addColorStop(1, 'rgba(12, 14, 18, 0)');
+  grad.addColorStop(0.62, p.c1);
+  grad.addColorStop(1, p.bg);
   ctx.fillStyle = grad;
   ctx.fillRect(36, 36, 440, 440);
 
-  // Subtle architectural / geometric fine lines so ControlNet sees real gallery composition
-  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(256, 246, 98 + (variant % 3) * 18, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(96, 360 - (variant % 2) * 40);
-  ctx.lineTo(416, 170 + (variant % 3) * 28);
-  ctx.stroke();
+  if (p.style === 'arch') {
+    ctx.fillStyle = p.c1;
+    ctx.beginPath();
+    ctx.arc(256, 230, 118, Math.PI, 0);
+    ctx.lineTo(374, 430);
+    ctx.lineTo(138, 430);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = p.accent;
+    ctx.beginPath();
+    ctx.arc(256, 185, 42, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.style === 'botanical') {
+    ctx.strokeStyle = p.accent;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(256, 435);
+    ctx.quadraticCurveTo(238, 260, 272, 95);
+    ctx.stroke();
+    for (let l = 0; l < 7; l++) {
+      const ly = 390 - l * 42;
+      const side = l % 2 === 0 ? 1 : -1;
+      ctx.fillStyle = l % 2 === 0 ? p.accent : p.c0;
+      ctx.beginPath();
+      ctx.ellipse(256 + side * 46, ly, 44, 16, side * -0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (p.style === 'horizon') {
+    ctx.fillStyle = p.c0;
+    ctx.beginPath();
+    ctx.arc(276, 206, 74, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = p.c1;
+    ctx.fillRect(36, 278, 440, 198);
+    ctx.strokeStyle = p.accent;
+    ctx.lineWidth = 3;
+    for (let y = 298; y <= 398; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(92, y);
+      ctx.lineTo(420, y);
+      ctx.stroke();
+    }
+  } else if (p.style === 'chiaroscuro') {
+    // Dutch Golden Age chiaroscuro vessel & warm rim highlight
+    ctx.fillStyle = 'rgba(0,0,0,0.48)';
+    ctx.fillRect(36, 340, 440, 136);
+    ctx.fillStyle = p.accent;
+    ctx.beginPath();
+    ctx.ellipse(246, 286, 68, 92, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = p.c1;
+    ctx.beginPath();
+    ctx.ellipse(264, 292, 62, 88, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = p.c0;
+    ctx.beginPath();
+    ctx.arc(178, 348, 28, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.style === 'ink_study') {
+    ctx.strokeStyle = p.c0;
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(118, 390);
+    ctx.bezierCurveTo(148, 120, 356, 110, 382, 360);
+    ctx.stroke();
+    ctx.strokeStyle = p.accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(270, 220, 78, 0.2, Math.PI * 1.45);
+    ctx.stroke();
+  } else if (p.style === 'rorschach') {
+    for (const s of [-1, 1]) {
+      ctx.fillStyle = p.c0;
+      ctx.beginPath();
+      ctx.ellipse(256 + s * 54, 210, 56, 86, s * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = p.accent;
+      ctx.beginPath();
+      ctx.ellipse(256 + s * 36, 318, 38, 52, s * -0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (p.style === 'deco') {
+    ctx.strokeStyle = p.accent;
+    ctx.lineWidth = 3.5;
+    for (let r = 48; r <= 196; r += 36) {
+      ctx.beginPath();
+      ctx.arc(256, 396, r, Math.PI, 0);
+      ctx.stroke();
+    }
+    ctx.strokeRect(86, 86, 340, 340);
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(256, 246, 104, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = p.accent;
+    ctx.beginPath();
+    ctx.arc(294, 212, 34, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  ctx.strokeStyle = p.frame;
-  ctx.lineWidth = 22;
-  ctx.strokeRect(11, 11, 490, 490);
+  // Subtle canvas linen weave grain
+  for (let i = 0; i < 2400; i++) {
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,250,240,0.035)' : 'rgba(0,0,0,0.045)';
+    ctx.fillRect((i * 83) % 512, (i * 137) % 512, 2, 1);
+  }
+  ctx.restore();
+
   return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
 }
 

@@ -386,9 +386,15 @@ export class CameraAndExportController {
   }
 
   flyTo(pos, target) {
+    // Si cambiamos de piso (ΔY > 3.0 m), colocar inmediatamente la cota Y en el nuevo nivel para no atravesar losas
+    if (Math.abs(this.camera.position.y - pos.y) > 3.0) {
+      this.camera.position.set(pos.x + (this.camera.position.x - pos.x) * 0.35, pos.y, pos.z + (this.camera.position.z - pos.z) * 0.35);
+      this.controls.target.set(target.x, target.y, target.z);
+    }
     this.targetPos.set(pos.x, pos.y, pos.z);
     this.targetLook.set(target.x, target.y, target.z);
     this.isTransitioning = true;
+    this._lastFlyTick = performance.now();
   }
 
   updateDepthRangeForFocus(focusPoint, lockedBounds = null) {
@@ -444,8 +450,12 @@ export class CameraAndExportController {
 
   update() {
     if (this.isTransitioning) {
-      this.camera.position.lerp(this.targetPos, 0.09);
-      this.controls.target.lerp(this.targetLook, 0.09);
+      const now = performance.now();
+      const dt = Math.min(0.12, Math.max(0.008, (now - (this._lastFlyTick || now)) / 1000));
+      this._lastFlyTick = now;
+      const alpha = Math.min(1.0, Math.max(0.16, 1.0 - Math.exp(-11.0 * dt)));
+      this.camera.position.lerp(this.targetPos, alpha);
+      this.controls.target.lerp(this.targetLook, alpha);
       if (
         this.camera.position.distanceTo(this.targetPos) < 0.03 &&
         this.controls.target.distanceTo(this.targetLook) < 0.03

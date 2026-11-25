@@ -290,6 +290,14 @@ export const SPOT_ADVISORY_BLUEPRINTS = {
         camTarget: { x: -8.6, y: 19.6 + 0.38, z: -6.9 },
         promptToken: 'handcrafted warm-lit wooden rooftop lantern beside woven linen sun lounger cushions and brass goblet on aged teak deck by glowing turquoise plunge pool',
         motionPrompt: 'Gentle golden sunset water caustics shimmering across aged teak wood and warm lantern glass, locked 100mm macro, motion strength 2.2'
+      },
+      {
+        name: 'Escultura Gótica & Cabana Resort en Lino',
+        modelId: 'gothic_statue',
+        camPos: { x: -8.2, y: 19.6 + 1.55, z: -9.8 },
+        camTarget: { x: -10.2, y: 19.6 + 1.35, z: -12.2 },
+        promptToken: 'weathered classical gothic stone statue on dark basalt plinth beside lush Mediterranean terrace planters and draped washed-linen resort garments on brushed brass cabana rack',
+        motionPrompt: 'Golden sunset breeze rustling tropical foliage beside carved stone sculpture on luxury rooftop deck, locked 85mm still, motion strength 2.0'
       }
     ],
     performanceAndSound: {
@@ -410,6 +418,14 @@ export const SPOT_ADVISORY_BLUEPRINTS = {
         camTarget: { x: 8.2, y: 14.7 + 1.05, z: -9.8 },
         promptToken: 'carved dark wood gothic cabinet beside flickering brass candleholders, brass goblets and coiled purple silk shibari ropes in candlelit chiaroscuro boudoir',
         motionPrompt: 'Flickering 2200K candle flames casting slow dancing warm shadows across carved dark wood and polished brass goblets, 100mm macro, motion strength 2.2'
+      },
+      {
+        name: 'Perchero Couture SSC & Escultura en Penumbra',
+        modelId: 'gothic_statue',
+        camPos: { x: 6.9, y: 14.7 + 1.38, z: -5.2 },
+        camTarget: { x: 9.2, y: 14.7 + 1.22, z: -8.2 },
+        promptToken: 'brushed brass couture garment rack holding satin-black leather bodice and deep emerald velvet evening robes with warm brass O-rings beside candlelit gothic stone statue',
+        motionPrompt: 'Warm 2200K candle highlights glinting subtly on brushed brass hangers, supple black leather and emerald velvet nap, locked 85mm macro, motion strength 2.0'
       }
     ],
     performanceAndSound: {
@@ -448,6 +464,14 @@ export const SPOT_ADVISORY_BLUEPRINTS = {
         camTarget: { x: -0.35, y: 9.8 + 0.88, z: -13.12 },
         promptToken: 'amber glass perfume flacons, crimson matte lipstick in brass tube, ornate brass vase and glowing vanity bulbs reflected on carved baroque console table',
         motionPrompt: 'Ultra-slow macro glide across amber glass perfume bottles and brass vanity tray catching warm mirror bulb reflections, motion strength 2.0'
+      },
+      {
+        name: 'Perchero Atelier de Latón Cepillado & Seda',
+        modelId: 'fancy_picture_frame_01',
+        camPos: { x: -1.65, y: 9.8 + 1.32, z: -10.85 },
+        camTarget: { x: -3.45, y: 9.8 + 1.18, z: -13.15 },
+        promptToken: 'bespoke brushed-brass and dark walnut couture wardrobe rack with draped emerald velvet gown, charcoal silk slip, leather hatbox and gilded Dutch oil painting behind',
+        motionPrompt: 'Soft vanity bulb light caressing draped silk charmeuse, emerald velvet folds and warm brushed brass hangers in quiet dressing room, motion strength 2.0'
       }
     ],
     performanceAndSound: {
@@ -597,6 +621,14 @@ export const SPOT_ADVISORY_BLUEPRINTS = {
         camTarget: { x: -2.0, y: 4.9 + 0.82, z: -3.5 },
         promptToken: 'artisan ceramic coffee cup and saucer beside brass candleholder on white Carrara marble bistro table with blurry copper espresso bar in background',
         motionPrompt: 'Delicate steam rising from fresh espresso on Carrara marble table while warm cafe chandelier bokeh glows softly behind, 100mm macro, motion strength 2.0'
+      },
+      {
+        name: 'Librería Literaria, Busto Clásico & Perchero Bistró',
+        modelId: 'steel_frame_shelves_03',
+        camPos: { x: -9.4, y: 4.9 + 1.36, z: -8.2 },
+        camTarget: { x: -11.9, y: 4.9 + 1.25, z: -9.8 },
+        promptToken: 'modernist Eixample literary cafe corner with steel-and-walnut bookshelves filled with art encyclopedias, classical marble bust on Carrara pedestal and gilded Dutch paintings',
+        motionPrompt: 'Warm morning sunlight gliding across leatherbound book spines, sculpted white marble bust and lush tropical indoor foliage, locked 85mm still, motion strength 2.0'
       }
     ],
     performanceAndSound: {

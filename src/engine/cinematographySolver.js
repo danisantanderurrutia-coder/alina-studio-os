@@ -189,9 +189,19 @@ export function assemblePrompts({ shot, spot, catalog, aspectRatio, foregroundPr
     const lock = hasChar ? '' : catalog.characterReference.tokenLockPrompt;
     flux = [lock, ctx, fgTokens, st.promptTokens, optics, li.promptLightingTokens, dir.fluxPromptTokens].filter(Boolean).join(', ');
   }
+  const fluxClean = flux;
   flux += ` --ar ${aspectRatio}`;
+  const cleanMoveTokens = (mv.motionPromptTokens || '')
+    .replace(/--motion\s+[\d.]+/gi, '')
+    .replace(/,?\s*strict\s+[\d.]+s?(?:\s+seconds?)?\s+(?:clip\s+)?(?:limit|max)/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  const cleanDirMotion = (dir.motionPromptStyle || '')
+    .replace(/,?\s*strict\s+[\d.]+s?(?:\s+seconds?)?\s+(?:clip\s+)?(?:limit|max)/gi, '')
+    .trim();
   const motion = `${mv.motionPromptTokens}, ${dir.motionPromptStyle}`;
-  return { flux, motion };
+  const motionClean = [cleanMoveTokens, cleanDirMotion].filter(Boolean).join(', ');
+  return { flux, fluxClean, motion, motionClean };
 }
 
 // ---------- solver ----------
@@ -341,6 +351,13 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
   const zw = auditShot(shot, catalog);
   const prompts = assemblePrompts({ shot, spot, catalog, aspectRatio, foregroundProp });
 
+  const minFocus = Math.min(focusStart, focusEnd, foregroundProp?.distanceFromCameraM ?? Infinity);
+  const maxFocus = Math.max(focusStart, focusEnd);
+  const depthBoundsM = {
+    uNear: +Math.max(0.32, minFocus * 0.28).toFixed(3),
+    uFar: +Math.max(maxFocus + 8.0, maxFocus * 2.8).toFixed(3)
+  };
+
   return {
     shotId: shot.shotId,
     spotId: shot.spotId,
@@ -350,6 +367,8 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
     foregroundFraming: Boolean(shot.foregroundFraming),
     foregroundProp,
     alinaRotY: +rotY.toFixed(4),
+    alinaRotYDeg: +(rotY / DEG).toFixed(2),
+    depthBoundsM,
     camera: {
       startPos: r3(startPos), startTarget: r3(target),
       endPos: r3(endPos), endTarget: r3(target),

@@ -16,8 +16,8 @@ export { catalog };
  * No toca luces del edificio ni el modo Día/Noche (solo se suma encima y se restaura).
  */
 export class CinemaDirector {
-  constructor({ scene, renderer, lighting, camCtrl, alina, unityBridge, getSpot, prepareSpot, getBaseMode }) {
-    Object.assign(this, { scene, renderer, lighting, camCtrl, alina, unityBridge, getSpot, prepareSpot, getBaseMode });
+  constructor({ scene, renderer, lighting, camCtrl, alina, getSpot, prepareSpot, getBaseMode }) {
+    Object.assign(this, { scene, renderer, lighting, camCtrl, alina, getSpot, prepareSpot, getBaseMode });
     this.active = false;
     this.payload = null;
     this.shot = null;
@@ -190,7 +190,6 @@ export class CinemaDirector {
 
     this._setCamera(0, 0);
     this._updateForegroundProp(p.foregroundProp);
-    this.unityBridge?.applyCinemaShot(p);
     return p;
   }
 
@@ -205,6 +204,9 @@ export class CinemaDirector {
     const baseMesh = this.foregroundMeshes[propData.propId] || this.foregroundMeshes.monstera_leaf;
     if (baseMesh) {
       const clone = baseMesh.clone(true);
+      clone.traverse((o) => {
+        if (o.isMesh) o.userData.maskId = 'foreground';
+      });
       clone.scale.setScalar(propData.scale || 0.3);
       this.foregroundGroup.add(clone);
       this.foregroundGroup.position.set(propData.worldPos.x, propData.worldPos.y, propData.worldPos.z);
@@ -212,16 +214,22 @@ export class CinemaDirector {
     }
   }
 
+  /** Posiciona cámara y foco de forma limpia en t ∈ [0, 1] (sin ruido handheld si cleanKeyframe=true). */
+  seekNormalized(t, { cleanKeyframe = true } = {}) {
+    if (!this.payload) return;
+    this._setCamera(t, cleanKeyframe ? 0 : t * this.payload.camera.durationSec, cleanKeyframe);
+  }
+
   // ---------- cámara ----------
-  _setCamera(t, elapsed) {
+  _setCamera(t, elapsed, suppressHandheld = false) {
     const p = this.payload; if (!p) return;
     const c = p.camera;
     const k = S.ease(c.easing, t);
     const pos = S.lerp3(c.startPos, c.endPos, k);
     const tgt = S.lerp3(c.startTarget, c.endTarget, k);
 
-    // handheld orgánico (Perlin-lite con senos incomensurables)
-    if (c.handheldAmpM > 0) {
+    // handheld orgánico (Perlin-lite con senos incomensurables; desactivado en captura limpia de keyframes)
+    if (c.handheldAmpM > 0 && !suppressHandheld) {
       const w = 2 * Math.PI * c.handheldHz;
       pos.x += Math.sin(elapsed * w) * c.handheldAmpM * 0.6 + Math.sin(elapsed * w * 0.37 + 1.3) * c.handheldAmpM * 0.4;
       pos.y += Math.sin(elapsed * w * 2.0 + 0.5) * c.handheldAmpM * 0.7;
@@ -237,7 +245,7 @@ export class CinemaDirector {
     this.camCtrl.controls.update();
     if (c.rollDeg) cam.rotateZ(THREE.MathUtils.degToRad(c.rollDeg));
 
-    // foco (para pase Depth y HUD)
+    // foco (para pase Depth, Bokeh CoC y HUD)
     const f = p.dof.startFocusDistM + (p.dof.endFocusDistM - p.dof.startFocusDistM) * k;
     this.focusDistM = f;
   }
@@ -248,7 +256,6 @@ export class CinemaDirector {
     this.playing = true;
     this.t0 = performance.now();
     this.onMoveEnd = onEnd || null;
-    this.unityBridge?.playCameraMove(this.payload);
   }
 
   stop(finished) {

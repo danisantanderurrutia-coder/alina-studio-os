@@ -4,9 +4,9 @@ import { SkyAndLightingController } from './engine/skyAndLighting.js';
 import { buildSanctuaryArchitecture } from './engine/buildingBuilder.js';
 import { AlinaAvatarController } from './engine/alinaLoader.js';
 import { CameraAndExportController } from './engine/cameraAndExport.js';
-import { UnityWebGLBridge } from './engine/unityBridge.js';
 import { CinemaDirector } from './engine/cinemaDirector.js';
 import { mountCinemaPanel } from './engine/cinemaUI.js';
+import { buildZipBlob } from './engine/zipWriter.js';
 import {
   analyzeCapturedImage,
   buildFluxPromptFromCapture,
@@ -29,13 +29,14 @@ const state = {
   activeView: 'plato', // 'plato' | 'prompts' | 'objects' | 'cinema'
   cinemaSubView: 'chapters', // 'chapters' | 'director' | 'bible'
   objects3DVisible: false,
-  activeEngine: 'threejs', // 'threejs' | 'unity'
+  activeEngine: 'threejs',
   activeFloor: 2,
   activeSpot: SANCTUARY_FLOORS[2].spots[0],
   activeAnim: 'Idle',
   activeCamPreset: '85mm',
   lightingMode: 'night',
   sliced: true,
+  activePass: 'beauty',
   depthPass: false,
   guide916: false,
   theaterMode: false,
@@ -46,72 +47,10 @@ const state = {
   selectedShotId: null,
   defaultChapterIdForNextShot: '',
   pendingObjectIdsForNextShot: [],
-  pendingUnityCapture: null,
-  unityLoadedFloors: new Set(),
-  threeLoadMs: 0,
-  unityLoadMs: null,
-  unityFps: null
+  threeLoadMs: 0
 };
 
-const UNITY_FLOOR_DESCRIPTIONS = {
-  0: 'Planta Baja — Cabaret Nocturne, parking exterior, marquesina VIP y piano de cola',
-  1: 'Le Velvet Café — Barra de roble con La Marzocco en cobre, mesas Carrara y balcón',
-  2: 'Residencia Privada — Tocador vanity iluminado, baño spa basáltico, cocina y suite',
-  3: 'The Mind Sanctuary — Estudio de podcast con Shure SM7B, biblioteca clínica y boudoir',
-  4: 'Penthouse Rooftop — Plunge pool basáltica, tumbonas de teca, barra en cobre y skyline'
-};
-
-let floorOverlayHideTimer = null;
-
-function updateUnityFloorLoadingUI({ floor, percent = 0, done = false, error = '' }) {
-  const overlay = document.getElementById('unity-floor-loading-overlay');
-  const titleEl = document.getElementById('unity-floor-loading-title');
-  const pctEl = document.getElementById('unity-floor-loading-pct');
-  const barEl = document.getElementById('unity-floor-progress-bar');
-  if (!overlay || !titleEl || !pctEl || !barEl) return;
-
-  const desc = UNITY_FLOOR_DESCRIPTIONS[floor] || SANCTUARY_FLOORS[floor]?.description || 'Escenario 3D';
-  const loadingMessage = `Cargando piso ${floor}: ${desc}, favor espere`;
-
-  if (floorOverlayHideTimer) {
-    clearTimeout(floorOverlayHideTimer);
-    floorOverlayHideTimer = null;
-  }
-
-  if (error) {
-    overlay.classList.remove('hidden');
-    titleEl.textContent = `Error cargando piso ${floor}: ${error}`;
-    pctEl.textContent = 'ERR';
-    setStatusText(`⚠️ <span class="text-rose-400 font-semibold">Error cargando piso ${floor}:</span> ${error}`);
-    return;
-  }
-
-  const clampedPct = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
-  overlay.classList.remove('hidden');
-  titleEl.textContent = loadingMessage;
-  pctEl.textContent = `${clampedPct}%`;
-  barEl.style.width = `${clampedPct}%`;
-
-  if (state.activeEngine === 'unity') {
-    const hud = document.getElementById('viewport-status-hud');
-    if (hud) hud.textContent = `${loadingMessage} (${clampedPct}%)`;
-    setStatusText(`⏳ <span class="text-amber-300 font-semibold">${loadingMessage}</span> <span class="font-mono text-emerald-400">${clampedPct}%</span>`);
-  }
-
-  if (done) {
-    state.unityLoadedFloors.add(floor);
-    floorOverlayHideTimer = setTimeout(() => {
-      overlay.classList.add('hidden');
-      floorOverlayHideTimer = null;
-      if (state.activeEngine === 'unity') {
-        updateViewportHud();
-        setStatusText(`✅ <span class="text-emerald-400 font-semibold">Piso ${floor} cargado (100%):</span> ${desc}`);
-      }
-    }, 450);
-  }
-}
-
-let scene, renderer, lighting, arch, alina, camCtrl, unityBridge, cinema, cinemaUI, objectsUI, chaptersUI;
+let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -160,12 +99,7 @@ function setStatusText(html) {
 function updatePerfBadge() {
   const el = document.getElementById('perf-badge');
   if (!el) return;
-  if (state.activeEngine === 'threejs') {
-    el.textContent = `FPS: ${currentFps || '--'}`;
-  } else {
-    const fpsTxt = state.unityFps != null ? `${state.unityFps}` : '--';
-    el.textContent = `U6 FPS: ${fpsTxt}`;
-  }
+  el.textContent = `FPS: ${currentFps || '--'}`;
 }
 
 function syncSliceButtonUI() {
@@ -354,11 +288,6 @@ function selectFloor(floorNum) {
 
   updateFloorCardStyles();
   applyThreeJSSlicing();
-
-  if (state.activeEngine === 'unity' && unityBridge?.ready && !state.unityLoadedFloors.has(floorNum)) {
-    updateUnityFloorLoadingUI({ floor: floorNum, percent: 0, done: false });
-  }
-  unityBridge?.sendFloor(floorNum);
   selectSpot(floorInfo.spots[0]);
 }
 
@@ -377,8 +306,6 @@ function selectSpot(spot) {
   alina?.placeAtSpot(spot);
   syncAnimButtons(spot.defaultAnim || 'Idle');
   camCtrl?.flyTo(spot.camPos, spot.camTarget);
-  unityBridge?.sendSpot(spot.id);
-  unityBridge?.sendAnimation(spot.defaultAnim || 'Idle');
 
   updateViewportHud();
   cinemaUI?.onSpotChanged();
@@ -410,15 +337,14 @@ function prepareSpotForCinema(spotId) {
 
 function updateViewportHud() {
   const floorLabel = SANCTUARY_FLOORS[state.activeFloor].floorName.split('•')[0].trim();
-  const engineTag = state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP';
-  const passTag = state.depthPass ? 'DEPTH PASS' : state.activeSpot.name;
-  document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [${engineTag}]`;
+  const passLabels = { beauty: state.activeSpot.name, depth: 'DEPTH PASS', normals: 'CAMERA NORMALS', mask: 'SEMANTIC MASK 7-ID' };
+  const passTag = passLabels[state.activePass] || state.activeSpot.name;
+  document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [Three.js 1:1]`;
 }
 
 function setLightingMode(mode) {
   state.lightingMode = mode;
   lighting?.setMode(mode);
-  unityBridge?.sendLightingMode(mode);
   cinemaUI?.onModeChanged();
 
   const btnDay = document.getElementById('btn-mode-day');
@@ -432,22 +358,24 @@ function setLightingMode(mode) {
   }
 }
 
-function setDepthPass(enabled) {
-  state.depthPass = enabled;
+function setViewportPass(pass = 'beauty') {
+  state.activePass = pass;
+  state.depthPass = pass === 'depth';
   const focus = new THREE.Vector3(state.activeSpot.alinaPos.x, state.activeSpot.alinaPos.y + 1.0, state.activeSpot.alinaPos.z);
-  camCtrl?.setDepthPass(enabled, focus);
-  unityBridge?.sendRenderPass(enabled ? 'depth' : 'beauty');
+  camCtrl?.setRenderPass(pass, focus);
 
-  const btnBeauty = document.getElementById('btn-beauty-pass');
-  const btnDepth = document.getElementById('btn-depth-pass');
-  if (enabled) {
-    btnDepth.className = 'px-2 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow';
-    btnBeauty.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
-  } else {
-    btnBeauty.className = 'px-2 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow';
-    btnDepth.className = 'px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
-  }
+  document.querySelectorAll('.pass-btn').forEach((btn) => {
+    const isAct = btn.dataset.pass === pass;
+    const activeColor = pass === 'beauty' ? 'bg-[#c86446]' : pass === 'depth' ? 'bg-emerald-600' : pass === 'normals' ? 'bg-indigo-600' : 'bg-fuchsia-600';
+    btn.className = isAct
+      ? `pass-btn px-2 py-1 rounded-lg ${activeColor} text-white font-semibold shadow transition-all`
+      : 'pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
+  });
   updateViewportHud();
+}
+
+function setDepthPass(enabled) {
+  setViewportPass(enabled ? 'depth' : 'beauty');
 }
 
 function setCameraPreset(mode) {
@@ -458,9 +386,7 @@ function setCameraPreset(mode) {
     syncSliceButtonUI();
     applyThreeJSSlicing();
     camCtrl?.flyTo({ x: 3.5, y: 12.8, z: 36.0 }, { x: 0, y: 11.2, z: -5.5 });
-    unityBridge?.sendDollhouseSlice(false);
-    unityBridge?.sendCameraAngle('dollhouse');
-    document.getElementById('viewport-status-hud').textContent = `CASA DE MUÑECAS 5 PISOS [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
+    document.getElementById('viewport-status-hud').textContent = 'CASA DE MUÑECAS 5 PISOS [Three.js 1:1]';
     return;
   }
   if (mode === 'overview') {
@@ -468,9 +394,7 @@ function setCameraPreset(mode) {
     syncSliceButtonUI();
     applyThreeJSSlicing();
     camCtrl?.flyTo({ x: 30.0, y: 24.5, z: 33.5 }, { x: 0, y: 10.5, z: -4.0 });
-    unityBridge?.sendDollhouseSlice(false);
-    unityBridge?.sendCameraAngle('overview');
-    document.getElementById('viewport-status-hud').textContent = `EXTERIOR 3/4 • 5 PISOS [${state.activeEngine === 'threejs' ? 'Three.js' : 'Unity 6 URP'}]`;
+    document.getElementById('viewport-status-hud').textContent = 'EXTERIOR 3/4 • 5 PISOS [Three.js 1:1]';
     return;
   }
 
@@ -484,17 +408,16 @@ function setCameraPreset(mode) {
       { x: s.alinaPos.x, y: s.alinaPos.y, z: s.alinaPos.z }
     );
   }
-  unityBridge?.sendCameraAngle(mode);
   updateViewportHud();
 }
 
 function buildHiggsfieldPayload() {
-  const camTelemetry = state.activeEngine === 'threejs' && camCtrl
+  const camTelemetry = camCtrl
     ? camCtrl.getCameraTelemetry()
-    : (unityBridge?.lastCameraTelemetry || { source: 'Unity6_URP_WebGL', spot: state.activeSpot.id, preset: state.activeCamPreset });
+    : { spot: state.activeSpot.id, preset: state.activeCamPreset };
 
   return {
-    engine: state.activeEngine === 'threejs' ? 'Motor A: Three.js WebGL + alina.glb' : 'Motor B: Unity 6 URP WebGL',
+    engine: 'Three.js Metric 1:1 Previz + alina.glb',
     character: 'Alina Van Dijk',
     token_lock: '28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair with natural soft waves, vivid emerald green eyes, light natural freckles, crimson lips, micro-pores',
     floor: SANCTUARY_FLOORS[state.activeFloor].floorName,
@@ -529,11 +452,8 @@ function scheduleSaveShot(shot) {
 }
 
 function getCurrentCameraSnapshot() {
-  if (state.activeEngine === 'threejs' && camCtrl) {
+  if (camCtrl) {
     return { ...camCtrl.getCameraTelemetry(), approximate: false };
-  }
-  if (state.activeEngine === 'unity' && unityBridge?.lastCameraTelemetry) {
-    return { ...unityBridge.lastCameraTelemetry, approximate: false };
   }
   const s = state.activeSpot;
   const presetPos =
@@ -649,66 +569,24 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
 
 function captureCurrentViewportToPrompt({ withDepth = false } = {}) {
   if (state.activeView !== 'prompts') switchMainView('prompts');
-
-  if (state.activeEngine === 'threejs') {
-    const beautyUrl = camCtrl.renderVertical916DataURL(1080, 1920, state.depthPass ? true : false);
-    const depthUrl = withDepth ? camCtrl.renderVertical916DataURL(1080, 1920, true) : null;
-    createShotFromCapture(beautyUrl, depthUrl);
-    return;
-  }
-
-  if (!unityBridge?.ready) {
-    setStatusText('⏳ <span class="text-amber-300 font-bold">Espera a que cargue Unity 6 URP para capturar el frame.</span>');
-    return;
-  }
-
-  state.pendingUnityCapture = { mode: 'create', withDepth };
-  setStatusText('📸 <span class="text-[#f29979]">Capturando frame 1080×1920 desde Unity 6 URP...</span>');
-  if (state.depthPass) unityBridge.requestDepthScreenshot916();
-  else unityBridge.requestScreenshot916();
+  const beautyUrl = camCtrl.renderVertical916DataURL(1080, 1920, state.depthPass ? true : false);
+  const depthUrl = withDepth ? camCtrl.renderVertical916DataURL(1080, 1920, true) : null;
+  createShotFromCapture(beautyUrl, depthUrl);
 }
 
 function captureViewportAsObjectRender(aspect = '1:1') {
-  if (state.activeEngine === 'threejs') {
-    const h = aspect === '1:1' ? 1080 : 1920;
-    return Promise.resolve(camCtrl.renderVertical916DataURL(1080, h, false));
-  }
-
-  if (!unityBridge?.ready) {
-    setStatusText('⏳ <span class="text-amber-300 font-bold">Espera a que cargue Unity 6 URP para capturar el objeto.</span>');
-    return Promise.resolve(null);
-  }
-
-  return new Promise((resolve) => {
-    state.pendingUnityCapture = {
-      mode: 'objectCapture',
-      aspect,
-      resolve
-    };
-    unityBridge.requestScreenshot916();
-  });
+  const h = aspect === '1:1' ? 1080 : 1920;
+  return Promise.resolve(camCtrl.renderVertical916DataURL(1080, h, false));
 }
 
 function attachDepthToSelectedShot() {
   const shot = getSelectedShot();
   if (!shot) return;
-
-  if (state.activeEngine === 'threejs') {
-    shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, true);
-    regenerateShotPrompts(shot, { onlyFluxIfClean: true });
-    saveShotToDB(shot);
-    renderShotsPanel();
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura.</span>');
-    return;
-  }
-
-  if (!unityBridge?.ready) {
-    setStatusText('⏳ <span class="text-amber-300">Unity 6 URP aún no está listo.</span>');
-    return;
-  }
-  state.pendingUnityCapture = { mode: 'attachDepth', shotId: shot.id };
-  setStatusText('🌑 <span class="text-emerald-300">Capturando Depth Map 1080×1920 desde Unity 6 URP...</span>');
-  unityBridge.requestDepthScreenshot916();
+  shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, true);
+  regenerateShotPrompts(shot, { onlyFluxIfClean: true });
+  saveShotToDB(shot);
+  renderShotsPanel();
+  setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura.</span>');
 }
 
 function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
@@ -882,15 +760,8 @@ function restoreShotToViewport(shot) {
   setLightingMode(shot.lightingMode);
   setDepthPass(shot.depthPass);
 
-  unityBridge?.sendSpot(shot.spot.id);
-  unityBridge?.sendAnimation(shot.anim);
-
-  if (state.activeEngine === 'threejs' && shot.camera?.position && shot.camera?.target) {
+  if (shot.camera?.position && shot.camera?.target) {
     camCtrl?.flyTo(shot.camera.position, shot.camera.target);
-  } else if (!shot.camera?.approximate && shot.camera?.position && shot.camera?.target) {
-    unityBridge?.flyCameraTo(shot.camera.position, shot.camera.target);
-  } else {
-    unityBridge?.sendCameraAngle(shot.camPreset || '85mm');
   }
 
   updateViewportHud();
@@ -938,105 +809,41 @@ function buildShotExportPayload(shot) {
   };
 }
 
-function exportSelectedShotPackage() {
+async function exportSelectedShotPackage() {
   const shot = getSelectedShot();
   if (!shot) return;
 
-  const baseName = `alina_${shot.engine}_piso${shot.floor}_${shot.spot.id}_${shot.id.slice(-5)}`;
+  const baseName = `alina_piso${shot.floor}_${shot.spot.id}_${shot.id.slice(-5)}`;
   const attachedObjects = getObjectsForShot(shot);
 
-  downloadDataUrl(shot.image, `${baseName}_beauty_1080x1920.png`);
-
-  // Descarga también los renders de los Objetos asociados para subirlos como Elements a Higgsfield
-  attachedObjects.forEach((obj, i) => {
-    setTimeout(() => {
-      downloadDataUrl(obj.image, `${baseName}_ref_${obj.handle.replace('@', '')}.png`);
-    }, 650 + i * 220);
-  });
-
-  if (shot.depthImage) {
-    setTimeout(() => downloadDataUrl(shot.depthImage, `${baseName}_depth_1080x1920.png`), 220);
-    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 440);
-    setStatusText(
-      `✅ <span class="text-emerald-400 font-bold">Paquete exportado (Beauty + Depth + ${attachedObjects.length} Objeto(s) + JSON).</span>`
-    );
-    return;
-  }
-
-  if (state.activeEngine === 'threejs') {
-    const autoDepth = camCtrl.renderVertical916DataURL(1080, 1920, true);
-    shot.depthImage = autoDepth;
+  if (!shot.depthImage && camCtrl) {
+    shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, 'depth');
     saveShotToDB(shot);
     renderShotsPanel();
-    setTimeout(() => downloadDataUrl(autoDepth, `${baseName}_depth_1080x1920.png`), 220);
-    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 440);
-    setStatusText(
-      `✅ <span class="text-emerald-400 font-bold">Paquete completo exportado (Beauty + Depth + ${attachedObjects.length} Objeto(s) + JSON).</span>`
-    );
-    return;
   }
 
-  if (unityBridge?.ready) {
-    state.pendingUnityCapture = { mode: 'exportDepth', shotId: shot.id, baseName };
-    unityBridge.requestDepthScreenshot916();
-    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 450);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportando Beauty + Depth desde Unity 6 URP + Objetos + JSON...</span>');
-  } else {
-    setTimeout(() => downloadJson(buildShotExportPayload(shot), `${baseName}_higgsfield.json`), 250);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Exportado Beauty PNG + Objetos + JSON.</span>');
-  }
-}
+  const entries = [
+    { path: `frames_3d_raw/start_beauty_1080x1920.png`, data: shot.image },
+    { path: `frames_3d_raw/start_depth_1080x1920.png`, data: shot.depthImage },
+    { path: `frames_3d_raw/start_normals_1080x1920.png`, data: camCtrl.renderVertical916DataURL(1080, 1920, 'normals') },
+    { path: `frames_3d_raw/start_mask_1080x1920.png`, data: camCtrl.renderVertical916DataURL(1080, 1920, 'mask') },
+    { path: `higgsfield_capture_manifest.json`, data: buildShotExportPayload(shot) }
+  ];
 
-async function switchEngine(targetEngine) {
-  if (state.activeEngine === targetEngine) return;
-  state.activeEngine = targetEngine;
+  attachedObjects.forEach((obj) => {
+    entries.push({
+      path: `elements_refs/${obj.handle.replace('@', '')}.png`,
+      data: obj.image
+    });
+  });
 
-  const threeBox = document.getElementById('three-canvas-container');
-  const unityBox = document.getElementById('unity-canvas-container');
-  const btnA = document.getElementById('btn-engine-a');
-  const btnB = document.getElementById('btn-engine-b');
-  const badge = document.getElementById('motor-badge');
-
-  if (targetEngine === 'threejs') {
-    threeBox.classList.remove('hidden');
-    unityBox.classList.add('hidden');
-    btnA.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all';
-    btnB.className = 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-semibold transition-all';
-    badge.textContent = 'THREE.JS';
-    badge.className = 'text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold shrink-0';
-    camCtrl?.onWindowResize();
-    updatePerfBadge();
-    updateViewportHud();
-    return;
-  }
-
-  threeBox.classList.add('hidden');
-  unityBox.classList.remove('hidden');
-  btnB.className = 'px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold shadow transition-all';
-  btnA.className = 'px-2.5 py-1 rounded-lg text-slate-300 hover:text-white font-semibold transition-all';
-  badge.textContent = 'UNITY 6 URP';
-  badge.className = 'text-[10px] font-mono text-pink-300 bg-pink-500/15 px-2 py-0.5 rounded-full border border-pink-500/30 font-bold shrink-0';
-  updatePerfBadge();
-  updateViewportHud();
-  refreshViewportLayout();
-
-  unityBridge.pendingState = {
-    floor: state.activeFloor,
-    spotId: state.activeSpot.id,
-    lightingMode: state.lightingMode,
-    sliced: state.sliced,
-    anim: state.activeAnim,
-    renderPass: state.depthPass ? 'depth' : 'beauty'
-  };
-
-  try {
-    await unityBridge.ensureLoaded();
-    unityBridge.syncFullState(unityBridge.pendingState);
-    refreshViewportLayout();
-  } catch (err) {
-    document.getElementById('unity-loading-text').textContent = `Error al cargar Unity WebGL: ${err.message}`;
-    setStatusText(`⚠️ <span class="text-rose-400">Error Unity WebGL:</span> ${err.message}`);
-  }
+  const zipBlob = await buildZipBlob(entries);
+  const url = URL.createObjectURL(zipBlob);
+  downloadDataUrl(url, `shotpack_${baseName}.zip`);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setStatusText(
+    `✅ <span class="text-emerald-400 font-bold">Shot Pack .zip exportado (Beauty + Depth + Normals + Mask + ${attachedObjects.length} Objeto(s) + JSON).</span>`
+  );
 }
 
 function toggleTheaterMode(forceState = null) {
@@ -1058,9 +865,7 @@ function bindUIEvents() {
   document.getElementById('btn-prompts-close').addEventListener('click', () => switchMainView('plato'));
   document.getElementById('btn-goto-objects-vault').addEventListener('click', () => switchMainView('objects'));
 
-  // Motores e iluminación
-  document.getElementById('btn-engine-a').addEventListener('click', () => switchEngine('threejs'));
-  document.getElementById('btn-engine-b').addEventListener('click', () => switchEngine('unity'));
+  // Iluminación
   document.getElementById('btn-mode-day').addEventListener('click', () => setLightingMode('day'));
   document.getElementById('btn-mode-night').addEventListener('click', () => setLightingMode('night'));
 
@@ -1068,7 +873,6 @@ function bindUIEvents() {
     state.sliced = !state.sliced;
     syncSliceButtonUI();
     applyThreeJSSlicing();
-    unityBridge?.sendDollhouseSlice(state.sliced);
   });
 
   // Captura rápida de Toma hacia Prompts
@@ -1220,8 +1024,9 @@ function bindUIEvents() {
       : 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors';
   });
 
-  document.getElementById('btn-beauty-pass').addEventListener('click', () => setDepthPass(false));
-  document.getElementById('btn-depth-pass').addEventListener('click', () => setDepthPass(true));
+  document.querySelectorAll('.pass-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setViewportPass(btn.dataset.pass));
+  });
 
   document.querySelectorAll('.cam-preset-btn').forEach((btn) => {
     btn.addEventListener('click', () => setCameraPreset(btn.dataset.cam));
@@ -1232,7 +1037,6 @@ function bindUIEvents() {
       const animName = btn.dataset.anim;
       syncAnimButtons(animName);
       alina?.playAnimation(animName);
-      unityBridge?.sendAnimation(animName);
     });
   });
 
@@ -1290,18 +1094,10 @@ function bindUIEvents() {
   });
 
   document.getElementById('btn-export-png').addEventListener('click', () => {
-    if (state.activeEngine === 'threejs') {
-      const url = camCtrl.renderVertical916DataURL(1080, 1920, state.depthPass);
-      const tag = state.depthPass ? 'depth' : 'beauty';
-      downloadDataUrl(url, `alina_9x16_piso${state.activeFloor}_${state.activeSpot.id}_${tag}.png`);
-      setStatusText(`✅ <span class="text-emerald-400 font-bold">Frame 1080×1920 (${tag}) exportado.</span>`);
-    } else if (state.depthPass) {
-      unityBridge.requestDepthScreenshot916();
-      setStatusText('📸 Capturando Depth Map 1080×1920 desde Unity 6 URP...');
-    } else {
-      unityBridge.requestScreenshot916();
-      setStatusText('📸 Capturando 1080×1920 desde Unity 6 URP...');
-    }
+    const pass = state.activePass || 'beauty';
+    const url = camCtrl.renderVertical916DataURL(1080, 1920, pass);
+    downloadDataUrl(url, `alina_9x16_piso${state.activeFloor}_${state.activeSpot.id}_${pass}.png`);
+    setStatusText(`✅ <span class="text-emerald-400 font-bold">Frame 1080×1920 (${pass}) exportado.</span>`);
   });
 
   document.getElementById('btn-export-json').addEventListener('click', () => {
@@ -1309,25 +1105,23 @@ function bindUIEvents() {
     setStatusText('✅ <span class="text-amber-300 font-bold">JSON técnico del Spot descargado.</span>');
   });
 
-  document.getElementById('btn-export-package').addEventListener('click', () => {
+  document.getElementById('btn-export-package').addEventListener('click', async () => {
     const baseName = `alina_piso${state.activeFloor}_${state.activeSpot.id}`;
-    if (state.activeEngine === 'threejs') {
-      const beautyUrl = camCtrl.renderVertical916DataURL(1080, 1920, false);
-      downloadDataUrl(beautyUrl, `${baseName}_beauty_1080x1920.png`);
-      setTimeout(() => {
-        const depthUrl = camCtrl.renderVertical916DataURL(1080, 1920, true);
-        downloadDataUrl(depthUrl, `${baseName}_depth_1080x1920.png`);
-      }, 220);
-      setTimeout(() => {
-        downloadJson(buildHiggsfieldPayload(), `${baseName}_higgsfield.json`);
-      }, 440);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete 9:16 exportado (Beauty + Depth + JSON).</span>');
-    } else {
-      unityBridge.requestScreenshot916();
-      setTimeout(() => unityBridge.requestDepthScreenshot916(), 300);
-      setTimeout(() => downloadJson(buildHiggsfieldPayload(), `${baseName}_unity_higgsfield.json`), 600);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Paquete Unity 9:16 exportado.</span>');
-    }
+    const op = camCtrl.renderOpenPose916(1080, 1920, alina?.root || null);
+    const entries = [
+      { path: 'frames_3d_raw/start_beauty_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'beauty') },
+      { path: 'frames_3d_raw/start_depth_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'depth') },
+      { path: 'frames_3d_raw/start_normals_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'normals') },
+      { path: 'frames_3d_raw/start_mask_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'mask') },
+      { path: 'frames_3d_raw/start_openpose_1080x1920.png', data: op.dataUrl },
+      { path: 'frames_3d_raw/start_openpose.json', data: op.keypoints },
+      { path: 'higgsfield_spot_manifest.json', data: buildHiggsfieldPayload() }
+    ];
+    const blob = await buildZipBlob(entries);
+    const url = URL.createObjectURL(blob);
+    downloadDataUrl(url, `shotpack_${baseName}.zip`);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setStatusText('✅ <span class="text-emerald-400 font-bold">Shot Pack 9:16 (.zip con Beauty, Depth, Normals, Mask, OpenPose y JSON) exportado.</span>');
   });
 }
 
@@ -1355,87 +1149,8 @@ async function init() {
   camCtrl = new CameraAndExportController(container, scene, renderer, lighting);
   alina = new AlinaAvatarController(scene);
 
-  unityBridge = new UnityWebGLBridge(
-    document.getElementById('unity-canvas'),
-    (pct) => {
-      document.getElementById('unity-progress-bar').style.width = `${pct}%`;
-      document.getElementById('unity-loading-text').textContent = `Cargando runtime Unity 6 URP... ${pct}%`;
-    },
-    (loadMs) => {
-      if (loadMs != null) state.unityLoadMs = loadMs;
-      document.getElementById('unity-loading-overlay').classList.add('hidden');
-      if (!state.unityLoadedFloors.has(state.activeFloor)) {
-        updateUnityFloorLoadingUI({ floor: state.activeFloor, percent: 0, done: false });
-      }
-      unityBridge.requestCameraTelemetry();
-      updatePerfBadge();
-      updateViewportHud();
-    },
-    async (base64Png) => {
-      const dataUrl = `data:image/png;base64,${base64Png}`;
-      const pending = state.pendingUnityCapture;
-      if (pending?.mode === 'objectCapture') {
-        state.pendingUnityCapture = null;
-        const finalUrl = pending.aspect === '1:1' ? await cropDataUrlSquare(dataUrl, 1080) : dataUrl;
-        pending.resolve(finalUrl);
-        return;
-      }
-      if (pending?.mode === 'create') {
-        const wantDepth = pending.withDepth;
-        state.pendingUnityCapture = null;
-        await createShotFromCapture(dataUrl, null);
-        if (wantDepth && state.selectedShotId) {
-          state.pendingUnityCapture = { mode: 'attachDepth', shotId: state.selectedShotId };
-          setTimeout(() => unityBridge.requestDepthScreenshot916(), 180);
-        }
-        return;
-      }
-      downloadDataUrl(dataUrl, `alina_unity_9x16_piso${state.activeFloor}_${state.activeSpot.id}_beauty.png`);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Beauty 1080×1920 PNG descargada.</span>');
-    },
-    (fps) => {
-      state.unityFps = fps;
-      if (state.activeEngine === 'unity') updatePerfBadge();
-    },
-    async (base64DepthPng) => {
-      const depthUrl = `data:image/png;base64,${base64DepthPng}`;
-      const pending = state.pendingUnityCapture;
-      if (pending?.mode === 'create') {
-        state.pendingUnityCapture = null;
-        await createShotFromCapture(depthUrl, depthUrl);
-        return;
-      }
-      if (pending?.mode === 'attachDepth') {
-        state.pendingUnityCapture = null;
-        const target = state.shots.find((s) => s.id === pending.shotId);
-        if (target) {
-          target.depthImage = depthUrl;
-          regenerateShotPrompts(target, { onlyFluxIfClean: true });
-          saveShotToDB(target);
-          renderShotsPanel();
-          setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map Unity 1080×1920 adjuntado.</span>');
-        }
-        return;
-      }
-      if (pending?.mode === 'exportDepth') {
-        state.pendingUnityCapture = null;
-        const target = state.shots.find((s) => s.id === pending.shotId);
-        if (target) {
-          target.depthImage = depthUrl;
-          saveShotToDB(target);
-          renderShotsPanel();
-        }
-        downloadDataUrl(depthUrl, `${pending.baseName}_depth_1080x1920.png`);
-        return;
-      }
-      downloadDataUrl(depthUrl, `alina_unity_9x16_piso${state.activeFloor}_${state.activeSpot.id}_depth.png`);
-      setStatusText('✅ <span class="text-emerald-400 font-bold">Captura Unity Depth Map 1080×1920 PNG descargada.</span>');
-    }
-  );
-  unityBridge.onFloorLoadProgress = updateUnityFloorLoadingUI;
-
   cinema = new CinemaDirector({
-    scene, renderer, lighting, camCtrl, alina, unityBridge,
+    scene, renderer, lighting, camCtrl, alina,
     getSpot: (id) => (id ? findSpotById(id) : state.activeSpot),
     prepareSpot: prepareSpotForCinema,
     getBaseMode: () => state.lightingMode

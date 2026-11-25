@@ -21,6 +21,7 @@ export class AlinaAvatarController {
       if (obj.isMesh) {
         obj.castShadow = true;
         obj.receiveShadow = true;
+        obj.userData.maskId = 'alina';
         if (obj.material) {
           obj.material.envMapIntensity = 0.75;
           obj.material.needsUpdate = true;

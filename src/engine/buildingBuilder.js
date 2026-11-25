@@ -664,11 +664,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const mirrorDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.04, 36), matMirror);
   mirrorDisc.rotation.x = Math.PI / 2;
   mirrorDisc.position.set(-0.4, 1.65, -13.58);
+  mirrorDisc.userData.maskId = 'mirror';
   p2.add(mirrorDisc);
   const mirrorReflector = new Reflector(new THREE.CircleGeometry(0.74, 36), {
     clipBias: 0.003,
-    textureWidth: 512,
-    textureHeight: 512,
+    textureWidth: 1024,
+    textureHeight: 1024,
     color: 0x9aa4b2
   });
   mirrorReflector.position.set(-0.4, 1.65, -13.55);

@@ -41,12 +41,13 @@
 
     /* =========================================================================
        SISTEMA DE VISTAS LIMPIO POR MENÚ SUPERIOR (0 SATURACIÓN VISUAL)
-       Vistas: 'plato' | 'prompts' | 'objects' | 'cinema'
+       Vistas: 'plato' | 'prompts' | 'objects' | 'cinema' | 'advisors'
        ========================================================================= */
     #col-levels,
     #col-viewer,
     #col-prompts,
     #col-objects,
+    #col-advisors,
     #cinema-subnav-wrap,
     #col-chapters,
     #col-director,
@@ -77,6 +78,11 @@
     body[data-view="cinema"][data-cinema-sub="director"] #compactFloorBar { display: flex; }
     body[data-view="cinema"][data-cinema-sub="bible"] #col-bible { display: block; }
 
+    /* 5) VISTA CONSEJO DE ASESORES: Completa (12 cols), o Visor 3D (5 cols) + Consejo (7 cols) */
+    body[data-view="advisors"] #col-advisors { display: flex; }
+    body[data-view="advisors"].advisors-with-3d #col-viewer { display: flex; }
+    body[data-view="advisors"].advisors-with-3d #compactFloorBar { display: flex; }
+
     @media (min-width: 1024px) {
       body[data-view="plato"] #col-levels { grid-column: span 3 / span 3; }
       body[data-view="plato"] #col-viewer { grid-column: span 9 / span 9; }
@@ -87,6 +93,10 @@
       body[data-view="objects"] #col-objects { grid-column: span 12 / span 12; }
       body[data-view="objects"].objects-with-3d #col-viewer { grid-column: span 5 / span 5; }
       body[data-view="objects"].objects-with-3d #col-objects { grid-column: span 7 / span 7; }
+
+      body[data-view="advisors"] #col-advisors { grid-column: span 12 / span 12; }
+      body[data-view="advisors"].advisors-with-3d #col-viewer { grid-column: span 5 / span 5; }
+      body[data-view="advisors"].advisors-with-3d #col-advisors { grid-column: span 7 / span 7; }
 
       body[data-view="cinema"][data-cinema-sub="director"] #col-viewer { grid-column: span 7 / span 7; }
       body[data-view="cinema"][data-cinema-sub="director"] #col-director { grid-column: span 5 / span 5; }
@@ -120,7 +130,7 @@
       box-shadow: 0 0 0 1px rgba(200, 100, 70, 0.35);
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-F5ROy1GM.js"></script>
+  <script type="module" crossorigin src="./assets/index-NhMh0PDR.js"></script>
 </head>
 <body data-view="plato" data-cinema-sub="chapters" class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
@@ -156,6 +166,10 @@
       <button id="nav-cinema" data-nav="cinema" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
         <span>🎞️ Cine & Capítulos</span>
         <span id="chaptersCountBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-white/10 text-slate-300">4</span>
+      </button>
+      <button id="nav-advisors" data-nav="advisors" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
+        <span>🎭 Asesores</span>
+        <span id="advisorsScoreBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-[#c86446]/25 text-[#f29979] border border-[#c86446]/40">8 HoDs</span>
       </button>
     </nav>
 
@@ -505,12 +519,17 @@
          =================================================================== -->
     <section id="col-bible" class="col-span-12 min-w-0"></section>
 
+    <!-- ===================================================================
+         SECCIÓN 5 ('advisors'): CONSEJO DE ASESORES DE PRODUCCIÓN DE CINE
+         =================================================================== -->
+    <section id="col-advisors" class="col-span-12 flex-col min-w-0"></section>
+
   </main>
 
   <!-- BARRA DE ESTADO FLOTANTE / DISCRETA AL PIE -->
   <footer class="max-w-[1920px] mx-auto px-5 pb-4">
     <div id="renderStatus" class="bg-[#12141a]/90 border border-white/10 rounded-xl px-4 py-2 text-center text-[11px] font-mono text-slate-400" role="status" aria-live="polite">
-      Listo: Navega arriba entre Plató 3D, Estudio Prompts, Objetos y Cine & Capítulos.
+      Listo: Navega arriba entre Plató 3D, Estudio Prompts, Objetos, Cine & Capítulos y Consejo de Asesores.
     </div>
   </footer>
 
@@ -522,8 +541,8 @@
         <div class="flex items-center gap-2.5">
           <span class="text-xl">📐</span>
           <div>
-            <h2 id="docs-modal-title" class="text-sm font-bold text-white tracking-wide">THE ALINA SANCTUARY 3D · ARQUITECTURA & MOTOR</h2>
-            <p class="text-[11px] text-slate-400">Pipeline de Producción 3D-to-AI Zero-Waste · Three.js + Unity 6 URP 1:1</p>
+            <h2 id="docs-modal-title" class="text-sm font-bold text-white tracking-wide">THE ALINA SANCTUARY 3D · ARQUITECTURA & MOTOR v3.3</h2>
+            <p class="text-[11px] text-slate-400">Pipeline Single-Source Three.js 1:1 → Render-to-Real (Flux) → Higgsfield Cinema Studio 4.0</p>
           </div>
         </div>
         <button id="btn-docs-close" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 text-lg transition-colors" aria-label="Cerrar modal">✕</button>
@@ -531,25 +550,25 @@
 
       <!-- Segmented Tabs Navigation -->
       <div class="flex items-center gap-1 p-2 bg-black/60 border-b border-white/5 overflow-x-auto custom-scrollbar text-xs">
-        <button data-tab="docs-1" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0">🏛️ Espacio & Dual-Engine</button>
+        <button data-tab="docs-1" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0">🏛️ Espacio 1:1 & Set Dressing</button>
         <button data-tab="docs-2" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎬 Director & Óptica 35mm</button>
         <button data-tab="docs-3" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎮 Controles & Cámaras</button>
-        <button data-tab="docs-4" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎛️ Pases AI & ControlNet</button>
-        <button data-tab="docs-5" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🌿 Bokeh & Regla 1:2</button>
+        <button data-tab="docs-4" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎛️ Pases AI & Higgsfield 4.0</button>
+        <button data-tab="docs-5" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎭 Consejo & Regla 1:2</button>
       </div>
 
       <!-- Modal Body (Scrollable) -->
       <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs leading-relaxed text-slate-300 flex-1">
         
-        <!-- PESTAÑA 1: ESPACIO & DUAL-ENGINE -->
+        <!-- PESTAÑA 1: ESPACIO & THREE.JS 1:1 -->
         <div id="pane-docs-1" class="docs-pane space-y-4">
           <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Espacio Arquitectónico Métrico 1:1</h3>
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Espacio Arquitectónico Métrico 1:1 (Single-Source Three.js)</h3>
             <p>
-              El santuario está modelado como un edificio real de <strong>26 m de ancho × 16 m de profundidad</strong>, compuesto por <strong>5 plantas de 4.90 m de altura libre</strong> cada una (desde la Planta Baja en <code class="text-emerald-400 font-mono">Y = 0</code> hasta el Rooftop en <code class="text-emerald-400 font-mono">Y = 19.6 m</code>).
+              El santuario está construido como un edificio métrico continuo de <strong>26 m de ancho × 16 m de profundidad</strong> con <strong>5 plantas de 4.90 m de altura libre</strong> (desde Planta Baja en <code class="text-emerald-400 font-mono">Y = 0</code> hasta el Penthouse en <code class="text-emerald-400 font-mono">Y = 19.6 m</code>).
             </p>
             <p>
-              Cada rincón del edificio corresponde a uno de los <strong>12 spots canónicos</strong> con coordenadas exactas compartidas entre ambos motores: Suite Privada, Tocador Vanity con espejo planar, Baño Spa, Cocina Gourmet, Estudio de Podcast, Boudoir SSC, Piscina Infinity, Cocktail Bar, Café Bistro, Pasarela y Cabaret.
+              Cada una de las <strong>12 estancias canónicas</strong> está vestida siguiendo la <strong>Ley de las 3 Capas Métricas</strong> con <strong>37 modelos GLTF 1K escaneados CC0</strong>, alfombras persas y tejidas PBR, mosaico hidráulico del Eixample, cortinajes plisados de 4.8 m y apliques cálidos de pared para que ControlNet y Higgsfield jamás encuentren fondos vacíos.
             </p>
           </div>
 
@@ -557,26 +576,26 @@
             <div class="p-3.5 bg-black/40 border border-emerald-500/20 rounded-xl space-y-1.5">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                <h4 class="font-bold text-white">⚡ Motor A: Three.js WebGL</h4>
+                <h4 class="font-bold text-white">⚡ Motor Unificado Three.js WebGL</h4>
               </div>
               <p class="text-slate-400 text-[11px]">
-                Motor nativo en JavaScript de carga ultrarrápida e instantánea en el navegador. Incorpora texturas escaneadas PBR de Poly Haven (1K), iluminación física con sombras dinámicas de contacto, corte frontal automático (*open-side south*) y generación de animatics WebM en tiempo real.
+                Carga instantánea (~240 kB gzip de código), 60 FPS estables, espejo planar real en el Tocador Vanity, shader de Bokeh Óptico (<code class="text-emerald-300 font-mono">CoC</code> de 28 muestras en espiral áurea) y captura multipass sincronizada en <code class="text-white font-mono">t=0</code> y <code class="text-white font-mono">t=1</code>.
               </p>
             </div>
 
             <div class="p-3.5 bg-black/40 border border-[#c86446]/30 rounded-xl space-y-1.5">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#c86446]"></span>
-                <h4 class="font-bold text-white">🎮 Motor B: Unity 6 URP WebGL</h4>
+                <h4 class="font-bold text-white">🎭 Consejo de 8 Jefes de Departamento</h4>
               </div>
               <p class="text-slate-400 text-[11px]">
-                Motor compilado a WebAssembly (WebAssembly 9.9 MB + Data 82 MB) con shaders URP nativos. Proporciona fidelidad visual de videojuego AAA, post-procesado con perfil de volumen (*Bokeh Depth of Field*, *Bloom*, *Vignette*, *ACES tonemapping*) y puente bidireccional mediante <code class="text-[#f29979] font-mono">AlinaSanctuaryBridge.cs</code>.
+                La pestaña <strong>Asesores</strong> audita en vivo cada plano desde Diseño de Producción, Vestuario Textil, Fotografía Kelvin, Atrezzo B-Roll 100mm, Dirección SSC, Sonido Binaural 3D, AI VFX y Montaje.
               </p>
             </div>
           </div>
 
           <div class="p-3 bg-black/50 border border-white/5 rounded-xl text-[11px] text-slate-400">
-            💡 <strong>Corte Casa de Muñecas (Sliced):</strong> El botón <code class="text-white font-mono">🔪 Corte Sliced</code> expone la sección frontal del edificio y oculta los techos superiores para que la cámara pueda encuadrar cualquier habitación sin colisiones de geometría.
+            💡 <strong>Corte Casa de Muñecas (Sliced):</strong> El botón <code class="text-white font-mono">🔪 Sliced: ON</code> oculta las plantas superiores al nivel activo para encuadrar con total libertad sin colisiones de techo.
           </div>
         </div>
 
@@ -651,7 +670,7 @@
           <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
             <h4 class="font-bold text-white text-xs">Desenganche Suave al Control Manual (*No Snap-Back*)</h4>
             <p class="text-slate-400 text-[11px]">
-              Tanto en Three.js como en Unity 6 URP, si la cámara está reproduciendo un movimiento cinematográfico o un vuelo y tú tocas el ratón, <strong>la cámara se detiene de inmediato y te cede el control libre</strong>, recalculando la distancia orbital desde la posición exacta donde la dejaste.
+              Si la cámara en Three.js está reproduciendo un movimiento cinematográfico o un vuelo y tocas el ratón, <strong>la cámara se detiene al instante y te cede el control libre</strong>, manteniendo la posición exacta donde la dejaste.
             </p>
           </div>
         </div>
@@ -730,7 +749,7 @@
 
       <!-- Modal Footer -->
       <div class="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between text-[11px] text-slate-400">
-        <span class="font-mono text-slate-400">The Alina Sanctuary 3D · v2.0 Dual-Engine Ready</span>
+        <span class="font-mono text-slate-400">Alina Studio OS v3.3 · Single-Source Three.js 1:1 + Higgsfield 4.0 + 8 HoDs</span>
         <button id="btn-docs-close-footer" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#c86446] hover:text-white text-slate-200 font-semibold transition-colors">Entendido</button>
       </div>
     </div>

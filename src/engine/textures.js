@@ -301,17 +301,147 @@ export function buildContactShadowTexture() {
 }
 
 export function buildGalleryArtTexture(variant = 1) {
-  const [c, ctx] = makeCanvas(256);
-  ctx.fillStyle = variant === 1 ? '#12141a' : '#181014';
-  ctx.fillRect(0, 0, 256, 256);
-  const grad = ctx.createRadialGradient(128, 120, 12, 128, 128, 110);
-  grad.addColorStop(0, variant === 1 ? '#d18447' : '#bf2e4c');
-  grad.addColorStop(0.55, variant === 1 ? '#1a735c' : '#dbba6b');
-  grad.addColorStop(1, 'rgba(18, 20, 26, 0)');
+  const [c, ctx] = makeCanvas(512);
+  const palettes = {
+    1: { bg: '#12141a', c0: '#d18447', c1: '#1a735c', frame: '#e5dfd3' },
+    2: { bg: '#181014', c0: '#bf2e4c', c1: '#dbba6b', frame: '#ded6c6' },
+    3: { bg: '#0f1715', c0: '#10b981', c1: '#c8963e', frame: '#1e222a' },
+    4: { bg: '#1d1916', c0: '#e2c799', c1: '#5c3a24', frame: '#d8cfc0' },
+    5: { bg: '#141118', c0: '#a855f7', c1: '#c86446', frame: '#242731' },
+    6: { bg: '#ebe5d8', c0: '#1f242d', c1: '#9e3d24', frame: '#181a20' }
+  };
+  const p = palettes[variant] || palettes[1];
+  ctx.fillStyle = p.bg;
+  ctx.fillRect(0, 0, 512, 512);
+
+  const grad = ctx.createRadialGradient(256, 232, 24, 256, 256, 215);
+  grad.addColorStop(0, p.c0);
+  grad.addColorStop(0.58, p.c1);
+  grad.addColorStop(1, 'rgba(12, 14, 18, 0)');
   ctx.fillStyle = grad;
-  ctx.fillRect(16, 16, 224, 224);
-  ctx.strokeStyle = '#e5dfd3';
-  ctx.lineWidth = 10;
-  ctx.strokeRect(5, 5, 246, 246);
+  ctx.fillRect(36, 36, 440, 440);
+
+  // Subtle architectural / geometric fine lines so ControlNet sees real gallery composition
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(256, 246, 98 + (variant % 3) * 18, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(96, 360 - (variant % 2) * 40);
+  ctx.lineTo(416, 170 + (variant % 3) * 28);
+  ctx.stroke();
+
+  ctx.strokeStyle = p.frame;
+  ctx.lineWidth = 22;
+  ctx.strokeRect(11, 11, 490, 490);
   return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
+}
+
+export function buildPersianRugTexture(palette = 'crimson') {
+  const [c, ctx] = makeCanvas(512);
+  const schemes = {
+    crimson: { base: '#3d131b', border: '#181216', gold: '#c8963e', accent: '#124e3f', cream: '#d8cbb8' },
+    emerald: { base: '#0d2b22', border: '#12131a', gold: '#c8963e', accent: '#6b1d2f', cream: '#d2c7b4' },
+    ivory:   { base: '#cfc5b4', border: '#4a3b31', gold: '#9c6b3b', accent: '#2c333d', cream: '#ece6da' },
+    charcoal:{ base: '#21242c', border: '#121419', gold: '#b57c4a', accent: '#3c4250', cream: '#9aa1ad' }
+  };
+  const s = schemes[palette] || schemes.crimson;
+
+  ctx.fillStyle = s.base;
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Outer multi-band woven border
+  ctx.strokeStyle = s.border;
+  ctx.lineWidth = 36;
+  ctx.strokeRect(24, 24, 464, 464);
+  ctx.strokeStyle = s.gold;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(46, 46, 420, 420);
+  ctx.strokeStyle = s.cream;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(58, 58, 396, 396);
+
+  // Corner spandrels
+  ctx.fillStyle = s.accent;
+  for (const [cx, cy] of [[62, 62], [450, 62], [62, 450], [450, 450]]) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 48, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Re-mask outer border clean
+  ctx.strokeStyle = s.border;
+  ctx.lineWidth = 28;
+  ctx.strokeRect(14, 14, 484, 484);
+
+  // Central Persian medallion + geometric diamonds
+  ctx.save();
+  ctx.translate(256, 256);
+  for (let ring = 3; ring >= 1; ring--) {
+    const r = ring * 38;
+    ctx.fillStyle = ring === 3 ? s.accent : ring === 2 ? s.gold : s.cream;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.25);
+    ctx.lineTo(r * 0.92, 0);
+    ctx.lineTo(0, r * 1.25);
+    ctx.lineTo(-r * 0.92, 0);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Subtle vintage distressing / weave grain so it never looks vector-flat
+  for (let i = 0; i < 4200; i++) {
+    const x = (i * 79) % 512;
+    const y = (i * 131) % 512;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,245,230,0.045)' : 'rgba(0,0,0,0.065)';
+    ctx.fillRect(x, y, 2, 1);
+  }
+
+  return finalizeTexture(c, { repeatX: 1, repeatY: 1 });
+}
+
+export function buildEixampleHydraulicTileTexture(repeatX = 6, repeatY = 4) {
+  const [c, ctx] = makeCanvas(256);
+  ctx.fillStyle = '#e7dfd1';
+  ctx.fillRect(0, 0, 256, 256);
+
+  // Grout lines (2x2 sub-tiles)
+  ctx.strokeStyle = 'rgba(60,52,44,0.28)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1, 1, 126, 126);
+  ctx.strokeRect(129, 1, 126, 126);
+  ctx.strokeRect(1, 129, 126, 126);
+  ctx.strokeRect(129, 129, 126, 126);
+
+  // Barcelona modernista panot / floral geometry in terracotta & slate blue
+  const drawTile = (ox, oy) => {
+    ctx.save();
+    ctx.translate(ox + 64, oy + 64);
+    ctx.strokeStyle = '#334e68';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 42, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#b85a3a';
+    for (let a = 0; a < 4; a++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath();
+      ctx.ellipse(0, -24, 9, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#2a4365';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  drawTile(0, 0);
+  drawTile(128, 0);
+  drawTile(0, 128);
+  drawTile(128, 128);
+
+  return finalizeTexture(c, { repeatX, repeatY });
 }

@@ -8,7 +8,9 @@ import {
   buildSideWindowTexture,
   loadPolyHavenPBR,
   buildContactShadowTexture,
-  buildGalleryArtTexture
+  buildGalleryArtTexture,
+  buildPersianRugTexture,
+  buildEixampleHydraulicTileTexture
 } from './textures.js';
 
 const gltfModelLoader = new GLTFLoader();
@@ -174,6 +176,33 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   });
   const matArt1 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(1), roughness: 0.35, metalness: 0.04 });
   const matArt2 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(2), roughness: 0.35, metalness: 0.04 });
+  const matArt3 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(3), roughness: 0.35, metalness: 0.04 });
+  const matArt4 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(4), roughness: 0.35, metalness: 0.04 });
+  const matArt5 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(5), roughness: 0.35, metalness: 0.04 });
+  const matArt6 = new THREE.MeshStandardMaterial({ map: buildGalleryArtTexture(6), roughness: 0.35, metalness: 0.04 });
+
+  // Woven PBR Rug & Hydraulic Tile Materials (Production Designer Floor Zoning)
+  const pbrWovenLinen = loadPolyHavenPBR('rough_linen', { repeatX: 6, repeatY: 6, includeAO: false });
+  const makeRugMat = (palette) =>
+    new THREE.MeshStandardMaterial({
+      map: buildPersianRugTexture(palette),
+      normalMap: pbrWovenLinen.normalMap,
+      roughnessMap: pbrWovenLinen.roughnessMap,
+      normalScale: new THREE.Vector2(0.55, 0.55),
+      roughness: 0.96,
+      metalness: 0.01
+    });
+  const matRugCrimson = makeRugMat('crimson');
+  const matRugEmerald = makeRugMat('emerald');
+  const matRugIvory = makeRugMat('ivory');
+  const matRugCharcoal = makeRugMat('charcoal');
+  const matHydraulicTile = new THREE.MeshStandardMaterial({
+    map: buildEixampleHydraulicTileTexture(5, 4),
+    normalMap: pbrConcrete.normalMap,
+    normalScale: new THREE.Vector2(0.25, 0.25),
+    roughness: 0.58,
+    metalness: 0.04
+  });
   const matGlass = new THREE.MeshPhysicalMaterial({
     color: 0xa5f3fc,
     roughness: 0.08,
@@ -400,6 +429,50 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     placeGLTFModel(parent, 'potted_plant_04', 1.35 * scale, x, y, z, x * 0.35, { addShadow: true });
   }
 
+  // Production Designer Floor Zoning: Woven PBR Rugs with bevel trim (0% "empty warehouse floor")
+  function addRug(parent, w, d, x, z, rugMat = matRugCrimson, y = 0.012, rotY = 0) {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.rotation.y = rotY;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, 0.018, d), rugMat);
+    body.receiveShadow = true;
+    body.castShadow = false;
+    g.add(body);
+    // Subtle dark fringe / piping along short ends
+    const fringeA = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, 0.01, 0.05), matCreamLinen);
+    fringeA.position.set(0, -0.002, d / 2 + 0.02);
+    fringeA.receiveShadow = true;
+    const fringeB = fringeA.clone();
+    fringeB.position.z = -d / 2 - 0.02;
+    g.add(fringeA, fringeB);
+    parent.add(g);
+    return g;
+  }
+
+  // Architectural 4.8m Multi-Pleat Velvet Drapes + Brass Tieback Ring
+  function addPleatedCurtain(parent, x, z, drapeMat = matCrimsonVelvet, height = 4.76) {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    for (const [ox, oz, r] of [[-0.17, 0.02, 0.14], [0, -0.02, 0.16], [0.17, 0.02, 0.14]]) {
+      cyl(g, r * 0.92, r * 1.08, height, 12, ox, height / 2, oz, drapeMat, true);
+    }
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.022, 8, 20), matBrass);
+    tie.rotation.x = Math.PI / 2;
+    tie.position.set(0, 1.38, 0);
+    g.add(tie);
+    parent.add(g);
+    return g;
+  }
+
+  // Practical Warm Wall Sconce (for 85mm f/1.4 Background Bokeh Catchlights)
+  function addWallSconce(parent, x, y, z, rotY = 0) {
+    placeGLTFModel(parent, 'industrial_wall_sconce', 0.42, x, y, z, rotY, { addShadow: false });
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), matWarmBulb);
+    const fwd = new THREE.Vector3(0, -0.04, 0.14).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+    glow.position.set(x + fwd.x, y + 0.18 + fwd.y, z + fwd.z);
+    parent.add(glow);
+  }
+
   function addChair(parent, x, y, z, rotY = 0, seatMat = matWoodDark) {
     const cg = new THREE.Group();
     cg.position.set(x, y, z);
@@ -520,16 +593,23 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(pb, 0.12, 0.05, 9.1, -6.0, 0.03, -5.2, matNeonCyan, false);
   box(pb, 0.12, 0.05, 9.1, 6.0, 0.03, -5.2, matNeonCyan, false);
 
-  // Stage & Crimson Velvet Curtains
+  // Stage & Full-Height Pleated Crimson Velvet Curtains
   box(pb, 8.6, 0.45, 3.8, 0, 0.225, -12.1, matWalnutFloor);
-  for (const cx of [-4.6, -4.1, 4.1, 4.6]) {
-    cyl(pb, 0.26, 0.28, FLOOR_HEIGHT - 0.1, 14, cx, FLOOR_HEIGHT / 2, -13.7, matCrimsonVelvet);
+  for (const cx of [-4.7, -4.0, 4.0, 4.7]) {
+    addPleatedCurtain(pb, cx, -13.7, matCrimsonVelvet, FLOOR_HEIGHT - 0.12);
   }
+  // Back Brick Wall Practical Sconces & Framed Speakeasy Art
+  for (const sx of [-8.4, -5.6, 5.6, 8.4]) {
+    addWallSconce(pb, sx, 2.35, -14.22, 0);
+  }
+  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.35, -7.0, 2.1, -14.25, 0, { addShadow: false, customArtMat: matArt5 });
+  placeGLTFModel(pb, 'hanging_picture_frame_01', 1.35, 7.0, 2.1, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
 
-  // West Bar Counter + Backlit Bottles + Barstools
+  // West Bar Counter + Backlit Bottles + Ornate Backbar Mirror + Brass Goblets + Barstools
   box(pb, 1.6, 1.08, 7.6, -9.6, 0.54, -5.6, matDarkMarble);
   box(pb, 1.75, 0.08, 7.8, -9.6, 1.1, -5.6, matCopper);
   box(pb, 0.45, 2.5, 7.0, -12.5, 1.4, -5.6, matWoodDark);
+  placeGLTFModel(pb, 'ornate_mirror_01', 1.45, -12.18, 1.55, -5.6, Math.PI / 2, { addShadow: false });
   for (let bz = -8.4; bz <= -2.8; bz += 0.7) {
     cyl(pb, 0.055, 0.055, 0.28, 10, -12.4, 1.55, bz, bz % 1.4 === 0 ? matCopper : matNeonCyan);
     cyl(pb, 0.055, 0.055, 0.28, 10, -12.4, 2.15, bz, matWarmBulb);
@@ -539,9 +619,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   }
   placeGLTFModel(pb, 'wine_bottles_01', 0.36, -9.6, 1.14, -4.4, Math.PI / 2, { addShadow: false });
   placeGLTFModel(pb, 'wine_bottles_01', 0.36, -9.6, 1.14, -6.8, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'brass_goblets', 0.22, -9.45, 1.14, -5.6, 0.4, { addShadow: false });
+  placeGLTFModel(pb, 'ceramic_vase_01', 0.34, -9.65, 1.14, -8.2, 0, { addShadow: false });
   placeGLTFModel(pb, 'Chandelier_01', 1.35, 0, FLOOR_HEIGHT - 0.05, -5.2, 0, { addShadow: false, hangFromCeiling: true });
 
-  // Grand Piano (Compound: contoured body, open lid + prop, 3 legs, keys, bench)
+  // Grand Piano on Emerald Persian Rug + Brass Candelabra on Lid
+  addRug(pb, 3.2, 3.6, -5.8, -11.0, matRugEmerald, 0.014, 0.45);
   const piano = new THREE.Group();
   piano.position.set(-5.8, 0, -11.2);
   piano.rotation.y = 0.45;
@@ -558,26 +641,34 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(piano, 0.82, 0.44, 0.34, 0, 0.22, 1.65, matPianoLacquer);
   pb.add(piano);
 
-  // VIP Lounge Sculpted ArmChairs + Round Cocktail Tables + Candelabras
+  // VIP Lounge on Crimson Persian Rug + Sculpted ArmChairs + Pillows + Brass Goblets + Cabinet
+  addRug(pb, 4.2, 8.4, 8.0, -5.5, matRugCrimson, 0.014, 0);
+  placeGLTFModel(pb, 'GothicCabinet_01', 1.85, 11.9, 0, -5.5, -Math.PI / 2, { addShadow: true });
   placeGLTFModel(pb, 'ArmChair_01', 0.88, 7.15, 0, -2.5, Math.PI / 2, { addShadow: true });
   placeGLTFModel(pb, 'ArmChair_01', 0.88, 7.15, 0, -5.5, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(pb, 'throw_pillows_01', 0.34, 7.08, 0.42, -2.5, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(pb, 'throw_pillows_01', 0.34, 7.08, 0.42, -5.5, Math.PI / 2, { addShadow: false });
   placeGLTFModel(pb, 'coffee_table_round_01', 0.62, 8.2, 0, -2.5, 0, { addShadow: true });
   placeGLTFModel(pb, 'coffee_table_round_01', 0.62, 8.2, 0, -5.5, 0.7, { addShadow: true });
+  placeGLTFModel(pb, 'brass_goblets', 0.20, 8.38, 0.62, -2.42, 0.3, { addShadow: false });
+  placeGLTFModel(pb, 'brass_goblets', 0.20, 8.38, 0.62, -5.42, -0.5, { addShadow: false });
   for (const tz of [-2.5, -5.5, -8.5]) {
     if (tz < -6.0) {
       cyl(pb, 0.55, 0.55, 0.04, 20, 8.0, 0.78, tz, matDarkMarble);
       cyl(pb, 0.06, 0.14, 0.75, 12, 8.0, 0.375, tz, matBrass);
       placeGLTFModel(pb, 'dining_chair_02', 0.92, 7.15, 0, tz, Math.PI / 2, { addShadow: true });
     }
-    placeGLTFModel(pb, 'brass_candleholders', 0.26, 8.2, tz < -6.0 ? 0.80 : 0.62, tz, 0, { addShadow: false });
+    placeGLTFModel(pb, 'brass_candleholders', 0.26, 8.15, tz < -6.0 ? 0.80 : 0.62, tz, 0, { addShadow: false });
   }
+  addPlantPot(pb, -11.4, 0, -12.6, 1.25);
+  addPlantPot(pb, 9.2, 0, -10.8, 1.15);
   const cabaretLight = new THREE.PointLight(0xff66b2, 24.0, 30, 1.3);
   cabaretLight.position.set(0, 3.85, -6.5);
   pb.add(cabaretLight);
   lighting.registerLight(cabaretLight, { dayIntensity: 2.0, nightIntensity: 24.0 });
 
   // =========================================================================
-  // NIVEL 1 (PISO 1): LE VELVET CAFÉ & LOUNGE
+  // NIVEL 1 (PISO 1): LE VELVET CAFÉ & LOUNGE (SET-02 EIXAMPLE MOSAIC)
   // =========================================================================
   const p1 = new THREE.Group();
   p1.position.y = FLOOR_HEIGHT;
@@ -585,49 +676,77 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   floorGroups[1] = p1;
 
   addFloorBase(p1, 1, matWhiteMarble);
-  // Front Balcony Railing
+  // Central Barcelona Modernista Hydraulic Tile Carpet + Lateral Woven Ivory Lounge Rugs
+  box(p1, 7.4, 0.016, 5.8, 0.1, 0.009, -3.6, matHydraulicTile, false, true);
+  addRug(p1, 3.6, 4.2, -6.4, -4.0, matRugIvory, 0.012, 0);
+  addRug(p1, 3.6, 4.2, 6.5, -4.2, matRugIvory, 0.012, 0);
+
+  // Front Balcony Railing + Architectural Velvet/Linen Drapes on Facade Columns
   box(p1, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
   box(p1, BUILDING_WIDTH - 2.6, 0.06, 0.14, -1.2, 0.97, 1.48, matSteel);
+  for (const dx of [-12.4, -5.5, 4.1]) {
+    addPleatedCurtain(p1, dx, 1.12, matEmeraldVelvet, 4.76);
+  }
 
-  // 6m Oak Coffee Bar + Copper La Marzocco Espresso Machine + Pastry Display
+  // 6m Oak Coffee Bar + Copper La Marzocco Espresso Machine + Pastry Display + Porcelain Service
   box(p1, 6.2, 1.05, 1.35, -0.5, 0.525, -9.8, matWoodOak);
   box(p1, 6.3, 0.06, 1.45, -0.5, 1.08, -9.8, matWhiteMarble);
-  // La Marzocco Espresso Machine
+  // La Marzocco Espresso Machine + Porcelain Tea/Coffee Service
   box(p1, 1.35, 0.52, 0.62, -1.2, 1.36, -9.8, matCopper);
   box(p1, 1.1, 0.18, 0.22, -1.2, 1.25, -9.45, matChrome);
   cyl(p1, 0.1, 0.14, 0.48, 12, 0.1, 1.35, -9.8, matSteel); // Grinder
+  placeGLTFModel(p1, 'tea_set_01', 0.24, -2.55, 1.11, -9.75, 0.3, { addShadow: false });
+  placeGLTFModel(p1, 'brass_vase_01', 0.34, -3.25, 1.11, -9.85, 0, { addShadow: false });
   // Glass Pastry Case
   box(p1, 1.6, 0.65, 0.72, 1.5, 1.42, -9.75, matGlass, false);
   for (let px = 1.0; px <= 2.0; px += 0.35) {
     cyl(p1, 0.08, 0.1, 0.08, 10, px, 1.15, -9.75, matWoodOak);
   }
-  // Cafe Wall Sign
+
+  // Back Wall Dressing: Sign + Wooden Credenza + Ornate Mirror + Gallery Triptych + Sconces
   const cafeSignTex = buildSignTexture('LE VELVET CAFÉ', '#1c1410', '#d99a64', 'SPECIALTY ESPRESSO  •  EIXAMPLE');
   const matCafeSign = new THREE.MeshStandardMaterial({ map: cafeSignTex, emissiveMap: cafeSignTex, emissive: new THREE.Color(0xffdfa8), emissiveIntensity: 1.0 });
   lighting.registerEmissive(matCafeSign, { dayIntensity: 0.3, nightIntensity: 1.2 });
   box(p1, 4.4, 0.8, 0.1, -0.5, 3.1, -14.2, matCafeSign, false);
-  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.35, -6.2, 1.85, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
-  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.35, 5.2, 1.85, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(p1, 'modern_wooden_cabinet', 0.92, -6.2, 0, -13.55, 0, { addShadow: true });
+  placeGLTFModel(p1, 'book_encyclopedia_set_01', 0.30, -6.6, 0.92, -13.55, 0, { addShadow: false });
+  placeGLTFModel(p1, 'ceramic_vase_01', 0.36, -5.7, 0.92, -13.55, 0.4, { addShadow: false });
+  placeGLTFModel(p1, 'ornate_mirror_01', 1.55, 5.4, 1.45, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.35, -6.2, 2.05, -14.25, 0, { addShadow: false, customArtMat: matArt4 });
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.25, -9.2, 2.05, -14.25, 0, { addShadow: false, customArtMat: matArt6 });
+  placeGLTFModel(p1, 'hanging_picture_frame_01', 1.25, 8.0, 2.05, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
+  addWallSconce(p1, -3.6, 2.45, -14.22, 0);
+  addWallSconce(p1, 2.8, 2.45, -14.22, 0);
+
+  // West & East Reading Lounges (ArmChairs + Mid-Century Chairs + Throw Pillows + Side Tables)
   placeGLTFModel(p1, 'coffee_table_round_01', 0.72, -5.8, 0, -4.0, 0.26, { addShadow: true });
   placeGLTFModel(p1, 'coffee_table_round_01', 0.72, 6.0, 0, -4.2, -0.44, { addShadow: true });
-  placeGLTFModel(p1, 'ArmChair_01', 0.88, -6.9, 0, -4.0, Math.PI / 2, { addShadow: true });
-  placeGLTFModel(p1, 'ArmChair_01', 0.88, 7.1, 0, -4.2, -Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p1, 'ArmChair_01', 0.88, -7.1, 0, -4.0, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p1, 'mid_century_lounge_chair', 0.82, -5.8, 0, -5.45, 0.15, { addShadow: true });
+  placeGLTFModel(p1, 'ArmChair_01', 0.88, 7.25, 0, -4.2, -Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p1, 'mid_century_lounge_chair', 0.82, 6.0, 0, -5.6, -0.2, { addShadow: true });
+  placeGLTFModel(p1, 'throw_pillows_01', 0.34, -7.02, 0.42, -4.0, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p1, 'throw_pillows_01', 0.34, 7.18, 0.42, -4.2, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p1, 'ceramic_vase_01', 0.28, 6.0, 0.72, -4.2, 0, { addShadow: false });
+  placeGLTFModel(p1, 'mantel_clock_01', 0.26, -5.8, 0.72, -4.0, 0.35, { addShadow: false });
 
-  // 2 Center Carrara Bistro Tables + Sculpted Dining Chairs + Chandeliers
+  // 2 Center Carrara Bistro Tables + Sculpted Porcelain Tea Sets + Dining Chairs + Chandeliers
   for (const [tx, tz] of [[-2.0, -3.5], [2.2, -3.8]]) {
-    cyl(p1, 0.56, 0.56, 0.04, 22, tx, 0.76, tz, matWhiteMarble);
+    cyl(p1, 0.58, 0.58, 0.04, 24, tx, 0.76, tz, matWhiteMarble);
     cyl(p1, 0.05, 0.18, 0.74, 12, tx, 0.37, tz, matSteel);
-    cyl(p1, 0.05, 0.045, 0.08, 10, tx + 0.1, 0.82, tz, matCreamLinen);
-    placeGLTFModel(p1, 'brass_candleholders', 0.22, tx - 0.15, 0.78, tz, 0.35, { addShadow: false });
-    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx - 0.72, 0, tz, Math.PI / 2, { addShadow: true });
-    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx + 0.72, 0, tz, -Math.PI / 2, { addShadow: true });
+    placeGLTFModel(p1, 'tea_set_01', 0.21, tx + 0.12, 0.78, tz + 0.04, tx * 0.4, { addShadow: false });
+    placeGLTFModel(p1, 'brass_candleholders', 0.22, tx - 0.18, 0.78, tz - 0.08, 0.35, { addShadow: false });
+    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx - 0.74, 0, tz, Math.PI / 2, { addShadow: true });
+    placeGLTFModel(p1, 'dining_chair_02', 0.90, tx + 0.74, 0, tz, -Math.PI / 2, { addShadow: true });
   }
-  placeGLTFModel(p1, 'wine_bottles_01', 0.32, 1.8, 1.11, -9.8, 0, { addShadow: false });
+  placeGLTFModel(p1, 'wine_bottles_01', 0.32, 2.35, 1.11, -9.8, 0, { addShadow: false });
   placeGLTFModel(p1, 'Chandelier_01', 1.15, -3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
   placeGLTFModel(p1, 'Chandelier_01', 1.15, 3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
-  addPlantPot(p1, -11.5, 0, -12.5, 1.3);
-  addPlantPot(p1, 8.8, 0, -12.5, 1.2);
-  addPlantPot(p1, -11.2, 0, 0.2, 1.1);
+  addPlantPot(p1, -11.5, 0, -12.5, 1.35);
+  addPlantPot(p1, 8.8, 0, -12.5, 1.25);
+  addPlantPot(p1, -11.2, 0, 0.2, 1.15);
+  placeGLTFModel(p1, 'fern_02', 0.85, -9.8, 0, -0.6, 0.5, { addShadow: true });
+  placeGLTFModel(p1, 'fern_02', 0.85, 8.6, 0, -0.4, -0.4, { addShadow: true });
 
   const cafeLight = new THREE.PointLight(0xffdfb0, 20.0, 28, 1.3);
   cafeLight.position.set(0, 3.85, -5.5);
@@ -653,13 +772,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p2, 0.16, FLOOR_HEIGHT, 4.8, 4.4, FLOOR_HEIGHT / 2, -12.0, matDivider);
   box(p2, 0.16, FLOOR_HEIGHT, 3.4, 4.4, FLOOR_HEIGHT / 2, -0.2, matDivider);
   for (const dx of [-4.75, 4.15, -12.65]) {
-    cyl(p2, 0.22, 0.22, 4.75, 12, dx, 2.38, 1.15, matCrimsonVelvet);
+    addPleatedCurtain(p2, dx, 1.15, matCrimsonVelvet, 4.76);
   }
   placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, 2.4, 1.95, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
-  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, -2.8, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.25, -2.6, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  addWallSconce(p2, -1.9, 2.35, -14.22, 0);
+  addWallSconce(p2, 1.2, 2.35, -14.22, 0);
 
-  // ZONE 1: TOCADOR VANITY & VESTIDOR (Sculpted Baroque ClassicConsole_01)
+  // ZONE 1: TOCADOR VANITY & VESTIDOR (Ivory Rug + ClassicConsole_01 + GothicCabinet + Ornate Mirror)
+  addRug(p2, 3.6, 2.9, -0.4, -12.0, matRugIvory, 0.012, 0);
   placeGLTFModel(p2, 'ClassicConsole_01', 0.82, -0.4, 0, -13.15, 0, { addShadow: true });
+  placeGLTFModel(p2, 'GothicCabinet_01', 1.82, 2.85, 0, -13.55, -0.18, { addShadow: true });
+  placeGLTFModel(p2, 'ornate_mirror_01', 1.55, -4.82, 1.45, -10.6, Math.PI / 2, { addShadow: false });
   // Real-Time Planar Reflector Mirror + Depth Fallback Disc + Brass Rim + 12 Bulbs
   const mirrorDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.76, 0.04, 36), matMirror);
   mirrorDisc.rotation.x = Math.PI / 2;
@@ -684,14 +808,14 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     bulb.position.set(-0.4 + Math.cos(ba) * 0.78, 1.65 + Math.sin(ba) * 0.78, -13.505);
     p2.add(bulb);
   }
-  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brush Cup, Candelabra, Ottoman_01)
+  // Vanity Cosmetics (Amber Perfume Bottles, Crimson Lipstick, Brass Vase, Candelabra, Ottoman_01)
   const matAmberGlass = new THREE.MeshPhysicalMaterial({ color: 0xd97706, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.85 });
   cyl(p2, 0.04, 0.04, 0.14, 12, 0.14, 0.89, -13.12, matAmberGlass);
   cyl(p2, 0.018, 0.018, 0.04, 10, 0.14, 0.98, -13.12, matBrass);
   cyl(p2, 0.03, 0.03, 0.11, 12, 0.24, 0.88, -13.16, matAmberGlass);
   cyl(p2, 0.014, 0.014, 0.08, 10, 0.02, 0.86, -13.06, matBrass);
   cyl(p2, 0.012, 0.012, 0.04, 10, 0.02, 0.91, -13.06, matCrimsonVelvet);
-  cyl(p2, 0.04, 0.038, 0.12, 12, -0.68, 0.88, -13.12, matCreamLinen);
+  placeGLTFModel(p2, 'brass_vase_01', 0.28, 0.42, 0.82, -13.15, 0.2, { addShadow: false });
   placeGLTFModel(p2, 'brass_candleholders', 0.24, -0.92, 0.82, -13.14, 0.18, { addShadow: false });
   placeGLTFModel(p2, 'Ottoman_01', 0.48, -0.4, 0, -12.05, -0.26, { addShadow: true });
 
@@ -712,7 +836,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   p2.add(vanityLight);
   lighting.registerLight(vanityLight, { dayIntensity: 2.5, nightIntensity: 10.0 });
 
-  // ZONE 2: BAÑO SPA (West X: -12.8..-5.0)
+  // ZONE 2: BAÑO SPA (West X: -12.8..-5.0 — Woven Spa Mat, Lanterns, Ceramic Vases, Ferns & Art)
+  addRug(p2, 3.2, 2.6, -9.0, -7.8, matRugCharcoal, 0.012, 0);
   const tubOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.82, 0.66, 28), matDarkMarble);
   tubOuter.scale.set(1.35, 1.0, 0.72);
   tubOuter.position.set(-9.0, 0.33, -7.8);
@@ -723,52 +848,72 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   tubWater.position.set(-9.0, 0.665, -7.8);
   p2.add(tubWater);
   waterMeshes.push(tubWater);
-  // Brass freestanding tub faucet
+  // Brass freestanding tub faucet + Bath Side Caddy with Goblets
   cyl(p2, 0.025, 0.03, 0.95, 10, -10.5, 0.48, -7.8, matBrass);
   box(p2, 0.25, 0.04, 0.04, -10.38, 0.94, -7.8, matBrass);
-  // Frosted Glass Shower Screen & Teak Towel Bench
+  placeGLTFModel(p2, 'side_table_tall_01', 0.68, -10.65, 0, -6.65, 0.3, { addShadow: true });
+  placeGLTFModel(p2, 'brass_goblets', 0.19, -10.65, 0.68, -6.65, 0, { addShadow: false });
+  // Frosted Glass Shower Screen, Teak Bench, Ceramic Vases, Wooden Lanterns & Humidity Ferns
   box(p2, 0.08, 2.4, 2.8, -6.4, 1.2, -10.6, matFrostedGlass, false);
-  box(p2, 1.2, 0.42, 0.5, -11.2, 0.21, -10.8, matTeak);
+  box(p2, 1.5, 0.42, 0.55, -11.1, 0.21, -10.8, matTeak);
   for (let tx = -11.55; tx <= -10.85; tx += 0.35) {
     const towel = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.34, 12), matCreamLinen);
     towel.rotation.x = Math.PI / 2;
     towel.position.set(tx, 0.52, -10.8);
     p2.add(towel);
   }
+  placeGLTFModel(p2, 'ceramic_vase_01', 0.38, -10.5, 0.42, -10.8, 0.4, { addShadow: false });
+  placeGLTFModel(p2, 'wooden_lantern_01', 0.52, -10.9, 0, -9.4, 0.35, { addShadow: true });
+  placeGLTFModel(p2, 'wooden_lantern_01', 0.44, -7.35, 0, -9.5, -0.25, { addShadow: true });
+  placeGLTFModel(p2, 'fern_02', 0.92, -11.9, 0, -12.6, 0.6, { addShadow: true });
+  placeGLTFModel(p2, 'fern_02', 0.82, -7.1, 0, -12.8, -0.4, { addShadow: true });
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.30, -9.2, 2.05, -14.25, 0, { addShadow: false, customArtMat: matArt3 });
+  addWallSconce(p2, -11.2, 2.35, -14.22, 0);
   addCandle(p2, -7.8, 0.66, -7.1, true);
   addCandle(p2, -8.2, 0.0, -6.6, false);
   addCandle(p2, -10.1, 0.0, -6.9, false);
 
-  // ZONE 3: COCINA & COMEDOR DE AUTOR (East X: +4.4..+10.0)
+  // ZONE 3: COCINA & COMEDOR DE AUTOR (East X: +4.4..+10.0 — Credenza, Porcelain Tea Set, Rug & Art)
+  addRug(p2, 3.1, 2.9, 7.3, -2.5, matRugCharcoal, 0.012, 0);
+  placeGLTFModel(p2, 'modern_wooden_cabinet', 0.92, 7.3, 0, -13.45, 0, { addShadow: true });
+  placeGLTFModel(p2, 'brass_vase_01', 0.36, 6.75, 0.92, -13.45, 0, { addShadow: false });
+  placeGLTFModel(p2, 'wine_bottles_01', 0.34, 7.85, 0.92, -13.45, 0.2, { addShadow: false });
+  placeGLTFModel(p2, 'hanging_picture_frame_01', 1.30, 7.3, 2.15, -14.25, 0, { addShadow: false, customArtMat: matArt4 });
+
   box(p2, 1.35, 0.94, 3.6, 7.3, 0.47, -8.0, matDarkMarble);
   box(p2, 1.45, 0.06, 3.7, 7.3, 0.96, -8.0, matDarkMarble);
-  // Brass Faucet, Espresso Cup, Wine Bottles, Modern Pendants & Barstools
+  // Brass Faucet, Sculpted Porcelain Tea Set, Brass Goblets, Wine Bottles, Modern Pendants & Barstools
   cyl(p2, 0.02, 0.025, 0.38, 10, 7.4, 1.16, -7.4, matBrass);
-  cyl(p2, 0.055, 0.045, 0.09, 12, 6.8, 1.03, -8.3, matCreamLinen);
-  placeGLTFModel(p2, 'wine_bottles_01', 0.34, 7.3, 0.99, -8.8, Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p2, 'tea_set_01', 0.23, 7.18, 0.99, -8.05, -Math.PI / 2, { addShadow: false });
+  placeGLTFModel(p2, 'brass_goblets', 0.20, 7.35, 0.99, -6.75, 0.3, { addShadow: false });
+  placeGLTFModel(p2, 'wine_bottles_01', 0.34, 7.3, 0.99, -8.95, Math.PI / 2, { addShadow: false });
   for (const pz of [-9.0, -8.0, -7.0]) {
     placeGLTFModel(p2, 'modern_ceiling_lamp_01', 1.45, 7.3, FLOOR_HEIGHT - 0.05, pz, 0, { addShadow: false, hangFromCeiling: true });
     placeGLTFModel(p2, 'bar_chair_round_01', 0.72, 6.1, 0, pz, -Math.PI / 2, { addShadow: true });
   }
-  // Dining Table & 4 Sculpted Dining Chairs
+  // Dining Table & 4 Sculpted Dining Chairs + Centerpiece Vase
   box(p2, 1.8, 0.06, 1.1, 7.3, 0.75, -2.5, matWoodDark);
   for (const [lx, lz] of [[6.5, -2.95], [8.1, -2.95], [6.5, -2.05], [8.1, -2.05]]) {
     cyl(p2, 0.03, 0.02, 0.72, 8, lx, 0.36, lz, matSteel);
   }
+  placeGLTFModel(p2, 'ceramic_vase_01', 0.30, 7.3, 0.78, -2.5, 0.5, { addShadow: false });
   placeGLTFModel(p2, 'dining_chair_02', 0.92, 6.8, 0, -1.65, Math.PI, { addShadow: true });
   placeGLTFModel(p2, 'dining_chair_02', 0.92, 7.8, 0, -1.65, Math.PI, { addShadow: true });
   placeGLTFModel(p2, 'dining_chair_02', 0.92, 6.8, 0, -3.35, 0, { addShadow: true });
   placeGLTFModel(p2, 'dining_chair_02', 0.92, 7.8, 0, -3.35, 0, { addShadow: true });
+  addPlantPot(p2, 9.2, 0, -0.8, 1.15);
 
   const kitchenLight = new THREE.PointLight(0xffd39c, 10.0, 14, 1.4);
   kitchenLight.position.set(7.1, 2.55, -7.8);
   p2.add(kitchenLight);
   lighting.registerLight(kitchenLight, { dayIntensity: 2.0, nightIntensity: 10.0 });
 
-  // ZONE 4: SUITE PRINCIPAL (Raised Walnut Dais + Sculpted GothicBed_01 + Nightstands + Desk Lamps + Chandelier)
+  // ZONE 4: SUITE PRINCIPAL (Large Persian Rug + Walnut Dais + GothicBed_01 + Throw Pillows + Reading Corner)
+  addRug(p2, 5.1, 4.9, -0.5, -3.2, matRugCrimson, 0.012, 0);
   box(p2, 3.9, 0.28, 4.1, -0.5, 0.14, -3.2, matWoodDark);
   box(p2, 3.6, 0.02, 3.8, -0.5, 0.29, -3.1, matCharcoalLinen, false, true);
   placeGLTFModel(p2, 'GothicBed_01', 1.52, -0.5, 0.28, -3.35, 0, { addShadow: true });
+  placeGLTFModel(p2, 'throw_pillows_01', 0.36, -0.5, 0.88, -4.05, 0, { addShadow: false });
   for (const nx of [-1.85, 0.85]) {
     placeGLTFModel(p2, 'ClassicNightstand_01', 0.58, nx, 0.28, -4.15, 0, { addShadow: true });
     placeGLTFModel(p2, 'desk_lamp_arm_01', 0.44, nx, 0.86, -4.15, nx < 0 ? -0.44 : 0.44, { addShadow: false });
@@ -779,11 +924,14 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   p2.add(suiteLight);
   lighting.registerLight(suiteLight, { dayIntensity: 1.5, nightIntensity: 9.5 });
 
-  // Eixample Balcony Railing + Sculpted Coffee Table + Accent ArmChair
+  // Eixample Balcony Railing + Wine Goblets Table + Mid-Century Reading Nook
   box(p2, BUILDING_WIDTH - 2.6, 0.95, 0.08, -1.2, 0.48, 1.48, matGlass, false);
   box(p2, BUILDING_WIDTH - 2.6, 0.06, 0.14, -1.2, 0.97, 1.48, matSteel);
   placeGLTFModel(p2, 'coffee_table_round_01', 0.65, 2.5, 0, 0.65, 0, { addShadow: true });
-  placeGLTFModel(p2, 'ArmChair_01', 0.88, -3.3, 0, -1.5, -0.66, { addShadow: true });
+  placeGLTFModel(p2, 'brass_goblets', 0.20, 2.45, 0.65, 0.65, 0.4, { addShadow: false });
+  placeGLTFModel(p2, 'mid_century_lounge_chair', 0.84, -3.35, 0, -1.55, -0.62, { addShadow: true });
+  placeGLTFModel(p2, 'side_table_tall_01', 0.68, -4.05, 0, -2.35, 0, { addShadow: true });
+  placeGLTFModel(p2, 'mantel_clock_01', 0.24, -4.05, 0.68, -2.35, 0.55, { addShadow: false });
 
   // =========================================================================
   // NIVEL 3 (PISO 3): THE MIND SANCTUARY (PODCAST & CLÍNICA + BOUDOIR SSC)
@@ -798,46 +946,83 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   // Center divider separating Podcast/Clinical (West) from Sensory Boudoir (East)
   box(p3, 0.18, FLOOR_HEIGHT, 9.0, 0.2, FLOOR_HEIGHT / 2, -9.8, matDivider);
   for (const dx of [-12.6, -0.1, 9.6]) {
-    cyl(p3, 0.22, 0.22, 4.75, 12, dx, 2.38, 1.15, matEmeraldVelvet);
+    addPleatedCurtain(p3, dx, 1.15, matEmeraldVelvet, 4.76);
   }
-  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, -4.8, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
-  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, 4.8, 2.45, -14.25, 0, { addShadow: false, customArtMat: matArt1 });
 
-  // WEST WING: PODCAST STUDIO + CLINICAL LIBRARY
+  // WEST WING: PODCAST STUDIO + CLINICAL LIBRARY (SET-01 BARCELONA DARK LOFT)
+  addRug(p3, 5.8, 6.4, -5.2, -8.2, matRugCrimson, 0.012, 0);
+  // Back Brick Wall Set Dressing (Credenza, Classical Marble Bust on Plinth, Archive Cabinet, 3 Edison Sconces, Art)
+  placeGLTFModel(p3, 'modern_wooden_cabinet', 0.92, -5.0, 0, -13.55, 0, { addShadow: true });
+  placeGLTFModel(p3, 'book_encyclopedia_set_01', 0.32, -5.5, 0.92, -13.55, 0, { addShadow: false });
+  placeGLTFModel(p3, 'brass_candleholders', 0.26, -4.45, 0.92, -13.55, 0.25, { addShadow: false });
+  placeGLTFModel(p3, 'GothicCabinet_01', 1.85, -1.85, 0, -13.55, -0.12, { addShadow: true });
+  // Classical Psychoanalysis Marble Bust on Dark Walnut Pedestal
+  box(p3, 0.62, 1.12, 0.62, -8.6, 0.56, -13.35, matWoodDark);
+  box(p3, 0.70, 0.06, 0.70, -8.6, 1.14, -13.35, matBrass);
+  placeGLTFModel(p3, 'marble_bust_01', 0.68, -8.6, 1.17, -13.35, 0.28, { addShadow: false });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, -5.0, 2.35, -14.25, 0, { addShadow: false, customArtMat: matArt2 });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.20, -10.4, 2.25, -14.25, 0, { addShadow: false, customArtMat: matArt6 });
+  for (const sx of [-8.6, -6.8, -3.2]) {
+    addWallSconce(p3, sx, 2.55, -14.22, 0);
+  }
+
+  // Clinical Walnut Desk + Shure SM7B + Analog Camera + Mantel Clock + Espresso Cup + Edison Lamp
   box(p3, 3.2, 0.08, 1.35, -4.8, 0.8, -10.5, matWoodDark);
   for (const lx of [-6.2, -3.4]) {
     box(p3, 0.08, 0.78, 1.1, lx, 0.39, -10.5, matSteel);
   }
-  // Boom Arm + Shure SM7B Microphone + Audio Interface + Headphones Stand + Edison Lamp
   cyl(p3, 0.02, 0.025, 0.65, 8, -4.2, 1.15, -10.4, matSteel);
   const micBody = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.22, 14), matSteel);
   micBody.rotation.x = Math.PI / 3;
   micBody.position.set(-4.5, 1.42, -10.1);
   p3.add(micBody);
-  box(p3, 0.32, 0.08, 0.2, -5.5, 0.88, -10.3, matSteel); // Interface
-  box(p3, 0.05, 0.03, 0.02, -5.5, 0.88, -10.19, matNeonCyan, false);
-  cyl(p3, 0.02, 0.06, 0.32, 10, -3.7, 1.0, -10.5, matBrass); // Headphone stand
-  placeGLTFModel(p3, 'desk_lamp_arm_01', 0.48, -6.0, 0.84, -10.55, -0.78, { addShadow: false });
-  // Floor-to-ceiling Bookshelf filled with sculpted encyclopedia volumes
+  box(p3, 0.32, 0.08, 0.2, -5.35, 0.88, -10.25, matSteel); // Audio Interface
+  box(p3, 0.05, 0.03, 0.02, -5.35, 0.88, -10.14, matNeonCyan, false);
+  placeGLTFModel(p3, 'Camera_01', 0.19, -3.65, 0.84, -10.38, -0.45, { addShadow: false });
+  placeGLTFModel(p3, 'mantel_clock_01', 0.25, -5.88, 0.84, -10.72, 0.25, { addShadow: false });
+  placeGLTFModel(p3, 'tea_set_01', 0.19, -4.85, 0.84, -10.18, 0.15, { addShadow: false });
+  placeGLTFModel(p3, 'desk_lamp_arm_01', 0.48, -6.12, 0.84, -10.55, -0.78, { addShadow: false });
+
+  // Floor-to-ceiling West Bookshelf filled with sculpted encyclopedia volumes + Vase accents
   box(p3, 0.55, 3.8, 6.4, -12.4, 1.9, -7.2, matWoodDark);
   for (let shelfY = 0.42; shelfY <= 3.12; shelfY += 0.68) {
     for (let bz = -9.6; bz <= -4.8; bz += 1.55) {
       placeGLTFModel(p3, 'book_encyclopedia_set_01', 0.34, -12.35, shelfY, bz, Math.PI / 2, { addShadow: false });
     }
   }
-  // Sculpted Leather/Velvet Psychoanalytic Sofa (Sofa_01) + Modern Ceiling Lamp
+  // Psychoanalytic Sofa (Sofa_01) + Throw Pillows + Round Coffee Table + Side Lamp + Plants
   placeGLTFModel(p3, 'Sofa_01', 0.88, -5.5, 0, -4.2, -1.48, { addShadow: true });
+  placeGLTFModel(p3, 'throw_pillows_01', 0.35, -5.45, 0.42, -4.2, -1.48, { addShadow: false });
+  placeGLTFModel(p3, 'coffee_table_round_01', 0.62, -7.2, 0, -4.2, 0.2, { addShadow: true });
+  placeGLTFModel(p3, 'brass_goblets', 0.19, -7.2, 0.62, -4.2, 0, { addShadow: false });
+  placeGLTFModel(p3, 'mid_century_lounge_chair', 0.82, -8.5, 0, -4.2, Math.PI / 2, { addShadow: true });
   placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, -4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
+  addPlantPot(p3, -11.4, 0, -2.2, 1.25);
 
   const podcastLight = new THREE.PointLight(0xffb86c, 15.0, 18, 1.3);
   podcastLight.position.set(-4.8, 2.95, -9.2);
   p3.add(podcastLight);
   lighting.registerLight(podcastLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
-  // EAST WING: SENSORY BOUDOIR SSC (Emerald Headboard, Shibari Ropes, 3Dio Binaural Mic)
+  // EAST WING: SENSORY BOUDOIR SSC (SET-04 VELVET CHIAROSCURO)
+  addRug(p3, 5.8, 6.8, 5.2, -9.4, matRugEmerald, 0.012, 0);
   box(p3, 2.4, 1.6, 0.22, 4.8, 0.8, -12.4, matEmeraldVelvet);
   box(p3, 2.2, 0.52, 2.2, 4.8, 0.26, -11.2, matBlackLeather);
   box(p3, 2.15, 0.14, 1.8, 4.8, 0.56, -11.0, matCharcoalLinen);
+  placeGLTFModel(p3, 'throw_pillows_01', 0.36, 4.8, 0.64, -11.9, 0, { addShadow: false });
+  placeGLTFModel(p3, 'Ottoman_01', 0.46, 4.8, 0, -9.85, 0, { addShadow: true });
+
+  // Gothic Cabinet, Vintage Day Bed Lounge, Ornate Baroque Mirror, Tall Side Table & Lanterns
+  placeGLTFModel(p3, 'GothicCabinet_01', 1.88, 8.6, 0, -10.2, -Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p3, 'vintage_day_bed', 0.88, 8.1, 0, -5.6, -Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p3, 'ornate_mirror_01', 1.55, 2.15, 1.55, -14.22, 0, { addShadow: false });
+  placeGLTFModel(p3, 'hanging_picture_frame_01', 1.35, 4.8, 2.55, -14.25, 0, { addShadow: false, customArtMat: matArt5 });
+  placeGLTFModel(p3, 'side_table_tall_01', 0.72, 6.45, 0, -11.6, -0.3, { addShadow: true });
+  placeGLTFModel(p3, 'brass_goblets', 0.21, 6.45, 0.72, -11.6, 0.2, { addShadow: false });
+  placeGLTFModel(p3, 'wooden_lantern_01', 0.52, 3.1, 0, -11.6, 0.3, { addShadow: true });
+  addWallSconce(p3, 3.3, 2.5, -14.22, 0);
+  addWallSconce(p3, 6.4, 2.5, -14.22, 0);
+
   // Shibari Rope Rack (Wall Panel with Purple & Black Silk Coils)
   box(p3, 1.8, 1.5, 0.08, 8.2, 1.55, -14.2, matWoodDark);
   const matLilacRope = new THREE.MeshStandardMaterial({ color: 0x7e22ce, roughness: 0.5 });
@@ -846,29 +1031,33 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     coil.position.set(rx, 1.6, -14.12);
     p3.add(coil);
   }
-  // 3Dio Binaural Microphone on Tripod + Pendant Lamp + Brass Candelabra
+  // 3Dio Binaural Microphone on Tripod + Pendant Lamp + Brass Candelabra + Candles
   cyl(p3, 0.025, 0.04, 1.05, 10, 4.8, 0.525, -8.8, matSteel);
   box(p3, 0.28, 0.14, 0.12, 4.8, 1.12, -8.8, matCreamLinen);
   placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, 4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
   placeGLTFModel(p3, 'brass_candleholders', 0.28, 6.4, 0.0, -9.5, 0.44, { addShadow: false });
   addCandle(p3, 6.4, 0.0, -9.5, true);
+  addCandle(p3, 3.25, 0.0, -9.8, false);
+  addPlantPot(p3, 8.9, 0, -2.0, 1.2);
 
   // =========================================================================
-  // NIVEL 4 (PISO 4): PENTHOUSE ROOFTOP «THE INNER CIRCLE»
+  // NIVEL 4 (PISO 4): PENTHOUSE ROOFTOP «THE INNER CIRCLE» (SET-03 TULUM/BCN)
   // =========================================================================
   const p4 = new THREE.Group();
   p4.position.y = 4 * FLOOR_HEIGHT;
   scene.add(p4);
   floorGroups[4] = p4;
 
-  // Teak Deck Slab (no solid high side walls — open panoramic sky & glass balustrade)
+  // Teak Deck Slab + Outdoor Woven Rugs Zoning Sun Loungers & Sunset Lounge
   box(p4, BUILDING_WIDTH, 0.24, BUILDING_DEPTH, 0, -0.12, BUILDING_CENTER_Z, matTeak, false, true);
+  addRug(p4, 3.4, 4.6, -9.0, -6.9, matRugCharcoal, 0.012, 0);
+  addRug(p4, 4.2, 3.8, 7.2, -3.2, matRugIvory, 0.012, 0);
   box(p4, BUILDING_WIDTH, 1.05, 0.08, 0, 0.525, 1.45, matGlass, false);
   box(p4, BUILDING_WIDTH, 1.05, 0.08, 0, 0.525, -14.45, matGlass, false);
   box(p4, 0.08, 1.05, BUILDING_DEPTH, -12.95, 0.525, BUILDING_CENTER_Z, matGlass, false);
   box(p4, 0.08, 1.05, BUILDING_DEPTH, 12.95, 0.525, BUILDING_CENTER_Z, matGlass, false);
 
-  // Hollow Basalt Plunge Pool Basin + Submerged Step + Underwater Cyan & Warm Key Lights
+  // Hollow Basalt Plunge Pool Basin + Submerged Step + Glowing Wooden Deck Lanterns
   box(p4, 7.0, 0.28, 4.2, -3.0, 0.14, -6.8, matDarkMarble);
   box(p4, 7.4, 0.66, 0.32, -3.0, 0.33, -8.95, matDarkMarble);
   box(p4, 7.4, 0.66, 0.32, -3.0, 0.33, -4.65, matDarkMarble);
@@ -877,6 +1066,9 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   box(p4, 1.3, 0.22, 0.7, -5.65, 0.34, -5.35, matDarkMarble);
   const poolSurface = box(p4, 6.8, 0.03, 4.0, -3.0, 0.59, -6.8, matWater, false, true);
   waterMeshes.push(poolSurface);
+  for (const [lx, lz] of [[-6.95, -4.45], [0.85, -4.45], [-6.95, -9.25], [2.45, -6.85]]) {
+    placeGLTFModel(p4, 'wooden_lantern_01', 0.52, lx, 0, lz, lx * 0.2, { addShadow: true });
+  }
   const poolLight = new THREE.PointLight(0x22d3ee, 18.0, 18, 1.35);
   poolLight.position.set(-3.0, 0.85, -6.8);
   p4.add(poolLight);
@@ -886,13 +1078,23 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   p4.add(poolKeyLight);
   lighting.registerLight(poolKeyLight, { dayIntensity: 2.0, nightIntensity: 14.0 });
 
-  // 2 Teak Sun Loungers + Cream Linen Cushions
+  // 2 Teak Sun Loungers + Cream Linen Cushions + Throw Pillows + Side Table with Brass Goblets
   for (const lz of [-8.2, -5.6]) {
     box(p4, 2.1, 0.24, 0.95, -9.0, 0.12, lz, matTeak);
     box(p4, 1.5, 0.12, 0.88, -8.75, 0.28, lz, matCreamLinen);
     const backRest = box(p4, 0.62, 0.12, 0.88, -9.75, 0.44, lz, matCreamLinen);
     backRest.rotation.z = 0.48;
+    placeGLTFModel(p4, 'throw_pillows_01', 0.32, -9.55, 0.42, lz, Math.PI / 2, { addShadow: false });
   }
+  placeGLTFModel(p4, 'side_table_tall_01', 0.62, -9.15, 0, -6.9, 0.2, { addShadow: true });
+  placeGLTFModel(p4, 'brass_goblets', 0.20, -9.15, 0.62, -6.9, 0.4, { addShadow: false });
+
+  // East Sunset Conversation Lounge (Mid-Century Chairs + Coffee Table + Ceramic Vase + Lantern)
+  placeGLTFModel(p4, 'coffee_table_round_01', 0.62, 7.2, 0, -3.2, 0.3, { addShadow: true });
+  placeGLTFModel(p4, 'ceramic_vase_01', 0.30, 7.2, 0.62, -3.2, 0, { addShadow: false });
+  placeGLTFModel(p4, 'mid_century_lounge_chair', 0.82, 5.95, 0, -3.2, Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p4, 'mid_century_lounge_chair', 0.82, 8.45, 0, -3.2, -Math.PI / 2, { addShadow: true });
+  placeGLTFModel(p4, 'wooden_lantern_01', 0.48, 8.75, 0, -1.85, -0.35, { addShadow: true });
 
   // Bioclimatic Pergola over Copper Cocktail Bar
   for (const [px, pz] of [[2.2, -11.5], [8.8, -11.5], [2.2, -6.8], [8.8, -6.8]]) {
@@ -901,15 +1103,17 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   for (let lz = -11.4; lz <= -6.8; lz += 0.48) {
     box(p4, 6.8, 0.08, 0.18, 5.5, 3.6, lz, matSteel);
   }
-  // Hammered Copper Bar + Backlit Liquor Display + Stools
+  // Hammered Copper Bar + Backlit Liquor Display + Brass Goblets + Stools
   box(p4, 4.6, 1.08, 1.15, 5.5, 0.54, -9.8, matCopper);
   box(p4, 4.75, 0.06, 1.25, 5.5, 1.1, -9.8, matDarkMarble);
   box(p4, 4.4, 2.1, 0.45, 5.5, 1.1, -11.4, matWoodDark);
   for (let bx = 3.6; bx <= 7.4; bx += 0.55) {
     cyl(p4, 0.05, 0.05, 0.28, 10, bx, 1.45, -11.35, bx % 1.1 === 0 ? matWarmBulb : matCopper);
   }
-  placeGLTFModel(p4, 'wine_bottles_01', 0.34, 4.6, 1.13, -9.8, 0, { addShadow: false });
-  placeGLTFModel(p4, 'brass_candleholders', 0.26, 6.4, 1.13, -9.8, 0.26, { addShadow: false });
+  placeGLTFModel(p4, 'wine_bottles_01', 0.34, 4.5, 1.13, -9.8, 0, { addShadow: false });
+  placeGLTFModel(p4, 'brass_goblets', 0.22, 5.45, 1.13, -9.72, 0.35, { addShadow: false });
+  placeGLTFModel(p4, 'brass_vase_01', 0.30, 6.95, 1.13, -9.85, -0.2, { addShadow: false });
+  placeGLTFModel(p4, 'brass_candleholders', 0.26, 6.3, 1.13, -9.8, 0.26, { addShadow: false });
   for (let sx = 3.8; sx <= 7.2; sx += 1.1) {
     placeGLTFModel(p4, 'bar_chair_round_01', 0.78, sx, 0, -8.8, Math.PI, { addShadow: true });
   }
@@ -918,13 +1122,15 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   p4.add(barLight);
   lighting.registerLight(barLight, { dayIntensity: 2.0, nightIntensity: 11.0 });
 
-  // Botanical Rooftop Planters (potted_plant_02, potted_plant_04, shrub_02)
+  // Lush Botanical Rooftop Planters (potted_plant_02, potted_plant_04, shrub_02, fern_02)
   for (const [px, pz] of [[-11.8, -13.0], [-11.8, -1.0], [11.5, -13.0], [11.5, -1.0]]) {
     const isBack = pz < -6.0;
     placeGLTFModel(p4, isBack ? 'potted_plant_02' : 'potted_plant_04', isBack ? 2.15 : 1.65, px, 0, pz, px * 0.35, { addShadow: true });
   }
   placeGLTFModel(p4, 'shrub_02', 1.05, -7.6, 0, -10.4, 0.44, { addShadow: true });
   placeGLTFModel(p4, 'shrub_02', 1.05, 1.4, 0, -10.4, -0.52, { addShadow: true });
+  placeGLTFModel(p4, 'fern_02', 0.95, -10.8, 0, -11.2, 0.4, { addShadow: true });
+  placeGLTFModel(p4, 'fern_02', 0.95, 9.8, 0, -11.2, -0.3, { addShadow: true });
 
   addPlantPot(p2, -11.6, 0, -5.8, 1.0);
   return {

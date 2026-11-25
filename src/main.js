@@ -24,11 +24,15 @@ import {
 } from './engine/shotsStorage.js';
 import { mountObjectsVaultUI } from './engine/objectsVaultUI.js';
 import { mountChaptersCinemaUI } from './engine/chaptersCinemaUI.js';
+import { mountAdvisorsBoardUI } from './engine/advisorsBoardUI.js';
+import { evaluateCouncilReadiness, getSpotBlueprint, getWardrobeById } from './data/advisorsBoardData.js';
 
 const state = {
-  activeView: 'plato', // 'plato' | 'prompts' | 'objects' | 'cinema'
+  activeView: 'plato', // 'plato' | 'prompts' | 'objects' | 'cinema' | 'advisors'
   cinemaSubView: 'chapters', // 'chapters' | 'director' | 'bible'
   objects3DVisible: false,
+  advisors3DVisible: false,
+  activeWardrobeId: 'charcoal_silk_slip',
   activeEngine: 'threejs',
   activeFloor: 2,
   activeSpot: SANCTUARY_FLOORS[2].spots[0],
@@ -50,7 +54,7 @@ const state = {
   threeLoadMs: 0
 };
 
-let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI;
+let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI, advisorsUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -137,6 +141,7 @@ function applyThreeJSSlicing() {
 function is3DViewportVisibleInCurrentView() {
   if (state.activeView === 'plato' || state.activeView === 'prompts') return true;
   if (state.activeView === 'objects' && state.objects3DVisible) return true;
+  if (state.activeView === 'advisors' && state.advisors3DVisible) return true;
   if (state.activeView === 'cinema' && state.cinemaSubView === 'director') return true;
   return false;
 }
@@ -154,7 +159,7 @@ function refreshViewportLayout() {
 }
 
 function switchMainView(viewName) {
-  const valid = ['plato', 'prompts', 'objects', 'cinema'];
+  const valid = ['plato', 'prompts', 'objects', 'cinema', 'advisors'];
   const next = valid.includes(viewName) ? viewName : 'plato';
   state.activeView = next;
   document.body.dataset.view = next;
@@ -167,6 +172,7 @@ function switchMainView(viewName) {
   });
 
   if (next === 'objects') objectsUI?.render();
+  if (next === 'advisors') advisorsUI?.render();
   if (next === 'cinema') {
     if (state.cinemaSubView === 'chapters') chaptersUI?.renderChapters();
     if (state.cinemaSubView === 'bible') chaptersUI?.renderBible();
@@ -180,6 +186,7 @@ function updateTopCounters() {
   const shotBadge = document.getElementById('shotsCountBadge');
   const objBadge = document.getElementById('objectsCountBadge');
   const chapBadge = document.getElementById('chaptersCountBadge');
+  const advBadge = document.getElementById('advisorsScoreBadge');
 
   if (shotBadge) {
     shotBadge.textContent = String(state.shots.length);
@@ -187,6 +194,19 @@ function updateTopCounters() {
   }
   if (objBadge) objBadge.textContent = String(state.objects.length);
   if (chapBadge) chapBadge.textContent = String(state.chapters.length);
+  if (advBadge && state.activeSpot) {
+    const ev = evaluateCouncilReadiness({
+      spotId: state.activeSpot.id,
+      wardrobeId: state.activeWardrobeId,
+      directorStyleId: cinema?.shot?.directorStyleId || null,
+      focalMm: cinema?.payload?.camera?.focalMm || 85,
+      motionStrength: parseFloat(document.getElementById('motionSlider')?.value) || 2.5,
+      durationSec: cinema?.payload?.camera?.durationSec || 3.5,
+      foregroundEnabled: Boolean(cinema?.payload?.foregroundProp),
+      attachedObjectsCount: state.pendingObjectIdsForNextShot.length
+    });
+    advBadge.textContent = `${ev.score}%`;
+  }
 }
 
 function renderFloorSidebar() {
@@ -309,6 +329,8 @@ function selectSpot(spot) {
 
   updateViewportHud();
   cinemaUI?.onSpotChanged();
+  advisorsUI?.onSpotChanged();
+  updateTopCounters();
 }
 
 function findSpotById(spotId) {
@@ -415,11 +437,20 @@ function buildHiggsfieldPayload() {
   const camTelemetry = camCtrl
     ? camCtrl.getCameraTelemetry()
     : { spot: state.activeSpot.id, preset: state.activeCamPreset };
+  const activeWardrobe = getWardrobeById(state.activeWardrobeId);
 
   return {
     engine: 'Three.js Metric 1:1 Previz + alina.glb',
     character: 'Alina Van Dijk',
     token_lock: '28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair with natural soft waves, vivid emerald green eyes, light natural freckles, crimson lips, micro-pores',
+    wardrobe_look: activeWardrobe
+      ? {
+          id: activeWardrobe.id,
+          name: activeWardrobe.name,
+          flux_tokens: activeWardrobe.fluxTokens,
+          higgsfield_physics: activeWardrobe.higgsfieldPhysics
+        }
+      : null,
     floor: SANCTUARY_FLOORS[state.activeFloor].floorName,
     spot: state.activeSpot.name,
     animation: state.activeAnim,
@@ -507,6 +538,8 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
   state.pendingObjectIdsForNextShot = [];
   const attachedObjects = state.objects.filter((o) => initialObjectIds.includes(o.id));
 
+  const activeWardrobe = getWardrobeById(state.activeWardrobeId);
+
   const fluxPrompt = buildFluxPromptFromCapture({
     spot,
     floorName,
@@ -515,7 +548,8 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     framing,
     imageMetrics,
     depthPass: hasDepth,
-    attachedObjects
+    attachedObjects,
+    wardrobe: activeWardrobe
   });
 
   const motionPrompt = buildHiggsfieldMotionFromCapture({
@@ -523,7 +557,8 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     framing,
     motionStrength,
     motionEngine: state.motionEngine,
-    cinemaMoveLabel
+    cinemaMoveLabel,
+    wardrobe: activeWardrobe
   });
 
   const shot = {
@@ -542,6 +577,7 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     framing,
     imageMetrics,
     cinemaMoveLabel,
+    wardrobeId: state.activeWardrobeId,
     image: beautyDataUrl,
     depthImage: depthDataUrl,
     motionEngine: state.motionEngine,
@@ -590,6 +626,7 @@ function attachDepthToSelectedShot() {
 }
 
 function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
+  const shotWardrobe = getWardrobeById(shot.wardrobeId || state.activeWardrobeId);
   shot.fluxPrompt = buildFluxPromptFromCapture({
     spot: shot.spot,
     floorName: shot.floorName,
@@ -598,7 +635,8 @@ function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
     framing: shot.framing,
     imageMetrics: shot.imageMetrics,
     depthPass: Boolean(shot.depthImage) || shot.depthPass,
-    attachedObjects: getObjectsForShot(shot)
+    attachedObjects: getObjectsForShot(shot),
+    wardrobe: shotWardrobe
   });
   if (!onlyFluxIfClean) {
     shot.motionPrompt = buildHiggsfieldMotionFromCapture({
@@ -606,7 +644,8 @@ function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
       framing: shot.framing,
       motionStrength: shot.motionStrength,
       motionEngine: shot.motionEngine,
-      cinemaMoveLabel: shot.cinemaMoveLabel
+      cinemaMoveLabel: shot.cinemaMoveLabel,
+      wardrobe: shotWardrobe
     });
   }
 }
@@ -1239,6 +1278,117 @@ async function init() {
       setStatus: setStatusText
     }
   );
+
+  // Montar Consejo de Asesores de Producción Cinematográfica (8 Jefes de Departamento)
+  advisorsUI = mountAdvisorsBoardUI(document.getElementById('col-advisors'), {
+    getActiveSpot: () => state.activeSpot,
+    selectSpotById: (spotId) => {
+      const sp = findSpotById(spotId);
+      if (!sp) return;
+      if (state.activeFloor !== sp.floor) {
+        state.activeFloor = sp.floor;
+        document.getElementById('currentFloorTag').textContent = SANCTUARY_FLOORS[sp.floor].floorName;
+        updateFloorCardStyles();
+        applyThreeJSSlicing();
+      }
+      selectSpot(sp);
+    },
+    getActiveWardrobeId: () => state.activeWardrobeId,
+    setActiveWardrobeId: (wid) => {
+      state.activeWardrobeId = wid;
+      const w = getWardrobeById(wid);
+      const selShot = getSelectedShot();
+      if (selShot) {
+        selShot.wardrobeId = wid;
+        regenerateShotPrompts(selShot);
+        saveShotToDB(selShot);
+        renderShotsPanel();
+      }
+      updateTopCounters();
+      setStatusText(`👗 <span class="text-pink-300 font-bold">Vestuario equipado:</span> ${w.name} (activo en Flux & Higgsfield).`);
+    },
+    is3DVisible: () => state.advisors3DVisible,
+    toggle3DVisible: () => {
+      state.advisors3DVisible = !state.advisors3DVisible;
+      document.body.classList.toggle('advisors-with-3d', state.advisors3DVisible);
+      refreshViewportLayout();
+      return state.advisors3DVisible;
+    },
+    getReadinessTelemetry: () => ({
+      directorStyleId: cinema?.shot?.directorStyleId || null,
+      focalMm: cinema?.payload?.camera?.focalMm || 85,
+      motionStrength: parseFloat(document.getElementById('motionSlider')?.value) || 2.5,
+      durationSec: cinema?.payload?.camera?.durationSec || 3.5,
+      foregroundEnabled: Boolean(cinema?.payload?.foregroundProp),
+      attachedObjectsCount: (getSelectedShot()?.objectIds?.length || 0) + state.pendingObjectIdsForNextShot.length
+    }),
+    flyCameraToHeroProp: (hp, spot) => {
+      if (!state.advisors3DVisible) {
+        state.advisors3DVisible = true;
+        document.body.classList.add('advisors-with-3d');
+        refreshViewportLayout();
+      }
+      cinema?.exit?.();
+      setTimeout(() => {
+        camCtrl?.flyTo(hp.camPos, hp.camTarget);
+        setStatusText(`🎯 <span class="text-emerald-400 font-bold">B-Roll 100mm encuadrado:</span> ${hp.name} (${spot.name}).`);
+      }, 80);
+    },
+    captureHeroPropToVault: async (hp, spot) => {
+      if (!state.advisors3DVisible) {
+        state.advisors3DVisible = true;
+        document.body.classList.add('advisors-with-3d');
+        refreshViewportLayout();
+      }
+      cinema?.exit?.();
+      camCtrl?.camera.position.set(hp.camPos.x, hp.camPos.y, hp.camPos.z);
+      camCtrl?.controls.target.set(hp.camTarget.x, hp.camTarget.y, hp.camTarget.z);
+      camCtrl?.controls.update();
+      camCtrl?.render();
+
+      const imgUrl = await captureViewportAsObjectRender('1:1');
+      const num = state.objects.length + 1;
+      const slug = hp.modelId.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const newObj = {
+        id: `obj-${Date.now()}`,
+        order: num,
+        name: hp.name,
+        handle: `@${slug}_${spot.id}`,
+        category: 'Audio & Set',
+        floor: spot.floor,
+        spotId: spot.id,
+        image: imgUrl,
+        isPlaceholderImage: false,
+        promptToken: hp.promptToken,
+        motionPrompt: hp.motionPrompt,
+        usage: `Hero Prop 1:2 curado por el Consejo de Producción en ${spot.name}.`
+      };
+      state.objects.unshift(newObj);
+      await saveObjectToDB(newObj);
+      updateTopCounters();
+      objectsUI?.render();
+      setStatusText(`🏺 <span class="text-emerald-400 font-bold">Hero Prop «${hp.name}» (${newObj.handle}) renderizado y guardado en Bóveda.</span>`);
+    },
+    applyCouncilBlueprintToStage: (bp) => {
+      state.activeWardrobeId = bp.recommendedWardrobeId;
+      if (!state.advisors3DVisible) {
+        state.advisors3DVisible = true;
+        document.body.classList.add('advisors-with-3d');
+        refreshViewportLayout();
+      }
+      cinemaUI?.applyCouncilPreset({
+        directorId: bp.recommendedDirectorId,
+        shotTypeId: bp.recommendedShotTypeId,
+        moveId: bp.recommendedMoveId,
+        foregroundPropId: bp.recommendedForegroundId
+      });
+      updateTopCounters();
+      const w = getWardrobeById(bp.recommendedWardrobeId);
+      setStatusText(
+        `✨ <span class="text-emerald-400 font-bold">Directrices del Consejo aplicadas:</span> Director + Rig Kelvin + Bokeh f/1.4 + Look «${w.name}».`
+      );
+    }
+  });
 
   // Cargar datos persistidos en IndexedDB (Objetos, Capítulos y Capturas)
   const [savedObjects, savedChapters, savedShots] = await Promise.all([

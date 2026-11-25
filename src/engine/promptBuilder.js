@@ -185,7 +185,8 @@ export function buildFluxPromptFromCapture({
   framing,
   imageMetrics,
   depthPass,
-  attachedObjects = []
+  attachedObjects = [],
+  wardrobe = null
 }) {
   const pose = POSE_DESCRIPTORS[anim]?.still || POSE_DESCRIPTORS.Idle.still;
   const baseLight =
@@ -205,6 +206,8 @@ export function buildFluxPromptFromCapture({
     ? '[ControlNet Depth 9:16 lock active] '
     : '';
 
+  const wardrobeClause = wardrobe?.fluxTokens ? `, ${wardrobe.fluxTokens}` : '';
+
   const objectsClause =
     Array.isArray(attachedObjects) && attachedObjects.length > 0
       ? ` Featured Higgsfield reference objects (${attachedObjects.map((o) => o.handle).join(', ')}): ${attachedObjects
@@ -212,7 +215,7 @@ export function buildFluxPromptFromCapture({
           .join('; ')}.`
       : '';
 
-  return `${depthNote}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa Mini LF ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}, ${pose}, located at ${spot.name} (${floorName}).${objectsClause} ${measuredLight}, ${baseLight}. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
+  return `${depthNote}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa 35 ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}${wardrobeClause}, ${pose}, located at ${spot.name} (${floorName}).${objectsClause} ${measuredLight}, ${baseLight}. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -223,9 +226,11 @@ export function buildHiggsfieldMotionFromCapture({
   framing,
   motionStrength = 2.5,
   motionEngine = 'higgsfield',
-  cinemaMoveLabel = null
+  cinemaMoveLabel = null,
+  wardrobe = null
 }) {
   const action = POSE_DESCRIPTORS[anim]?.motion || POSE_DESCRIPTORS.Idle.motion;
+  const fabricPhysics = wardrobe?.higgsfieldPhysics ? ` Wardrobe physics: ${wardrobe.higgsfieldPhysics}.` : '';
 
   let camMove;
   if (cinemaMoveLabel) {
@@ -245,5 +250,5 @@ export function buildHiggsfieldMotionFromCapture({
       ? 'Mouth gently closed, no talking (prepared for LivePortrait audio sync).'
       : 'Mouth closed, no talking, zero facial distortion, locked identity.';
 
-  return `${action}. Camera: ${camMove}, ${framing.angle}, ${framing.mm}mm lens feel. ${lipRule} Temporal consistency, natural physics, Higgsfield motion strength ${Number(motionStrength).toFixed(1)}.`;
+  return `${action}.${fabricPhysics} Camera: ${camMove}, ${framing.angle}, ${framing.mm}mm lens feel. ${lipRule} Temporal consistency, natural physics, Higgsfield motion strength ${Number(motionStrength).toFixed(1)}.`;
 }

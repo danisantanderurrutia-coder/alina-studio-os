@@ -668,6 +668,23 @@ export function mountCinemaPanel(root, ctx) {
         apply(dir.shot, true);
       }
     },
+    applyCouncilPreset({ directorId, shotTypeId, moveId, foregroundPropId }) {
+      const d = ix.directors.get(directorId) || ix.directors.get('fincher_cronenweth');
+      const st = ix.shotTypes.get(shotTypeId) || ix.shotTypes.get('mcu_interview');
+      const mv = ix.moves.get(moveId) || ix.moves.get('slow_dolly_push_in');
+      ui.directorId = d.id;
+      ui.shotTypeId = st.id;
+      ui.moveId = mv.id;
+      ui.lightId = d.defaultLightingSchemeId;
+      ui.lens = LENSES.reduce((a, b) => (Math.abs(b - st.defaultFocalMm) < Math.abs(a - st.defaultFocalMm) ? b : a));
+      ui.aperture = st.defaultAperture;
+      ui.role = 'A';
+      ui.focusOverride = 'auto';
+      ui.foregroundFraming = true;
+      ui.foregroundPropId = foregroundPropId || null;
+      syncSelectors();
+      apply(currentShot(), false);
+    },
     isPlayingScene: () => ui.playingScene
   };
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as S from './cinematographySolver.js';
 import catalog from '../data/cinematographyCatalog.json';
 import { FLOOR_HEIGHT, BUILDING_WIDTH, BUILDING_DEPTH, BUILDING_CENTER_Z } from '../data/sanctuaryData.js';
@@ -54,47 +55,121 @@ export class CinemaDirector {
   }
 
   _initForegroundMeshes() {
-    // 1. Hoja Tropical Monstera (plano curvado con textura o color verde profundo)
-    const leafGeo = new THREE.CylinderGeometry(0.005, 0.35, 0.85, 12, 4, true, 0, Math.PI);
+    // 1. Follaje Botánico Real (Carga fern_02 CC0 con frondas fenestradas + fallback multi-hoja orgánico)
+    const leafGroup = new THREE.Group();
     const leafMat = new THREE.MeshStandardMaterial({
-      color: 0x145a32,
-      roughness: 0.38,
-      metalness: 0.05,
+      color: 0x165b33,
+      roughness: 0.42,
+      metalness: 0.04,
       side: THREE.DoubleSide
     });
-    const leafMesh = new THREE.Mesh(leafGeo, leafMat);
-    leafMesh.rotation.z = Math.PI / 4;
-    leafMesh.castShadow = true;
+    for (const [rx, ry, rz, s] of [
+      [0.25, 0.2, 0.55, 1.0],
+      [-0.2, -0.35, 0.85, 0.78],
+      [0.1, 0.65, 0.3, 0.68]
+    ]) {
+      const blade = new THREE.Mesh(new THREE.PlaneGeometry(0.32 * s, 0.72 * s, 4, 8), leafMat);
+      blade.rotation.set(rx, ry, rz);
+      leafGroup.add(blade);
+    }
 
-    // 2. Copa de Cristal / Refractiva
-    const glassGeo = new THREE.CylinderGeometry(0.12, 0.08, 0.32, 16);
+    // 2. Copa Tallada con Tallo Fino (LatheGeometry + reemplazo asíncrono brass_goblets)
+    const glassGroup = new THREE.Group();
+    const gobletPts = [
+      new THREE.Vector2(0.0, 0.0),
+      new THREE.Vector2(0.09, 0.0),
+      new THREE.Vector2(0.085, 0.015),
+      new THREE.Vector2(0.014, 0.03),
+      new THREE.Vector2(0.012, 0.19),
+      new THREE.Vector2(0.095, 0.26),
+      new THREE.Vector2(0.115, 0.38),
+      new THREE.Vector2(0.108, 0.38)
+    ];
     const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      roughness: 0.08,
-      metalness: 0.1,
-      transmission: 0.88,
+      color: 0xfff8eb,
+      roughness: 0.06,
+      metalness: 0.08,
+      transmission: 0.9,
       transparent: true,
-      opacity: 0.72,
-      ior: 1.5
+      opacity: 0.76,
+      ior: 1.52
     });
-    const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+    glassGroup.add(new THREE.Mesh(new THREE.LatheGeometry(gobletPts, 24), glassMat));
 
-    // 3. Micrófono Shure Studio
+    // 3. Micrófono Broadcast Estudio con Horquilla (Shure SM7B Yoke Silhouette)
     const micGroup = new THREE.Group();
-    const micBody = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.32, 16), new THREE.MeshStandardMaterial({ color: 0x212529, roughness: 0.6 }));
-    const micGrille = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshStandardMaterial({ color: 0x495057, metalness: 0.8, roughness: 0.3 }));
-    micGrille.position.y = 0.18;
-    micGroup.add(micBody, micGrille);
+    const darkAnodized = new THREE.MeshStandardMaterial({ color: 0x1c1f26, roughness: 0.52, metalness: 0.65 });
+    const brassAccent = new THREE.MeshStandardMaterial({ color: 0xc8963e, roughness: 0.28, metalness: 0.88 });
+    const micBody = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.26, 20), darkAnodized);
+    const micFoam = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.066, 0.08, 8, 18),
+      new THREE.MeshStandardMaterial({ color: 0x262932, roughness: 0.92 })
+    );
+    micFoam.position.y = 0.14;
+    const micRing = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.007, 8, 24), brassAccent);
+    micRing.rotation.x = Math.PI / 2;
+    micRing.position.y = 0.06;
+    const yoke = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.009, 8, 20, Math.PI), darkAnodized);
+    yoke.rotation.z = Math.PI;
+    micGroup.add(micBody, micFoam, micRing, yoke);
+    micGroup.rotation.z = -0.22;
 
-    // 4. Frasco Perfume de Tocador en Latón
-    const flaconMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.26, 16), new THREE.MeshStandardMaterial({ color: 0xc8963e, metalness: 0.75, roughness: 0.25 }));
+    // 4. Frasco de Perfume Facetado en Cristal Ámbar & Atomizador de Latón
+    const flaconGroup = new THREE.Group();
+    const amberGlass = new THREE.MeshPhysicalMaterial({
+      color: 0xd97706,
+      roughness: 0.08,
+      metalness: 0.08,
+      transmission: 0.82,
+      transparent: true,
+      opacity: 0.86,
+      ior: 1.54
+    });
+    const flaconBody = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.22, 8), amberGlass);
+    const flaconNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 0.05, 16), brassAccent);
+    flaconNeck.position.y = 0.135;
+    const flaconCap = new THREE.Mesh(new THREE.OctahedronGeometry(0.042, 0), amberGlass);
+    flaconCap.position.y = 0.19;
+    flaconGroup.add(flaconBody, flaconNeck, flaconCap);
 
     this.foregroundMeshes = {
-      monstera_leaf: leafMesh,
-      crystal_glass: glassMesh,
+      monstera_leaf: leafGroup,
+      crystal_glass: glassGroup,
       vintage_microphone: micGroup,
-      perfume_bottle: flaconMesh
+      perfume_bottle: flaconGroup
     };
+
+    // Upgrade asíncrono a mallas escaneadas CC0 reales para silueta bokeh orgánica
+    const fgLoader = new GLTFLoader();
+    const upgradeFG = (propKey, url, targetH) => {
+      fgLoader.load(
+        url,
+        (gltf) => {
+          const model = gltf.scene;
+          const box = new THREE.Box3().setFromObject(model);
+          const sz = new THREE.Vector3();
+          const ctr = new THREE.Vector3();
+          box.getSize(sz);
+          box.getCenter(ctr);
+          const sc = targetH / Math.max(0.05, sz.y);
+          model.scale.multiplyScalar(sc);
+          model.position.set(-ctr.x * sc, -ctr.y * sc, -ctr.z * sc);
+          model.traverse((m) => {
+            if (m.isMesh) m.userData.maskId = 'foreground';
+          });
+          const wrap = new THREE.Group();
+          wrap.add(model);
+          this.foregroundMeshes[propKey] = wrap;
+          if (this.active && this.payload?.foregroundProp?.propId === propKey) {
+            this._updateForegroundProp(this.payload.foregroundProp);
+          }
+        },
+        undefined,
+        () => {}
+      );
+    };
+    upgradeFG('monstera_leaf', './polyhaven/models/fern_02/fern_02.gltf', 0.85);
+    upgradeFG('perfume_bottle', './polyhaven/models/brass_vase_01/brass_vase_01.gltf', 0.36);
   }
 
   // ---------- estado base ----------

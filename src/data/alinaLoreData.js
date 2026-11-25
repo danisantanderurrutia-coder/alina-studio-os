@@ -183,6 +183,51 @@ export const SEED_OBJECTS = [
     motionPrompt:
       'Subtle shallow depth-of-field focus pull past the matte black microphone capsule toward warm studio background glow, stationary camera, motion strength 2.0',
     usage: 'Objeto de encuadre en primer plano (Foreground Bokeh) para confesionarios y capítulos de voz.'
+  },
+  {
+    id: 'obj-busto-marmol',
+    name: 'Busto Clásico de Mármol & Enciclopedias',
+    handle: '@busto_marmol',
+    category: 'Intelecto & Estudio',
+    floor: 3,
+    spotId: 'podcast',
+    image: makeSeedObjectSvg('🏛️', 'Busto Clásico & Libros', '@busto_marmol • Piso 3 Podcast', '#f29979'),
+    isPlaceholderImage: true,
+    promptToken:
+      'classical sculpted white marble bust on dark walnut pedestal beside leatherbound psychoanalysis encyclopedias illuminated by warm tungsten brick-wall sconce',
+    motionPrompt:
+      'Slow 100mm macro rack focus from sculpted marble bust profile to gilded book spines under warm Edison wall glow, no humans, motion strength 2.0',
+    usage: 'Hero Prop 3D esculpido para B-Roll de autoridad intelectual en «The Mind Sanctuary».'
+  },
+  {
+    id: 'obj-camara-reloj',
+    name: 'Cámara Analógica & Reloj de Chimenea',
+    handle: '@camara_reloj',
+    category: 'Intelecto & Estudio',
+    floor: 3,
+    spotId: 'podcast',
+    image: makeSeedObjectSvg('📷', 'Cámara & Reloj Estudio', '@camara_reloj • Piso 3 Mesa', '#eab308'),
+    isPlaceholderImage: true,
+    promptToken:
+      'vintage brass-trimmed wooden mantel clock and classic analog rangefinder camera beside porcelain espresso cup on dark walnut desk',
+    motionPrompt:
+      'Warm Edison desk lamp light glinting softly across vintage camera lens glass and polished brass clock bezel, locked 100mm macro, motion strength 2.1',
+    usage: 'B-Roll 1:2 sobre el escritorio clínico de nogal en Piso 3.'
+  },
+  {
+    id: 'obj-copas-laton-bar',
+    name: 'Copas Rituales de Latón & Candelabros',
+    handle: '@copas_laton',
+    category: 'Café & Lifestyle',
+    floor: 4,
+    spotId: 'bar',
+    image: makeSeedObjectSvg('🏆', 'Copas Talladas Latón', '@copas_laton • Piso 4 / PB', '#d97706'),
+    isPlaceholderImage: true,
+    promptToken:
+      'ornate polished brass goblets beside flickering brass candleholders and backlit amber liquor bottles on hammered copper bar counter',
+    motionPrompt:
+      'Subtle lateral 100mm macro slider across gleaming brass goblets with warm candlelight bokeh twinkling behind, no people, motion strength 2.2',
+    usage: 'B-Roll nocturno de lujo para Barra Botánica (Piso 4), Boudoir (Piso 3) y VIP Cabaret (PB).'
   }
 ];
 

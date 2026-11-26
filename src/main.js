@@ -9,23 +9,35 @@ import { mountCinemaPanel } from './engine/cinemaUI.js';
 import { buildZipBlob } from './engine/zipWriter.js';
 import {
   analyzeCapturedImage,
+  buildCanonicalObjectTokenLock,
   buildFluxPromptFromCapture,
   buildHiggsfieldMotionFromCapture,
-  describeCaptureFraming
+  describeCaptureFraming,
+  detectObjectsInCameraFrustum
 } from './engine/promptBuilder.js';
 import {
   deleteShotFromDB,
   loadChaptersFromDB,
+  loadCustom3DProps,
+  loadCustomWardrobeLooks,
   loadObjectsFromDB,
   loadShotsFromDB,
   saveChapterToDB,
+  saveCustom3DProp,
+  saveCustomWardrobeLook,
   saveObjectToDB,
   saveShotToDB
 } from './engine/shotsStorage.js';
 import { mountObjectsVaultUI } from './engine/objectsVaultUI.js';
 import { mountChaptersCinemaUI } from './engine/chaptersCinemaUI.js';
+import { mountNodeGraphBlueprintUI } from './engine/nodeGraphBlueprintUI.js';
 import { mountAdvisorsBoardUI } from './engine/advisorsBoardUI.js';
-import { evaluateCouncilReadiness, getSpotBlueprint, getWardrobeById } from './data/advisorsBoardData.js';
+import {
+  ALINA_WARDROBE_CATALOG,
+  evaluateCouncilReadiness,
+  getSpotBlueprint,
+  getWardrobeById
+} from './data/advisorsBoardData.js';
 
 const state = {
   activeView: 'plato', // 'plato' | 'prompts' | 'objects' | 'cinema' | 'advisors'
@@ -54,7 +66,7 @@ const state = {
   threeLoadMs: 0
 };
 
-let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI, advisorsUI;
+let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI, blueprintUI, advisorsUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -172,6 +184,7 @@ function switchMainView(viewName) {
   if (next === 'advisors') advisorsUI?.render();
   if (next === 'cinema') {
     if (state.cinemaSubView === 'chapters') chaptersUI?.renderChapters();
+    if (state.cinemaSubView === 'blueprint') blueprintUI?.render();
     if (state.cinemaSubView === 'bible') chaptersUI?.renderBible();
   }
   if (next === 'prompts') renderShotsPanel();
@@ -531,7 +544,16 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
 
   const imageMetrics = await analyzeCapturedImage(beautyDataUrl);
   const hasDepth = Boolean(depthDataUrl) || state.depthPass;
-  const initialObjectIds = [...state.pendingObjectIdsForNextShot];
+
+  // MEJORA DE FLUJO 1 — FRUSTUM AUTO-TAGGING (Auto-detección matemática de objetos en el cono visual)
+  const autoDetectedObjects = detectObjectsInCameraFrustum({
+    cameraTelemetry: camera,
+    floor: state.activeFloor,
+    spotId: spot.id,
+    objects: state.objects
+  });
+  const autoDetectedIds = autoDetectedObjects.map((o) => o.id);
+  const initialObjectIds = Array.from(new Set([...state.pendingObjectIdsForNextShot, ...autoDetectedIds]));
   state.pendingObjectIdsForNextShot = [];
   const attachedObjects = state.objects.filter((o) => initialObjectIds.includes(o.id));
 
@@ -609,7 +631,9 @@ function captureCurrentViewportToPrompt({ withDepth = false } = {}) {
 
 function captureViewportAsObjectRender(aspect = '1:1') {
   const h = aspect === '1:1' ? 1080 : 1920;
-  return Promise.resolve(camCtrl.renderVertical916DataURL(1080, h, false));
+  const beautyUrl = camCtrl.renderVertical916DataURL(1080, h, 'beauty');
+  const depthUrl = camCtrl.renderVertical916DataURL(1080, h, 'depth');
+  return Promise.resolve({ beautyUrl, depthUrl });
 }
 
 function attachDepthToSelectedShot() {
@@ -826,6 +850,14 @@ function buildShotExportPayload(shot) {
       handle: o.handle,
       name: o.name,
       category: o.category,
+      floor: o.floor,
+      spotId: o.spotId,
+      worldPos: o.worldPos || null,
+      master_still_locked: Boolean(o.masterApprovedStill),
+      master_seed: o.masterSeed || null,
+      flux_redux_weight: o.reduxWeight ?? 0.75,
+      cn_depth_strength: o.cnDepthStrength ?? 0.68,
+      cn_depth_end: o.cnDepthEnd ?? 0.58,
       object_token_lock: o.promptToken,
       broll_motion_prompt: o.motionPrompt
     })),
@@ -916,32 +948,48 @@ function bindUIEvents() {
   document.getElementById('btn-capture-shot').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: false }));
   document.getElementById('btn-capture-shot-depth').addEventListener('click', () => captureCurrentViewportToPrompt({ withDepth: true }));
 
-  // Captura rápida de Objeto desde el visor 3D hacia la Bóveda de Objetos
+  // Captura rápida de Objeto desde el visor 3D hacia la Bóveda de Objetos (Doble Registro Beauty + Depth 16-bit)
   document.getElementById('btn-quick-save-object').addEventListener('click', async () => {
-    const imgUrl = await captureViewportAsObjectRender('1:1');
-    if (!imgUrl) return;
+    const res = await captureViewportAsObjectRender('1:1');
+    if (!res?.beautyUrl) return;
     const spotName = state.activeSpot?.name || 'Santuario';
+    const camSnap = getCurrentCameraSnapshot();
     const num = state.objects.length + 1;
     const newObj = {
       id: `obj-${Date.now()}`,
       order: num,
-      name: `Objeto ${spotName}`,
+      name: `Hero Prop ${spotName}`,
       handle: `@prop_${state.activeSpot?.id || 'set'}_${num}`,
-      category: 'Audio & Set',
+      category: 'Arte & Mobiliario',
       floor: state.activeFloor,
       spotId: state.activeSpot?.id || 'vanity',
-      image: imgUrl,
+      worldPos: camSnap?.target || state.activeSpot?.alinaPos || null,
+      camPos: camSnap?.position || null,
+      camTarget: camSnap?.target || null,
+      image: res.beautyUrl,
+      previzRender: res.beautyUrl,
+      previzDepthRender: res.depthUrl,
+      masterApprovedStill: null,
+      masterSeed: null,
+      reduxWeight: 0.75,
+      cnDepthStrength: 0.68,
+      cnDepthEnd: 0.58,
       isPlaceholderImage: false,
-      promptToken: `photorealistic prop captured from ${spotName}, detailed luxury surface texture and lighting`,
-      motionPrompt: 'Subtle macro light reflections across prop surface, slow 2% push-in, no humans, motion strength 2.2',
-      usage: `Capturado desde Piso ${state.activeFloor} (${spotName}).`
+      promptToken: buildCanonicalObjectTokenLock({
+        speciesOrModel: `sculpted architectural prop in ${spotName}`,
+        primaryMaterial: 'crafted in Alina Master Triad finishes (obsidian #111216, charcoal silk #1f232b, forest emerald #0B2B20, raw ivory #ebe4d5)',
+        containerOrHardware: 'warm brushed-brass hardware (#d4af37) and dark walnut or basalt base',
+        kelvinResponse: `illuminated by ${state.lightingMode === 'day' ? 'warm Mediterranean daylight' : 'intimate Kelvin practicals'}`
+      }),
+      motionPrompt: 'Locked 100mm macro shot with subtle warm Kelvin specular reflections across brushed-brass and natural surface grain, slow 2% push-in, duration 3.2s, no humans, motion strength 2.1',
+      usage: `Doble Registro 3D ↔ Bóveda capturado desde Piso ${state.activeFloor} (${spotName}).`
     };
     state.objects.unshift(newObj);
     await saveObjectToDB(newObj);
     updateTopCounters();
     switchMainView('objects');
     objectsUI?.selectObject(newObj.id);
-    setStatusText(`🏺 <span class="text-emerald-400 font-bold">Objeto guardado en la Bóveda (${newObj.handle}).</span>`);
+    setStatusText(`🏺 <span class="text-emerald-400 font-bold">Doble Registro (Beauty + Depth 16-bit) guardado en la Bóveda (${newObj.handle}).</span>`);
   });
 
   // Edición sobre la captura seleccionada
@@ -1202,11 +1250,299 @@ async function init() {
     setStatus: setStatusText
   });
 
+  // Pipeline 2D Web → Perchero 3D + Armario Cápsula + Bóveda de Objetos (Margaux De Vries Dep. 02)
+  async function importWebGarmentToRackAndVault({
+    title = 'Look Couture Importado',
+    subtype = 'dress',
+    floor = 2,
+    category = 'Vestuario & Joyas',
+    swatches = ['#1f232b', '#0B2B20', '#d4af37'],
+    fluxTokens = '',
+    higgsfieldPhysics = '',
+    referenceDataUrl = null
+  } = {}) {
+    const fNum = [0, 1, 2, 3, 4].includes(Number(floor)) ? Number(floor) : 2;
+    const defaultSpotByFloor = { 0: 'cabaret', 1: 'cafe', 2: 'vanity', 3: 'boudoir', 4: 'pool' };
+    const spotId = defaultSpotByFloor[fNum] || 'vanity';
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 18) || `look_${Date.now().toString(36).slice(-4)}`;
+
+    // 1. Colgar físicamente la prenda en el Perchero Couture 3D del piso seleccionado
+    const hung = arch?.hangCustomGarmentOnRack?.({
+      floor: fNum,
+      primaryHex: swatches[0] || '#1f232b',
+      secondaryHex: swatches[1] || '#0B2B20',
+      subtype
+    });
+    saveCustom3DProp({
+      id: `prop3d-${slug}`,
+      kind: 'garment',
+      floor: fNum,
+      primaryHex: swatches[0] || '#1f232b',
+      secondaryHex: swatches[1] || '#0B2B20',
+      subtype
+    });
+
+    // 2. Mover al piso/spot y renderizar automáticamente Beauty PBR + Depth 16-bit del perchero con la prenda colgada
+    if (state.activeFloor !== fNum) selectFloor(fNum);
+    const sp = findSpotById(spotId);
+    if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+
+    const prevAlinaVis = alina?.root ? alina.root.visible : true;
+    if (alina?.root) alina.root.visible = false;
+    if (hung?.camPos && hung?.camTarget) {
+      camCtrl.isTransitioning = false;
+      camCtrl.camera.position.set(hung.camPos.x, hung.camPos.y, hung.camPos.z);
+      camCtrl.controls.target.set(hung.camTarget.x, hung.camTarget.y, hung.camTarget.z);
+      camCtrl.controls.update();
+      camCtrl.render();
+    }
+    const res3D = await captureViewportAsObjectRender('1:1');
+    if (alina?.root) alina.root.visible = prevAlinaVis;
+    camCtrl.render();
+
+    const vaultObjId = `obj-look-${slug}-${Date.now().toString(36).slice(-4)}`;
+    const lookId = `look_${slug}`;
+    const handle = `@look_${slug}`;
+
+    // 3. Registrar en ALINA_WARDROBE_CATALOG y persistir
+    const newLook = {
+      id: lookId,
+      name: title,
+      handle,
+      vaultObjectId: vaultObjId,
+      rackLocation: {
+        floor: fNum,
+        spotId,
+        rackType: `Perchero Couture 3D Piso ${fNum}`,
+        coords: hung?.worldPos || { x: -3.45, y: fNum * FLOOR_HEIGHT, z: -13.22 }
+      },
+      category,
+      funnel: 'Virtual Try-On / IP-Adapter & Continuidad 3D',
+      spots: [spotId, 'vanity', 'boudoir'],
+      swatches,
+      fluxTokens,
+      higgsfieldPhysics,
+      stylistNote: `Importado de Web/Foto con paleta extraída (${swatches.join(', ')}) y colgado físicamente en el perchero 3D del Piso ${fNum}.`
+    };
+    const existingLookIdx = ALINA_WARDROBE_CATALOG.findIndex((w) => w.id === lookId);
+    if (existingLookIdx >= 0) ALINA_WARDROBE_CATALOG[existingLookIdx] = newLook;
+    else ALINA_WARDROBE_CATALOG.unshift(newLook);
+    saveCustomWardrobeLook(newLook);
+    state.activeWardrobeId = lookId;
+
+    // 4. Registrar ficha canónica en la Bóveda de Objetos (con Previz 3D del perchero + Master Still si se subió foto limpia)
+    const newVaultObj = {
+      id: vaultObjId,
+      order: 1,
+      name: `${title} (En Perchero 3D)`,
+      handle,
+      category: 'Vestuario & Joyas',
+      floor: fNum,
+      spotId,
+      wardrobeId: lookId,
+      modelId: `CoutureRack_P${fNum}`,
+      worldPos: hung?.worldPos || null,
+      camPos: hung?.camPos || null,
+      camTarget: hung?.camTarget || null,
+      image: referenceDataUrl || res3D.beautyUrl,
+      previzRender: res3D.beautyUrl,
+      previzDepthRender: res3D.depthUrl,
+      masterApprovedStill: referenceDataUrl || null,
+      masterSeed: referenceDataUrl ? String(Math.floor(10000000 + Math.random() * 90000000)) : null,
+      kelvinRecipe: fNum === 3 ? '2200K Key / 4600K Rim' : '3400K Key / 4800K Rim',
+      reduxWeight: 0.76,
+      cnDepthStrength: 0.68,
+      cnDepthEnd: 0.58,
+      isPlaceholderImage: false,
+      promptToken: `${fluxTokens} suspended on a sculpted dark-walnut hanger along a warm brushed-brass couture garment rack (#d4af37) in Piso ${fNum}`,
+      motionPrompt: higgsfieldPhysics,
+      usage: `Continuidad Perchero → Cuerpo importada desde Web/Foto en Piso ${fNum} (${spotId}).`
+    };
+    state.objects.unshift(newVaultObj);
+    await saveObjectToDB(newVaultObj);
+    updateTopCounters();
+    objectsUI?.render();
+    advisorsUI?.render();
+    setStatusText(
+      `👗 <span class="text-pink-300 font-bold">Prenda «${title}» (${handle}) colgada en el Perchero 3D del Piso ${fNum} y sincronizada en Armario + Bóveda.</span>`
+    );
+    return newVaultObj;
+  }
+
+  // Pipeline 2D Web → Objeto/Cuadro/Planta/Escultura 3D + Bóveda (Mateo Santoro Dep. 04)
+  async function importWebObjectTo3DAndVault({
+    title = 'Activo Web 3D',
+    subtype = 'painting',
+    floor = 2,
+    swatches = ['#1f232b', '#0B2B20', '#d4af37'],
+    promptToken = '',
+    motionPrompt = '',
+    referenceDataUrl = null
+  } = {}) {
+    const fNum = [0, 1, 2, 3, 4].includes(Number(floor)) ? Number(floor) : 2;
+    const defaultSpotByFloor = { 0: 'cabaret', 1: 'cafe', 2: 'vanity', 3: 'podcast', 4: 'pool' };
+    const spotId = defaultSpotByFloor[fNum] || 'vanity';
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 18) || `prop_${Date.now().toString(36).slice(-4)}`;
+
+    const spawned = arch?.spawnCustomObjectInFloor?.({
+      floor: fNum,
+      subtype,
+      imageDataUrl: referenceDataUrl,
+      primaryHex: swatches[0] || '#1f232b'
+    });
+    saveCustom3DProp({
+      id: `prop3d-${slug}`,
+      kind: 'object',
+      floor: fNum,
+      subtype,
+      primaryHex: swatches[0] || '#1f232b',
+      imageDataUrl: subtype === 'painting' ? referenceDataUrl : null
+    });
+
+    if (state.activeFloor !== fNum) selectFloor(fNum);
+    const sp = findSpotById(spotId);
+    if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+
+    await new Promise((r) => setTimeout(r, 140));
+    const prevAlinaVis = alina?.root ? alina.root.visible : true;
+    if (alina?.root) alina.root.visible = false;
+    if (spawned?.camPos && spawned?.camTarget) {
+      camCtrl.isTransitioning = false;
+      camCtrl.camera.position.set(spawned.camPos.x, spawned.camPos.y, spawned.camPos.z);
+      camCtrl.controls.target.set(spawned.camTarget.x, spawned.camTarget.y, spawned.camTarget.z);
+      camCtrl.controls.update();
+      camCtrl.render();
+    }
+    const res3D = await captureViewportAsObjectRender('1:1');
+    if (alina?.root) alina.root.visible = prevAlinaVis;
+    camCtrl.render();
+
+    const catMap = {
+      painting: 'Arte & Mobiliario',
+      plant: 'Botánica & Esculturas',
+      sculpture: 'Botánica & Esculturas',
+      furniture: 'Arte & Mobiliario'
+    };
+
+    const newVaultObj = {
+      id: `obj-web-${slug}-${Date.now().toString(36).slice(-4)}`,
+      order: 1,
+      name: title,
+      handle: `@${slug}`,
+      category: catMap[subtype] || 'Arte & Mobiliario',
+      floor: fNum,
+      spotId,
+      modelId: spawned?.modelId || 'custom_3d_prop',
+      worldPos: spawned?.worldPos || null,
+      camPos: spawned?.camPos || null,
+      camTarget: spawned?.camTarget || null,
+      image: res3D.beautyUrl,
+      previzRender: res3D.beautyUrl,
+      previzDepthRender: res3D.depthUrl,
+      masterApprovedStill: referenceDataUrl || null,
+      masterSeed: referenceDataUrl ? String(Math.floor(10000000 + Math.random() * 90000000)) : null,
+      reduxWeight: 0.75,
+      cnDepthStrength: 0.68,
+      cnDepthEnd: 0.58,
+      isPlaceholderImage: false,
+      promptToken,
+      motionPrompt,
+      usage: `Integrado desde Web/Foto en el Motor 3D (Piso ${fNum} · ${spotId}) con Doble Registro Beauty + Depth.`
+    };
+    state.objects.unshift(newVaultObj);
+    await saveObjectToDB(newVaultObj);
+    updateTopCounters();
+    objectsUI?.render();
+    setStatusText(
+      `🏺 <span class="text-emerald-400 font-bold">Activo «${title}» (${newVaultObj.handle}) integrado en Piso ${fNum} y renderizado en Bóveda.</span>`
+    );
+    return newVaultObj;
+  }
+
+  // Auto-curación (Self-Healing) en vivo desde el Motor 3D WebGL2 si alguna imagen de la Bóveda está caída
+  async function repairSingleVaultObjectFrom3D(objId) {
+    const obj = state.objects.find((o) => o.id === objId);
+    if (!obj || !obj.camPos || !obj.camTarget || !camCtrl) return null;
+    const prevFloor = state.activeFloor;
+    const prevSpot = state.activeSpot;
+    if (obj.floor != null && state.activeFloor !== obj.floor) selectFloor(obj.floor);
+    if (obj.spotId) {
+      const sp = findSpotById(obj.spotId);
+      if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+    }
+    const prevAlinaVis = alina?.root ? alina.root.visible : true;
+    if (alina?.root) alina.root.visible = false;
+    camCtrl.isTransitioning = false;
+    camCtrl.camera.position.set(obj.camPos.x, obj.camPos.y, obj.camPos.z);
+    camCtrl.controls.target.set(obj.camTarget.x, obj.camTarget.y, obj.camTarget.z);
+    camCtrl.controls.update();
+    camCtrl.render();
+    const beauty = camCtrl.renderVertical916DataURL(720, 720, 'beauty');
+    const depth = camCtrl.renderVertical916DataURL(720, 720, 'depth');
+    if (alina?.root) alina.root.visible = prevAlinaVis;
+    if (prevFloor !== state.activeFloor) selectFloor(prevFloor);
+    if (prevSpot && prevSpot.id !== state.activeSpot?.id) selectSpot(prevSpot);
+    camCtrl.render();
+
+    obj.previzRender = beauty;
+    obj.previzDepthRender = depth;
+    if (!obj.masterApprovedStill) obj.image = beauty;
+    obj.isPlaceholderImage = false;
+    await saveObjectToDB(obj);
+    objectsUI?.render();
+    return obj;
+  }
+
+  async function repairAllVaultImagesFrom3D() {
+    setStatusText('🔄 <span class="text-amber-300 font-bold">Re-renderizando en vivo los 32 objetos de la Bóveda desde el Motor 3D WebGL2...</span>');
+    for (const obj of state.objects) {
+      if (obj.camPos && obj.camTarget) {
+        await repairSingleVaultObjectFrom3D(obj.id);
+      }
+    }
+    objectsUI?.render();
+    setStatusText('✅ <span class="text-emerald-400 font-bold">Las 32 fichas de la Bóveda (Beauty + Depth 16-bit) han sido verificadas y re-renderizadas en 3D.</span>');
+  }
+
   // Montar Bóveda de Objetos
   objectsUI = mountObjectsVaultUI(document.getElementById('col-objects'), {
     getObjects: () => state.objects,
     getActiveFloor: () => state.activeFloor,
     getActiveSpot: () => state.activeSpot,
+    getCameraTelemetry: () => getCurrentCameraSnapshot(),
+    importWebGarmentToRackAndVault,
+    importWebObjectTo3DAndVault,
+    repairSingleVaultObjectFrom3D,
+    repairAllVaultImagesFrom3D,
+    flyToVaultObjectIn3D: (obj) => {
+      if (obj.floor != null && state.activeFloor !== obj.floor) {
+        selectFloor(obj.floor);
+      }
+      if (obj.spotId) {
+        const sp = findSpotById(obj.spotId);
+        if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+      }
+      if (!state.objects3DVisible) {
+        state.objects3DVisible = true;
+        document.body.classList.add('objects-with-3d');
+        objectsUI?.sync3DBar(true);
+        refreshViewportLayout();
+      }
+      if (obj.camPos && obj.camTarget) {
+        setTimeout(() => {
+          camCtrl?.flyTo(obj.camPos, obj.camTarget);
+          setStatusText(`🎯 <span class="text-emerald-400 font-bold">Cámara 100mm Macro encuadrando ${obj.handle}</span> en Piso ${obj.floor}.`);
+        }, 90);
+      }
+    },
     onObjectsChanged: () => {
       updateTopCounters();
       if (state.activeView === 'prompts') renderShotsPanel();
@@ -1256,7 +1592,12 @@ async function init() {
       onSubTabChanged: (sub) => {
         state.cinemaSubView = sub;
         document.body.dataset.cinemaSub = sub;
+        if (sub === 'blueprint') blueprintUI?.render();
         refreshViewportLayout();
+      },
+      onOpenBlueprint: (chapId) => {
+        if (chapId) blueprintUI?.openForChapter(chapId);
+        else blueprintUI?.render();
       },
       loadChapterSetIntoStudio: (ch) => {
         state.defaultChapterIdForNextShot = ch.id;
@@ -1275,6 +1616,23 @@ async function init() {
       setStatus: setStatusText
     }
   );
+
+  // Montar Grafo Nodal 2D Blueprint (Sequencer 1:2 + Fusion 3D-to-Higgsfield)
+  blueprintUI = mountNodeGraphBlueprintUI(document.getElementById('col-blueprint'), {
+    getChapters: () => state.chapters,
+    getObjects: () => state.objects,
+    getActiveSpot: () => state.activeSpot,
+    getLightingMode: () => state.lightingMode,
+    setLightingMode,
+    findSpotById,
+    selectFloor,
+    selectSpot,
+    switchMainView,
+    cinema,
+    camCtrl,
+    alina,
+    setStatus: setStatusText
+  });
 
   // Montar Consejo de Asesores de Producción Cinematográfica (8 Jefes de Departamento)
   advisorsUI = mountAdvisorsBoardUI(document.getElementById('col-advisors'), {
@@ -1331,6 +1689,30 @@ async function init() {
         setStatusText(`🎯 <span class="text-emerald-400 font-bold">B-Roll 100mm encuadrado:</span> ${hp.name} (${spot.name}).`);
       }, 80);
     },
+    flyToWardrobeRack: (vaultObjId) => {
+      const vObj = state.objects.find((o) => o.id === vaultObjId);
+      if (!vObj) return;
+      if (!state.advisors3DVisible) {
+        state.advisors3DVisible = true;
+        document.body.classList.add('advisors-with-3d');
+        refreshViewportLayout();
+      }
+      cinema?.exit?.();
+      if (vObj.floor != null && state.activeFloor !== vObj.floor) {
+        selectFloor(vObj.floor);
+      }
+      if (vObj.spotId) {
+        const sp = findSpotById(vObj.spotId);
+        if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+      }
+      if (vObj.camPos && vObj.camTarget) {
+        setTimeout(() => {
+          camCtrl?.flyTo(vObj.camPos, vObj.camTarget);
+          setStatusText(`👗 <span class="text-pink-300 font-bold">Continuidad Perchero → Cuerpo:</span> encuadrando ${vObj.handle} en Piso ${vObj.floor}.`);
+        }, 90);
+      }
+    },
+    importWebGarmentToRackAndVault,
     captureHeroPropToVault: async (hp, spot) => {
       if (!state.advisors3DVisible) {
         state.advisors3DVisible = true;
@@ -1343,7 +1725,7 @@ async function init() {
       camCtrl?.controls.update();
       camCtrl?.render();
 
-      const imgUrl = await captureViewportAsObjectRender('1:1');
+      const res = await captureViewportAsObjectRender('1:1');
       const num = state.objects.length + 1;
       const slug = hp.modelId.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       const newObj = {
@@ -1351,10 +1733,21 @@ async function init() {
         order: num,
         name: hp.name,
         handle: `@${slug}_${spot.id}`,
-        category: 'Audio & Set',
+        category: 'Arte & Mobiliario',
         floor: spot.floor,
         spotId: spot.id,
-        image: imgUrl,
+        modelId: hp.modelId,
+        worldPos: hp.camTarget,
+        camPos: hp.camPos,
+        camTarget: hp.camTarget,
+        image: res.beautyUrl,
+        previzRender: res.beautyUrl,
+        previzDepthRender: res.depthUrl,
+        masterApprovedStill: null,
+        masterSeed: null,
+        reduxWeight: 0.75,
+        cnDepthStrength: 0.68,
+        cnDepthEnd: 0.58,
         isPlaceholderImage: false,
         promptToken: hp.promptToken,
         motionPrompt: hp.motionPrompt,
@@ -1387,6 +1780,20 @@ async function init() {
     }
   });
 
+  // Restaurar looks y props 3D personalizados importados previamente desde la web
+  for (const customLook of loadCustomWardrobeLooks()) {
+    if (!ALINA_WARDROBE_CATALOG.some((w) => w.id === customLook.id)) {
+      ALINA_WARDROBE_CATALOG.unshift(customLook);
+    }
+  }
+  for (const propDef of loadCustom3DProps()) {
+    if (propDef.kind === 'garment') {
+      arch?.hangCustomGarmentOnRack?.(propDef);
+    } else if (propDef.kind === 'object') {
+      arch?.spawnCustomObjectInFloor?.(propDef);
+    }
+  }
+
   // Cargar datos persistidos en IndexedDB (Objetos, Capítulos y Capturas)
   const [savedObjects, savedChapters, savedShots] = await Promise.all([
     loadObjectsFromDB(),
@@ -1414,10 +1821,54 @@ async function init() {
     state.threeLoadMs = Math.round(performance.now() - startTime);
     updatePerfBadge();
     updateViewportHud();
+    console.log('[AlinaStudioOS] 3D Engine & Double-Registry Vault Ready');
   } catch (err) {
     console.error('[AlinaLoader] Error:', err);
     document.getElementById('viewport-status-hud').textContent = `Error cargando alina.glb: ${err.message}`;
   }
+
+  // Exponer puente programático para renderizado de Bóveda en lote (Chrome WebGL2 CDP) y Frustum Auto-Tagging
+  window.__ALINA_STUDIO__ = {
+    state,
+    selectFloor,
+    selectSpot,
+    findSpotById,
+    setLightingMode,
+    switchMainView,
+    importWebGarmentToRackAndVault,
+    importWebObjectTo3DAndVault,
+    detectObjectsInCameraFrustum: () =>
+      detectObjectsInCameraFrustum({
+        cameraTelemetry: getCurrentCameraSnapshot(),
+        floor: state.activeFloor,
+        spotId: state.activeSpot?.id,
+        objects: state.objects
+      }),
+    renderVaultObject1080: (objId) => {
+      const obj = state.objects.find((o) => o.id === objId);
+      if (!obj || !obj.camPos || !obj.camTarget) return null;
+      if (obj.floor != null && state.activeFloor !== obj.floor) {
+        selectFloor(obj.floor);
+      }
+      if (obj.spotId) {
+        const sp = findSpotById(obj.spotId);
+        if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
+      }
+      // Esconder temporalmente a Alina durante el render de B-Roll Zero-Face para la Bóveda
+      const prevAlinaVis = alina?.root ? alina.root.visible : true;
+      if (alina?.root) alina.root.visible = false;
+      camCtrl.isTransitioning = false;
+      camCtrl.camera.position.set(obj.camPos.x, obj.camPos.y, obj.camPos.z);
+      camCtrl.controls.target.set(obj.camTarget.x, obj.camTarget.y, obj.camTarget.z);
+      camCtrl.controls.update();
+      camCtrl.render();
+      const beauty = camCtrl.renderVertical916DataURL(1080, 1080, 'beauty');
+      const depth = camCtrl.renderVertical916DataURL(1080, 1080, 'depth');
+      if (alina?.root) alina.root.visible = prevAlinaVis;
+      camCtrl.render();
+      return { id: obj.id, handle: obj.handle, beauty, depth };
+    }
+  };
 
   function loop() {
     requestAnimationFrame(loop);

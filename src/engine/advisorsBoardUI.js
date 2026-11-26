@@ -14,6 +14,11 @@ import {
   getWardrobeById
 } from '../data/advisorsBoardData.js';
 import { SANCTUARY_FLOORS } from '../data/sanctuaryData.js';
+import {
+  extractPaletteAndTokensFromDataUrl,
+  fetchWebImageAsDataUrl,
+  readAndResizeImageFile
+} from './shotsStorage.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -32,6 +37,9 @@ const DIRECTOR_LABELS = {
 export function mountAdvisorsBoardUI(root, ctx) {
   let activeSubTab = 'spot_audit'; // 'spot_audit' | 'wardrobe' | 'council_hods'
   let selectedAdvisorId = ADVISORS_COUNCIL[0].id;
+  let showWardrobeImporter = false;
+  let pendingImportDataUrl = null;
+  let pendingImportAnalysis = null;
 
   function listAllSpots() {
     const out = [];
@@ -343,9 +351,79 @@ export function mountAdvisorsBoardUI(root, ctx) {
     body.innerHTML = `
       <div class="space-y-3">
         <div class="p-3 rounded-xl bg-pink-500/[0.07] border border-pink-500/20 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div>
+          <div class="flex-1 min-w-[260px]">
             <strong class="text-pink-300">👗 Directriz de Margaux De Vries (Costume Designer):</strong>
             <span class="text-slate-300 ml-1">El look seleccionado se inyecta automáticamente en tus nuevas capturas hacia <strong>Flux (Wardrobe #007AFF)</strong> y en la física de tela de <strong>Higgsfield</strong> sin tocar el rostro de Alina.</span>
+          </div>
+          <button id="btn-adv-toggle-web-garment" type="button" class="px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold shadow transition-all shrink-0">
+            ${showWardrobeImporter ? '✕ Cerrar Importador' : '🌐 Importar Prenda desde Foto / URL Web → Perchero 3D'}
+          </button>
+        </div>
+
+        <!-- PANEL IMPORTADOR DIRECTO DE ROPA DESDE FOTO / URL DE INTERNET (2D WEB -> PERCHERO 3D + BÓVEDA) -->
+        <div id="adv-wardrobe-importer" class="${showWardrobeImporter ? 'block' : 'hidden'} p-4 rounded-2xl bg-black/65 border border-pink-500/40 space-y-3 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
+            <div>
+              <span class="text-[10px] font-mono uppercase tracking-wider text-pink-300 font-bold">Pipeline 2D Web → Perchero Couture 3D + Bóveda (@look_*)</span>
+              <h4 class="text-xs font-bold text-white mt-0.5">Extrae paleta Hexadecimal, armoniza a la Tríada Cromática + Latón (#d4af37) y cuelga la prenda en el Perchero 3D</h4>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+            <div class="md:col-span-4 space-y-2">
+              <label class="block text-[10px] font-mono text-slate-300">1. Subir Foto de Ropa o Pegar URL de Internet</label>
+              <div class="flex gap-1.5">
+                <label class="cursor-pointer px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold border border-white/15 shrink-0">
+                  📂 Subir Foto
+                  <input id="imp-ward-file" type="file" accept="image/*" class="hidden">
+                </label>
+                <input id="imp-ward-url" type="url" placeholder="https://.../prenda.jpg"
+                  class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pink-400">
+                <button id="btn-imp-ward-fetch" type="button" class="px-2.5 py-1.5 rounded-xl bg-pink-600/80 hover:bg-pink-500 text-white font-bold shrink-0">Extraer</button>
+              </div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <input id="imp-ward-name" type="text" placeholder="Nombre del Look (ej. Corsé Terciopelo)"
+                  class="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-white">
+                <select id="imp-ward-subtype" class="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200">
+                  <option value="dress">Vestido / Gown</option>
+                  <option value="corset">Corsé Sastre / Bodice</option>
+                  <option value="blazer">Blazer / Sastre</option>
+                  <option value="lingerie">Lencero Seda / Slip</option>
+                  <option value="resort">Resort Lino / Pareo</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-1.5">
+                <select id="imp-ward-floor" class="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200">
+                  <option value="2">Piso 2 · Perchero Atelier Vanity</option>
+                  <option value="3">Piso 3 · Perchero Boudoir SSC</option>
+                  <option value="4">Piso 4 · Perchero Cabana Pool</option>
+                  <option value="1">Piso 1 · Perchero Bistró Café</option>
+                  <option value="0">Planta Baja · Perchero Cabaret VIP</option>
+                </select>
+                <input id="imp-ward-cat" type="text" value="Couture Importado"
+                  class="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200">
+              </div>
+            </div>
+
+            <div class="md:col-span-8 p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[10px] font-mono text-emerald-300 font-bold">2. Dictamen Automático de Paleta & Tokens Anti-Moiré</span>
+                <div id="imp-ward-swatches" class="flex items-center gap-1.5">
+                  ${(pendingImportAnalysis?.triadSwatches || ['#1f232b', '#0B2B20', '#d4af37'])
+                    .map((hex) => `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/25 text-white" style="background:${hex}">${hex}</span>`)
+                    .join('')}
+                </div>
+              </div>
+              <textarea id="imp-ward-flux" rows="2" placeholder="Flux Wardrobe Tokens (#007AFF)..."
+                class="w-full bg-black/60 border border-white/10 rounded-lg p-2 text-[11px] font-mono text-pink-200">${esc(pendingImportAnalysis?.fluxTokens || '')}</textarea>
+              <textarea id="imp-ward-physics" rows="2" placeholder="Higgsfield Fabric Physics..."
+                class="w-full bg-black/60 border border-white/10 rounded-lg p-2 text-[11px] font-mono text-cyan-200">${esc(pendingImportAnalysis?.higgsfieldPhysics || '')}</textarea>
+              <div class="flex items-center justify-end gap-2 pt-1">
+                <button id="btn-imp-ward-commit" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-[#c86446] hover:opacity-95 text-white font-bold shadow">
+                  👗 Colgar en Perchero 3D + Registrar en Armario & Bóveda (Render 1:1)
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -370,6 +448,7 @@ export function mountAdvisorsBoardUI(root, ctx) {
                     </div>
                   </div>
                   <h4 class="text-xs font-bold text-white">${esc(w.name)}</h4>
+                  ${w.handle ? `<div class="text-[10px] font-mono text-[#f29979]">${esc(w.handle)} • 📍 Piso ${w.rackLocation?.floor ?? 2} (${esc(w.rackLocation?.rackType || 'Perchero Couture')})</div>` : ''}
                   <p class="text-[11px] text-slate-400 leading-relaxed">${esc(w.stylistNote)}</p>
                   <div class="p-2 rounded-lg bg-black/55 border border-white/5 space-y-1 text-[10px] font-mono">
                     <div class="text-pink-300 truncate" title="${esc(w.fluxTokens)}"><strong>Flux:</strong> ${esc(w.fluxTokens)}</div>
@@ -379,13 +458,16 @@ export function mountAdvisorsBoardUI(root, ctx) {
 
                 <div class="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
                   <span class="text-[10px] font-mono text-slate-400">${esc(w.funnel)}</span>
-                  <button type="button" data-wid="${esc(w.id)}" class="btn-equip-wardrobe px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    isEquipped
-                      ? 'bg-emerald-600 text-white shadow'
-                      : 'bg-white/10 hover:bg-[#c86446] text-slate-200 hover:text-white'
-                  }">
-                    ${isEquipped ? '✓ Activo' : 'Equipar Look'}
-                  </button>
+                  <div class="flex items-center gap-1.5">
+                    ${w.vaultObjectId ? `<button type="button" data-wvault="${esc(w.vaultObjectId)}" class="btn-fly-wardrobe-rack px-2 py-1.5 rounded-xl text-[10px] font-mono bg-white/5 hover:bg-white/15 text-emerald-300 border border-emerald-500/30" title="Ver prenda colgada físicamente en su perchero 3D">🎯 Perchero 3D</button>` : ''}
+                    <button type="button" data-wid="${esc(w.id)}" class="btn-equip-wardrobe px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      isEquipped
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'bg-white/10 hover:bg-[#c86446] text-slate-200 hover:text-white'
+                    }">
+                      ${isEquipped ? '✓ Activo' : 'Equipar Look'}
+                    </button>
+                  </div>
                 </div>
               </div>`;
           }).join('')}
@@ -398,6 +480,85 @@ export function mountAdvisorsBoardUI(root, ctx) {
         ctx.setActiveWardrobeId(b.dataset.wid);
         render();
       };
+    });
+    body.querySelectorAll('.btn-fly-wardrobe-rack').forEach((b) => {
+      b.onclick = () => {
+        ctx.flyToWardrobeRack?.(b.dataset.wvault);
+        sync3DButtonUI();
+      };
+    });
+
+    $('btn-adv-toggle-web-garment')?.addEventListener('click', () => {
+      showWardrobeImporter = !showWardrobeImporter;
+      renderWardrobeSubView();
+    });
+
+    async function runWardrobeImageAnalysis(dataUrl, suggestedTitle) {
+      pendingImportDataUrl = dataUrl;
+      const nameInput = $('imp-ward-name');
+      if (nameInput && !nameInput.value.trim() && suggestedTitle) {
+        nameInput.value = suggestedTitle.replace(/\.[a-z0-9]+$/i, '');
+      }
+      const title = nameInput?.value?.trim() || suggestedTitle || 'Prenda Couture';
+      const subtype = $('imp-ward-subtype')?.value || 'dress';
+      const floor = Number($('imp-ward-floor')?.value ?? 2);
+      const kelvin = floor === 3 ? '2200K' : floor === 4 ? '4300K' : floor === 1 ? '4600K' : '3400K';
+      pendingImportAnalysis = await extractPaletteAndTokensFromDataUrl(dataUrl, {
+        mode: 'wardrobe',
+        title,
+        subtype,
+        floor,
+        kelvin
+      });
+      if ($('imp-ward-flux')) $('imp-ward-flux').value = pendingImportAnalysis.fluxTokens;
+      if ($('imp-ward-physics')) $('imp-ward-physics').value = pendingImportAnalysis.higgsfieldPhysics;
+      if ($('imp-ward-swatches')) {
+        $('imp-ward-swatches').innerHTML = pendingImportAnalysis.triadSwatches
+          .map((hex) => `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono border border-white/25 text-white" style="background:${hex}">${hex}</span>`)
+          .join('');
+      }
+    }
+
+    $('imp-ward-file')?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const dataUrl = await readAndResizeImageFile(file);
+      await runWardrobeImageAnalysis(dataUrl, file.name);
+    });
+
+    $('btn-imp-ward-fetch')?.addEventListener('click', async () => {
+      const url = $('imp-ward-url')?.value?.trim();
+      const dataUrl = await fetchWebImageAsDataUrl(url);
+      await runWardrobeImageAnalysis(dataUrl, $('imp-ward-name')?.value || 'Look Web Couture');
+    });
+
+    $('btn-imp-ward-commit')?.addEventListener('click', async () => {
+      const title = $('imp-ward-name')?.value?.trim() || 'Look Couture Importado';
+      const subtype = $('imp-ward-subtype')?.value || 'dress';
+      const floor = Number($('imp-ward-floor')?.value ?? 2);
+      const category = $('imp-ward-cat')?.value?.trim() || 'Couture Importado';
+      if (!pendingImportAnalysis) {
+        await runWardrobeImageAnalysis(pendingImportDataUrl, title);
+      }
+      const fluxTokens = $('imp-ward-flux')?.value?.trim() || pendingImportAnalysis.fluxTokens;
+      const higgsfieldPhysics = $('imp-ward-physics')?.value?.trim() || pendingImportAnalysis.higgsfieldPhysics;
+      const swatches = pendingImportAnalysis?.triadSwatches || ['#1f232b', '#0B2B20', '#d4af37'];
+
+      await ctx.importWebGarmentToRackAndVault?.({
+        title,
+        subtype,
+        floor,
+        category,
+        swatches,
+        fluxTokens,
+        higgsfieldPhysics,
+        referenceDataUrl: pendingImportDataUrl
+      });
+      showWardrobeImporter = false;
+      pendingImportDataUrl = null;
+      pendingImportAnalysis = null;
+      render();
+      sync3DButtonUI();
     });
   }
 

@@ -47,6 +47,9 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
         <button data-csub="chapters" class="csub-btn px-3 py-1.5 rounded-lg bg-[#c86446] text-white font-semibold transition-all">
           📖 Capítulos & Historia
         </button>
+        <button data-csub="blueprint" class="csub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
+          ⬡ Grafo Blueprint (2D)
+        </button>
         <button data-csub="director" class="csub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
           🎬 Director de Fotografía & Animatic
         </button>
@@ -70,6 +73,7 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
     });
     ctx.onSubTabChanged(subTab);
     if (subTab === 'chapters') renderChaptersView();
+    if (subTab === 'blueprint') ctx.onOpenBlueprint?.(selectedChapterId);
     if (subTab === 'bible') renderBibleView();
   }
 
@@ -192,6 +196,9 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
                   </select>
                 </div>
               </div>
+              <button id="btn-chap-open-blueprint" class="px-3 py-2 rounded-xl bg-purple-600/85 hover:bg-purple-500 text-white font-bold shadow whitespace-nowrap">
+                ⬡ Grafo Blueprint 2D
+              </button>
               <button id="btn-chap-goto-set" class="px-3 py-2 rounded-xl bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white font-bold shadow copper-glow whitespace-nowrap">
                 🎥 Rodar en Estudio Prompts ↗
               </button>
@@ -402,6 +409,11 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
         saveChapterToDB(ch);
         renderChaptersView();
       };
+    });
+
+    chaptersPaneRoot.querySelector('#btn-chap-open-blueprint')?.addEventListener('click', () => {
+      selectedChapterId = ch.id;
+      setSubTab('blueprint');
     });
 
     chaptersPaneRoot.querySelector('#btn-chap-goto-set').onclick = () => {

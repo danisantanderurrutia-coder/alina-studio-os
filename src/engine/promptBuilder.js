@@ -41,6 +41,110 @@ function dist3(a, b) {
 }
 
 /**
+ * MEJORA DE FLUJO 1 — AUTO-DETECCIÓN DE OBJETOS EN ENCUADRE (FRUSTUM AUTO-TAGGING):
+ * Detecta matemáticamente qué objetos canónicos de la Bóveda (`@handle` con `worldPos`)
+ * caen dentro del cono visual (frustum 9:16) de la cámara activa en el piso actual,
+ * ordenados por relevancia angular y proximidad a la línea de mirada.
+ */
+export function detectObjectsInCameraFrustum({
+  cameraTelemetry,
+  floor,
+  spotId = null,
+  objects = [],
+  aspect = 9 / 16,
+  maxDistanceM = 14.5,
+  maxAutoObjects = 4
+}) {
+  if (!cameraTelemetry?.position || !cameraTelemetry?.target || !Array.isArray(objects)) {
+    return [];
+  }
+
+  const camPos = cameraTelemetry.position;
+  const target = cameraTelemetry.target;
+  const fwdX = target.x - camPos.x;
+  const fwdY = target.y - camPos.y;
+  const fwdZ = target.z - camPos.z;
+  const fwdLen = Math.hypot(fwdX, fwdY, fwdZ) || 1;
+  const fx = fwdX / fwdLen;
+  const fy = fwdY / fwdLen;
+  const fz = fwdZ / fwdLen;
+
+  // Vector derecha (cross(fwd, worldUp(0,1,0)))
+  let rx = -fz;
+  let ry = 0;
+  let rz = fx;
+  const rLen = Math.hypot(rx, ry, rz) || 1;
+  rx /= rLen;
+  rz /= rLen;
+
+  // Vector arriba de cámara (cross(right, fwd))
+  const ux = ry * fz - rz * fy;
+  const uy = rz * fx - rx * fz;
+  const uz = rx * fy - ry * fx;
+
+  const vFovRad = ((cameraTelemetry.fov_deg || 42) * Math.PI) / 180;
+  const tanHalfV = Math.tan(vFovRad * 0.5) * 1.18; // +18% margen para volumen de malla
+  const tanHalfH = tanHalfV * aspect * 1.25;
+
+  const matches = [];
+
+  for (const obj of objects) {
+    if (!obj || obj.floor !== floor) continue;
+    // No auto-inyectar múltiples fichas @look_* salvo que sea un B-Roll directo al perchero
+    const isWardrobeCard = Boolean(obj.wardrobeId) || String(obj.handle || '').startsWith('@look_');
+    const pt = obj.worldPos || obj.camTarget;
+    if (!pt) continue;
+
+    const dx = pt.x - camPos.x;
+    const dy = pt.y - camPos.y;
+    const dz = pt.z - camPos.z;
+    const zCam = dx * fx + dy * fy + dz * fz;
+    if (zCam < 0.35 || zCam > maxDistanceM) continue;
+
+    const xCam = dx * rx + dy * ry + dz * rz;
+    const yCam = dx * ux + dy * uy + dz * uz;
+
+    const normX = Math.abs(xCam) / (zCam * tanHalfH);
+    const normY = Math.abs(yCam) / (zCam * tanHalfV);
+
+    if (normX <= 1.0 && normY <= 1.0) {
+      // Si es ficha de look colgado, solo incluir si está muy cerca del eje central o si no hay otro prop del mismo perchero
+      if (isWardrobeCard && normX > 0.55) continue;
+      const offAxisScore = Math.hypot(normX, normY) + (spotId && obj.spotId === spotId ? -0.25 : 0.15);
+      matches.push({ obj, score: offAxisScore, distM: Number(zCam.toFixed(2)) });
+    }
+  }
+
+  matches.sort((a, b) => a.score - b.score);
+  return matches.slice(0, maxAutoObjects).map((m) => m.obj);
+}
+
+/**
+ * Filtra y adapta cualquier descripción de objeto o prenda extraída de internet
+ * a la Tríada Cromática Maestra de Alina y herrajes en latón cepillado (Bloqueo de ADN Material).
+ */
+export function buildCanonicalObjectTokenLock({
+  speciesOrModel,
+  primaryMaterial,
+  containerOrHardware = 'warm brushed-brass hardware (#d4af37) on dark walnut and matte charcoal basalt base',
+  kelvinResponse = 'catching warm 3200K key light and subtle rim highlights'
+}) {
+  const sanitizeChrome = (str) =>
+    String(str || '')
+      .replace(/\b(chrome|stainless steel|silver metal|cold steel)\b/gi, 'warm brushed-brass (#d4af37)')
+      .replace(/\b(a potted plant|potted plant)\b/gi, 'tall braided Pachira aquatica indoor tree with glossy palmate dark-emerald leaves (#0B2B20)')
+      .replace(/\b(a statue|statue)\b/gi, 'neoclassical sculpted statue on matte charcoal basalt plinth with brushed-brass collar')
+      .replace(/\b(a clothes rack|clothes rack|garment rack)\b/gi, 'bespoke brushed-brass and dark-walnut couture garment rack (#d4af37)');
+
+  const sModel = sanitizeChrome(speciesOrModel || 'bespoke architectural hero prop');
+  const sMat = sanitizeChrome(primaryMaterial || 'crafted in obsidian-black (#111216), forest-emerald (#0B2B20) and raw ivory (#ebe4d5) finishes');
+  const sBase = sanitizeChrome(containerOrHardware);
+  const sLight = sanitizeChrome(kelvinResponse);
+
+  return `${sModel} with ${sMat}, mounted with ${sBase}, ${sLight}`.replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Calcula tipo de plano, ángulo vertical y focal equivalente desde telemetría 3D o preset de Unity.
  */
 export function describeCaptureFraming({ camera, spot, camPreset = '85mm', cinemaShot = null }) {
@@ -208,14 +312,23 @@ export function buildFluxPromptFromCapture({
 
   const wardrobeClause = wardrobe?.fluxTokens ? `, ${wardrobe.fluxTokens}` : '';
 
+  const masterLockedObjects = Array.isArray(attachedObjects)
+    ? attachedObjects.filter((o) => Boolean(o?.masterApprovedStill))
+    : [];
+
   const objectsClause =
     Array.isArray(attachedObjects) && attachedObjects.length > 0
-      ? ` Featured Higgsfield reference objects (${attachedObjects.map((o) => o.handle).join(', ')}): ${attachedObjects
-          .map((o) => o.promptToken)
+      ? ` Canonical Frustum & Vault Objects (${attachedObjects.map((o) => o.handle).join(', ')}): ${attachedObjects
+          .map((o) => `[${o.handle}${o.masterApprovedStill ? ` • MASTER STILL LOCKED seed:${o.masterSeed || 'fixed'} Redux:${o.reduxWeight || 0.75}` : ''}]: ${o.promptToken}`)
           .join('; ')}.`
       : '';
 
-  return `${depthNote}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa 35 ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}${wardrobeClause}, ${pose}, located at ${spot.name} (${floorName}).${objectsClause} ${measuredLight}, ${baseLight}. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
+  const reduxLockPrefix =
+    masterLockedObjects.length > 0
+      ? `[Master Still Lock Active: ${masterLockedObjects.map((o) => `${o.handle}@Redux(${o.reduxWeight || 0.75})+CNDepth(0.68@0.58)`).join(', ')}] `
+      : '';
+
+  return `${depthNote}${reduxLockPrefix}Cinematic ${framing.shot}, ${framing.angle}, shot on ARRI Alexa 35 ${framing.mm}mm prime lens, shallow depth of field, vertical 9:16 composition. ${TOKEN_LOCK}${wardrobeClause}, ${pose}, located at ${spot.name} (${floorName}).${objectsClause} ${measuredLight}, ${baseLight}. Scene reference: ${cleanSpotContext}`.replace(/\s+/g, ' ').trim();
 }
 
 /**

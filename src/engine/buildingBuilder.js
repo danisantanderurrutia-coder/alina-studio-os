@@ -27,6 +27,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   const floorGroups = [];
   const waterMeshes = [];
   const frontGlassPanels = [];
+  const coutureRacksByFloor = { 0: [], 1: [], 2: [], 3: [], 4: [] };
   // Keep all PointLights in an always-visible root group so toggling floorGroups[i].visible
   // never changes Three.js #define NUM_POINT_LIGHTS (0 shader recompilations on floor switch!)
   const lightsGroup = new THREE.Group();
@@ -342,6 +343,47 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     for (const px of [-10.5, -5.0, 0.2, 4.4, 9.6]) {
       box(group, 0.28, FLOOR_HEIGHT, 0.12, px, FLOOR_HEIGHT / 2, BUILDING_CENTER_Z - BUILDING_DEPTH / 2 + 0.18, matMoulding, false, true);
     }
+
+    // =========================================================================
+    // TECHO ARTESONADO SEÑORIAL (Coffered Architectural Ceiling + Recessed Cove LED)
+    // Cierra completamente el techo de cada planta (0% fuga de cielo con Sliced: ON)
+    // y baja el entablamento/casetones a Y = 3.52m..4.84m para coronar los encuadres 85mm.
+    // =========================================================================
+    const isDarkLoft = floorIndex === 0 || floorIndex === 3;
+    const ceilingMainMat = isDarkLoft ? matWoodDark : matDivider;
+    const beamMat = isDarkLoft ? matWoodDark : matMoulding;
+
+    // 1. Solid main ceiling slab at Y = 4.82m (prevents any sky leak above walls)
+    box(group, BUILDING_WIDTH, 0.18, BUILDING_DEPTH, 0, FLOOR_HEIGHT - 0.09, BUILDING_CENTER_Z, ceilingMainMat, false, true);
+
+    // 2. Stepped perimeter entablature soffit + warm recessed LED cove lighting at Y = 3.55m..4.35m
+    const northZ = BUILDING_CENTER_Z - BUILDING_DEPTH / 2;
+    // Upper soffit drop along North, West & East walls
+    box(group, BUILDING_WIDTH - 0.3, 0.56, 0.92, 0, FLOOR_HEIGHT - 0.42, northZ + 0.48, beamMat, false, true);
+    box(group, 0.92, 0.56, BUILDING_DEPTH - 0.3, -BUILDING_WIDTH / 2 + 0.48, FLOOR_HEIGHT - 0.42, BUILDING_CENTER_Z, beamMat, false, true);
+    box(group, 0.92, 0.56, BUILDING_DEPTH - 0.3, BUILDING_WIDTH / 2 - 0.48, FLOOR_HEIGHT - 0.42, BUILDING_CENTER_Z, beamMat, false, true);
+    // Lower frieze beam at Y = 3.56m + brushed brass lip + continuous warm glowing cove strip
+    box(group, BUILDING_WIDTH - 0.4, 0.22, 0.52, 0, 3.64, northZ + 0.28, matWoodDark, false, true);
+    box(group, BUILDING_WIDTH - 0.4, 0.04, 0.05, 0, 3.54, northZ + 0.54, matBrass, false, false);
+    box(group, BUILDING_WIDTH - 0.8, 0.045, 0.06, 0, 3.76, northZ + 0.55, matWarmBulb, false, false);
+
+    box(group, 0.52, 0.22, BUILDING_DEPTH - 0.4, -BUILDING_WIDTH / 2 + 0.28, 3.64, BUILDING_CENTER_Z, matWoodDark, false, true);
+    box(group, 0.05, 0.04, BUILDING_DEPTH - 0.4, -BUILDING_WIDTH / 2 + 0.54, 3.54, BUILDING_CENTER_Z, matBrass, false, false);
+    box(group, 0.06, 0.045, BUILDING_DEPTH - 0.8, -BUILDING_WIDTH / 2 + 0.55, 3.76, BUILDING_CENTER_Z, matWarmBulb, false, false);
+
+    box(group, 0.52, 0.22, BUILDING_DEPTH - 0.4, BUILDING_WIDTH / 2 - 0.28, 3.64, BUILDING_CENTER_Z, matWoodDark, false, true);
+    box(group, 0.05, 0.04, BUILDING_DEPTH - 0.4, BUILDING_WIDTH / 2 - 0.54, 3.54, BUILDING_CENTER_Z, matBrass, false, false);
+    box(group, 0.06, 0.045, BUILDING_DEPTH - 0.8, BUILDING_WIDTH / 2 - 0.55, 3.76, BUILDING_CENTER_Z, matWarmBulb, false, false);
+
+    // 3. Intersecting Coffered Ceiling Beams (Casetones Artesonados) + Brass Inlays at Y = 3.74m..4.74m
+    for (const bx of [-10.5, -5.0, 0.2, 4.4, 9.6]) {
+      box(group, 0.34, 0.96, BUILDING_DEPTH - 0.6, bx, FLOOR_HEIGHT - 0.56, BUILDING_CENTER_Z, beamMat, false, true);
+      box(group, 0.06, 0.035, BUILDING_DEPTH - 0.8, bx, FLOOR_HEIGHT - 1.05, BUILDING_CENTER_Z, matBrass, false, false);
+    }
+    for (const bz of [-12.2, -8.8, -5.2, -1.6]) {
+      box(group, BUILDING_WIDTH - 0.6, 0.88, 0.32, 0, FLOOR_HEIGHT - 0.52, bz, beamMat, false, true);
+      box(group, BUILDING_WIDTH - 0.8, 0.035, 0.06, 0, FLOOR_HEIGHT - 0.97, bz, matBrass, false, false);
+    }
   }
 
   function addContactShadow(parent, x, z, radiusX = 0.75, radiusZ = 0.75, y = 0.015) {
@@ -356,15 +398,31 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   function placeGLTFModel(parent, modelId, targetHeight, x, y, z, rotYRad = 0, { addShadow = true, customArtMat = null, hangFromCeiling = false } = {}) {
     loadCachedGLTF(modelId).then((gltf) => {
       const obj = gltf.scene.clone(true);
+      // PolyHaven botanical packs (pachira_aquatica_01, calathea_orbifolia_01, anthurium_botany_01)
+      // bundle multiple specimen variants side-by-side at X=-2..+4m. Keep only the primary specimen
+      // so the plant sits centered inside its cachepot with 0 floating clusters.
+      if (modelId === 'pachira_aquatica_01') {
+        for (const ch of [...obj.children]) {
+          if (!ch.name.endsWith('_d') && !ch.name.endsWith('_c')) obj.remove(ch);
+          else ch.position.set(0, 0, 0);
+        }
+      } else if (modelId === 'calathea_orbifolia_01' || modelId === 'anthurium_botany_01') {
+        for (const ch of [...obj.children]) {
+          if (!ch.name.endsWith('_a') && !ch.name.endsWith('_b')) obj.remove(ch);
+          else ch.position.set(0, 0, 0);
+        }
+      }
+      const wrap = new THREE.Group();
+      wrap.add(obj);
       obj.rotation.set(0, rotYRad, 0);
-      obj.updateMatrixWorld(true);
+      wrap.updateMatrixWorld(true);
 
       const b0 = new THREE.Box3().setFromObject(obj);
       const size0 = new THREE.Vector3();
       b0.getSize(size0);
       const scale = targetHeight / Math.max(0.05, size0.y);
       obj.scale.multiplyScalar(scale);
-      obj.updateMatrixWorld(true);
+      wrap.updateMatrixWorld(true);
 
       const b1 = new THREE.Box3().setFromObject(obj);
       const center1 = new THREE.Vector3();
@@ -713,6 +771,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
       rack.add(gItem);
     });
 
+    rack.userData.customHangerCount = 0;
+    const fIdx = floorGroups.findIndex((fg) => fg === parent);
+    if (fIdx >= 0 && coutureRacksByFloor[fIdx]) {
+      coutureRacksByFloor[fIdx].push(rack);
+    }
+
     parent.add(rack);
     return rack;
   }
@@ -787,6 +851,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     g.add(hatGroup);
 
     parent.add(g);
+    g.userData.isCoatStand = true;
+    const fIdx = floorGroups.findIndex((fg) => fg === parent);
+    if (fIdx >= 0 && coutureRacksByFloor[fIdx]) {
+      coutureRacksByFloor[fIdx].push(g);
+    }
     return g;
   }
 
@@ -832,6 +901,136 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     const fwd = new THREE.Vector3(0, -0.04, 0.14).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
     glow.position.set(x + fwd.x, y + 0.18 + fwd.y, z + fwd.z);
     parent.add(glow);
+  }
+
+  // Grand Chain-Suspended Chandelier / Pendant with Coffered Ceiling Rosette & 8 Glowing Candle Bulbs
+  // Suspends chandeliers down to lowestY = 2.38m..2.72m so they enter 85mm camera framing while clearing Alina (1.72m)
+  function addGrandChandelier(parent, x, z, { lowestY = 2.48, bodyHeight = 1.15, modelId = 'Chandelier_01', ceilingY = FLOOR_HEIGHT - 0.12, addHaloCandles = true } = {}) {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    // 1. Sculpted ceiling rosette / medallion at ceilingY + coffer medallion at Y = 3.82m
+    cyl(g, 0.38, 0.42, 0.05, 24, 0, ceilingY - 0.02, 0, matMoulding, false);
+    const outerRing = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.022, 10, 28), matBrass);
+    outerRing.rotation.x = Math.PI / 2;
+    outerRing.position.set(0, ceilingY - 0.045, 0);
+    g.add(outerRing);
+    cyl(g, 0.16, 0.22, 0.06, 18, 0, ceilingY - 0.06, 0, matBrass, false);
+
+    // 2. Sculpted brushed-brass suspension downrod & chain spheres from ceilingY down to top of chandelier
+    const topOfFixtureY = lowestY + bodyHeight;
+    const rodLen = Math.max(0.15, ceilingY - (lowestY + bodyHeight * 0.65));
+    cyl(g, 0.018, 0.018, rodLen, 10, 0, ceilingY - rodLen * 0.5, 0, matBrass, false);
+    for (let sy = ceilingY - 0.32; sy > topOfFixtureY - 0.15; sy -= 0.34) {
+      const node = new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 10), matBrass);
+      node.position.set(0, sy, 0);
+      g.add(node);
+    }
+
+    // 3. Sculpted GLTF Chandelier / Pendant body placed so its top hangs from topOfFixtureY
+    placeGLTFModel(parent, modelId, bodyHeight, x, topOfFixtureY, z, 0, {
+      addShadow: false,
+      hangFromCeiling: true
+    });
+
+    // 4. Ornate Brushed-Brass Candelabra Halo Ring + 8 Warm Emissive Candle Flames & Crystal Drops
+    if (addHaloCandles) {
+      const haloY = lowestY + bodyHeight * 0.34;
+      const haloR = modelId === 'Chandelier_01' ? 0.48 : 0.24;
+      const haloRing = new THREE.Mesh(new THREE.TorusGeometry(haloR, 0.014, 10, 28), matBrass);
+      haloRing.rotation.x = Math.PI / 2;
+      haloRing.position.set(0, haloY, 0);
+      g.add(haloRing);
+
+      const numBulbs = modelId === 'Chandelier_01' ? 8 : 4;
+      for (let i = 0; i < numBulbs; i++) {
+        const ang = (i / numBulbs) * Math.PI * 2;
+        const bx = Math.cos(ang) * haloR;
+        const bz = Math.sin(ang) * haloR;
+        // Brass bobèche cup + ivory wax candle sleeve + glowing teardrop bulb
+        cyl(g, 0.032, 0.02, 0.022, 10, bx, haloY + 0.012, bz, matBrass, false);
+        cyl(g, 0.014, 0.014, 0.085, 8, bx, haloY + 0.062, bz, matCreamLinen, false);
+        const flame = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 10), matWarmBulb);
+        flame.scale.set(0.85, 1.45, 0.85);
+        flame.position.set(bx, haloY + 0.125, bz);
+        g.add(flame);
+        // Hanging crystal/brass pendant drop below ring
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), matWarmBulb);
+        drop.scale.set(0.7, 1.6, 0.7);
+        drop.position.set(bx, haloY - 0.055, bz);
+        g.add(drop);
+      }
+      // Central warm core glow sphere
+      const coreGlow = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), matWarmBulb);
+      coreGlow.position.set(0, haloY - 0.04, 0);
+      g.add(coreGlow);
+    } else {
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), matWarmBulb);
+      bulb.position.set(0, lowestY + 0.14, 0);
+      g.add(bulb);
+    }
+
+    parent.add(g);
+    return g;
+  }
+
+  // Multi-Arm Floor or Table Brushed-Brass Candelabra with 5 Glowing Taper Candles
+  function addStandingCandelabra(parent, x, y, z, height = 1.46, arms = 5) {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+
+    const scale = height / 1.46;
+    // Weighted dark-marble & brushed-brass stepped pedestal base
+    cyl(g, 0.19 * scale, 0.22 * scale, 0.045 * scale, 20, 0, 0.022 * scale, 0, matDarkMarble, false);
+    cyl(g, 0.14 * scale, 0.18 * scale, 0.05 * scale, 18, 0, 0.068 * scale, 0, matBrass, false);
+    if (y < 0.05) {
+      addContactShadow(g, 0, 0, 0.30 * scale, 0.30 * scale, 0.008);
+    }
+
+    // Fluted brass central stem + ornamental turned nodes
+    const stemH = height - 0.26 * scale;
+    cyl(g, 0.018 * scale, 0.028 * scale, stemH, 12, 0, 0.09 * scale + stemH * 0.5, 0, matBrass, true);
+    for (const frac of [0.32, 0.64, 0.92]) {
+      const node = new THREE.Mesh(new THREE.SphereGeometry(0.036 * scale, 10, 10), matBrass);
+      node.position.set(0, 0.09 * scale + stemH * frac, 0);
+      g.add(node);
+    }
+
+    // Central crown candle
+    const topY = height - 0.16 * scale;
+    cyl(g, 0.036 * scale, 0.022 * scale, 0.025 * scale, 12, 0, topY, 0, matBrass, false);
+    cyl(g, 0.016 * scale, 0.016 * scale, 0.14 * scale, 10, 0, topY + 0.08 * scale, 0, matCreamLinen, false);
+    const centerFlame = new THREE.Mesh(new THREE.SphereGeometry(0.026 * scale, 10, 10), matWarmBulb);
+    centerFlame.scale.set(0.8, 1.5, 0.8);
+    centerFlame.position.set(0, topY + 0.175 * scale, 0);
+    g.add(centerFlame);
+
+    // Surrounding scrolled brass arms + taper candles + glowing flames
+    const outerCount = Math.max(2, arms - 1);
+    const armR = 0.22 * scale;
+    for (let i = 0; i < outerCount; i++) {
+      const ang = (i / outerCount) * Math.PI * 2 + 0.35;
+      const armGroup = new THREE.Group();
+      armGroup.position.set(0, topY - 0.10 * scale, 0);
+      armGroup.rotation.y = ang;
+
+      const scroll = new THREE.Mesh(new THREE.TorusGeometry(armR * 0.5, 0.009 * scale, 8, 16, Math.PI), matBrass);
+      scroll.rotation.x = Math.PI;
+      scroll.position.set(armR * 0.5, 0.02 * scale, 0);
+      armGroup.add(scroll);
+
+      cyl(armGroup, 0.034 * scale, 0.02 * scale, 0.024 * scale, 10, armR, 0.03 * scale, 0, matBrass, false);
+      cyl(armGroup, 0.015 * scale, 0.015 * scale, 0.13 * scale, 10, armR, 0.105 * scale, 0, matCreamLinen, false);
+      const flame = new THREE.Mesh(new THREE.SphereGeometry(0.024 * scale, 8, 8), matWarmBulb);
+      flame.scale.set(0.8, 1.5, 0.8);
+      flame.position.set(armR, 0.195 * scale, 0);
+      armGroup.add(flame);
+
+      g.add(armGroup);
+    }
+
+    parent.add(g);
+    return g;
   }
 
   function addChair(parent, x, y, z, rotY = 0, seatMat = matWoodDark) {
@@ -991,7 +1190,18 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(pb, 'wine_bottles_01', 0.36, -9.6, 1.14, -6.8, Math.PI / 2, { addShadow: false });
   placeGLTFModel(pb, 'brass_goblets', 0.22, -9.45, 1.14, -5.6, 0.4, { addShadow: false });
   placeGLTFModel(pb, 'ceramic_vase_01', 0.34, -9.65, 1.14, -8.2, 0, { addShadow: false });
-  placeGLTFModel(pb, 'Chandelier_01', 1.35, 0, FLOOR_HEIGHT - 0.05, -5.2, 0, { addShadow: false, hangFromCeiling: true });
+  // Grand Chain-Suspended Cabaret Chandeliers (Stage Proscenium, Central Dance Floor, VIP Lounge & West Bar Pendants)
+  addGrandChandelier(pb, 0, -5.2, { lowestY: 2.58, bodyHeight: 1.32, modelId: 'Chandelier_01' });
+  addGrandChandelier(pb, -1.8, -11.4, { lowestY: 2.48, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  addGrandChandelier(pb, 2.2, -11.4, { lowestY: 2.48, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  addGrandChandelier(pb, 8.0, -5.2, { lowestY: 2.52, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  for (const bz of [-3.6, -5.6, -7.6]) {
+    addGrandChandelier(pb, -9.6, bz, { lowestY: 2.28, bodyHeight: 0.95, modelId: 'modern_ceiling_lamp_01', addHaloCandles: false });
+  }
+  // Standing 5-Arm Brass Floor Candelabras flanking the Speakeasy Stage & Piano
+  addStandingCandelabra(pb, -3.5, 0.45, -11.8, 1.48, 5);
+  addStandingCandelabra(pb, 3.5, 0.45, -11.8, 1.48, 5);
+  addStandingCandelabra(pb, 6.4, 0, -8.8, 1.46, 5);
 
   // Grand Piano on Emerald Persian Rug + Brass Candelabra on Lid
   addRug(pb, 3.2, 3.6, -5.8, -11.0, matRugEmerald, 0.014, 0.45);
@@ -1121,8 +1331,16 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     placeGLTFModel(p1, 'dining_chair_02', 0.90, tx + 0.74, 0, tz, -Math.PI / 2, { addShadow: true });
   }
   placeGLTFModel(p1, 'wine_bottles_01', 0.32, 2.35, 1.11, -9.8, 0, { addShadow: false });
-  placeGLTFModel(p1, 'Chandelier_01', 1.15, -3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
-  placeGLTFModel(p1, 'Chandelier_01', 1.15, 3.8, FLOOR_HEIGHT - 0.05, -4.5, 0, { addShadow: false, hangFromCeiling: true });
+  // Eixample Salon Chain-Suspended Chandeliers & Espresso Bar Brass Pendants (lowered into 85mm camera framing)
+  addGrandChandelier(p1, -2.2, -5.8, { lowestY: 2.45, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  addGrandChandelier(p1, 2.2, -5.8, { lowestY: 2.45, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  addGrandChandelier(p1, -6.0, -4.2, { lowestY: 2.52, bodyHeight: 1.12, modelId: 'Chandelier_01' });
+  addGrandChandelier(p1, 6.2, -4.2, { lowestY: 2.52, bodyHeight: 1.12, modelId: 'Chandelier_01' });
+  for (const bx of [-2.4, -0.5, 1.4]) {
+    addGrandChandelier(p1, bx, -9.7, { lowestY: 2.26, bodyHeight: 0.92, modelId: 'modern_ceiling_lamp_01', addHaloCandles: false });
+  }
+  addStandingCandelabra(p1, -4.6, 0, -12.9, 1.46, 5);
+  addStandingCandelabra(p1, 3.8, 0, -12.9, 1.46, 5);
   addPlantPot(p1, -11.5, 0, -12.5, 1.35);
   addPlantPot(p1, 8.8, 0, -12.5, 1.25);
   addPlantPot(p1, -11.2, 0, 0.2, 1.15);
@@ -1232,6 +1450,11 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'brass_vase_01', 0.28, 0.42, 0.82, -13.15, 0.2, { addShadow: false });
   placeGLTFModel(p2, 'brass_candleholders', 0.24, -0.92, 0.82, -13.14, 0.18, { addShadow: false });
   placeGLTFModel(p2, 'Ottoman_01', 0.48, -0.4, 0, -12.05, -0.26, { addShadow: true });
+  // Chain-Suspended Chandeliers in Vanity & Dressing Room + Standing 5-Arm Brass Candelabras
+  addGrandChandelier(p2, -2.0, -11.8, { lowestY: 2.42, bodyHeight: 1.08, modelId: 'Chandelier_01' });
+  addGrandChandelier(p2, 1.5, -11.8, { lowestY: 2.42, bodyHeight: 1.08, modelId: 'Chandelier_01' });
+  addStandingCandelabra(p2, -1.65, 0, -13.05, 1.46, 5);
+  addStandingCandelabra(p2, 0.95, 0, -13.05, 1.46, 5);
 
   // Walk-In Couture Wardrobe Racks & Valet Stand (Curated by Margaux De Vries — Brushed Brass + Master Triad)
   addCoutureGarmentRack(p2, -3.45, 0, -13.22, 0.06, 'atelier');
@@ -1300,9 +1523,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p2, 'brass_goblets', 0.20, 7.35, 0.99, -6.75, 0.3, { addShadow: false });
   placeGLTFModel(p2, 'wine_bottles_01', 0.34, 7.3, 0.99, -8.95, Math.PI / 2, { addShadow: false });
   for (const pz of [-9.0, -8.0, -7.0]) {
-    placeGLTFModel(p2, 'modern_ceiling_lamp_01', 1.45, 7.3, FLOOR_HEIGHT - 0.05, pz, 0, { addShadow: false, hangFromCeiling: true });
+    addGrandChandelier(p2, 7.3, pz, { lowestY: 2.18, bodyHeight: 0.96, modelId: 'modern_ceiling_lamp_01', addHaloCandles: false });
     placeGLTFModel(p2, 'bar_chair_round_01', 0.72, 6.1, 0, pz, -Math.PI / 2, { addShadow: true });
   }
+  addGrandChandelier(p2, 7.3, -2.5, { lowestY: 2.35, bodyHeight: 1.10, modelId: 'Chandelier_01' });
+  addGrandChandelier(p2, -9.0, -7.8, { lowestY: 2.42, bodyHeight: 1.08, modelId: 'Chandelier_01' });
+  addStandingCandelabra(p2, -7.6, 0, -8.8, 1.42, 5);
   // Dining Table & 4 Sculpted Dining Chairs + Centerpiece Vase
   box(p2, 1.8, 0.06, 1.1, 7.3, 0.75, -2.5, matWoodDark);
   for (const [lx, lz] of [[6.5, -2.95], [8.1, -2.95], [6.5, -2.05], [8.1, -2.05]]) {
@@ -1327,7 +1553,8 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     placeGLTFModel(p2, 'ClassicNightstand_01', 0.58, nx, 0.28, -4.15, 0, { addShadow: true });
     placeGLTFModel(p2, 'desk_lamp_arm_01', 0.44, nx, 0.86, -4.15, nx < 0 ? -0.44 : 0.44, { addShadow: false });
   }
-  placeGLTFModel(p2, 'Chandelier_01', 1.20, -0.5, FLOOR_HEIGHT - 0.05, -3.2, 0, { addShadow: false, hangFromCeiling: true });
+  addGrandChandelier(p2, -0.5, -3.2, { lowestY: 2.45, bodyHeight: 1.18, modelId: 'Chandelier_01' });
+  addStandingCandelabra(p2, 1.95, 0, -3.85, 1.46, 5);
   addPersistentPointLight(p2, 0xffb870, 9.5, 12, 1.4, -0.5, 1.85, -3.6, { dayIntensity: 1.5, nightIntensity: 9.5 });
 
   // Eixample Balcony Railing + Wine Goblets Table + Mid-Century Reading Nook
@@ -1428,7 +1655,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p3, 'coffee_table_round_01', 0.62, -7.2, 0, -4.2, 0.2, { addShadow: true });
   placeGLTFModel(p3, 'brass_goblets', 0.19, -7.2, 0.62, -4.2, 0, { addShadow: false });
   placeGLTFModel(p3, 'mid_century_lounge_chair', 0.82, -8.5, 0, -4.2, Math.PI / 2, { addShadow: true });
-  placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, -4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
+  // Chain-Suspended Chandeliers in Podcast Clinical Library + Standing Brass Candelabras
+  addGrandChandelier(p3, -6.6, -11.4, { lowestY: 2.44, bodyHeight: 1.12, modelId: 'Chandelier_01' });
+  addGrandChandelier(p3, -2.8, -11.4, { lowestY: 2.44, bodyHeight: 1.12, modelId: 'Chandelier_01' });
+  addGrandChandelier(p3, -6.2, -4.8, { lowestY: 2.48, bodyHeight: 1.12, modelId: 'Chandelier_01' });
+  addStandingCandelabra(p3, -3.25, 0, -12.95, 1.46, 5);
+  addStandingCandelabra(p3, -7.25, 0, -12.95, 1.46, 5);
   addPlantPot(p3, -11.4, 0, -2.2, 1.25);
 
   addPersistentPointLight(p3, 0xffb86c, 15.0, 18, 1.3, -4.8, 2.95, -9.2, { dayIntensity: 2.0, nightIntensity: 11.0 });
@@ -1460,10 +1692,15 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     coil.position.set(rx, 1.6, -14.12);
     p3.add(coil);
   }
-  // 3Dio Binaural Microphone on Tripod + Pendant Lamp + Brass Candelabra + Candles
+  // 3Dio Binaural Microphone on Tripod + Chain-Suspended Boudoir Chandeliers + Standing Candelabras
   cyl(p3, 0.025, 0.04, 1.05, 10, 4.8, 0.525, -8.8, matSteel);
   box(p3, 0.28, 0.14, 0.12, 4.8, 1.12, -8.8, matCreamLinen);
-  placeGLTFModel(p3, 'modern_ceiling_lamp_01', 1.35, 4.8, FLOOR_HEIGHT - 0.05, -8.5, 0, { addShadow: false, hangFromCeiling: true });
+  addGrandChandelier(p3, 3.3, -10.8, { lowestY: 2.42, bodyHeight: 1.14, modelId: 'Chandelier_01' });
+  addGrandChandelier(p3, 6.4, -10.8, { lowestY: 2.42, bodyHeight: 1.14, modelId: 'Chandelier_01' });
+  addGrandChandelier(p3, 6.5, -5.6, { lowestY: 2.48, bodyHeight: 1.10, modelId: 'Chandelier_01' });
+  addStandingCandelabra(p3, 2.85, 0, -11.95, 1.52, 5);
+  addStandingCandelabra(p3, 6.85, 0, -11.95, 1.52, 5);
+  addStandingCandelabra(p3, 3.15, 0, -9.2, 1.28, 5);
   placeGLTFModel(p3, 'brass_candleholders', 0.28, 6.4, 0.0, -9.5, 0.44, { addShadow: false });
   addCandle(p3, 6.4, 0.0, -9.5, true);
   addCandle(p3, 3.25, 0.0, -9.8, false);
@@ -1549,13 +1786,36 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   placeGLTFModel(p4, 'mid_century_lounge_chair', 0.82, 8.45, 0, -3.2, -Math.PI / 2, { addShadow: true });
   placeGLTFModel(p4, 'wooden_lantern_01', 0.48, 8.75, 0, -1.85, -0.35, { addShadow: true });
 
-  // Bioclimatic Pergola over Copper Cocktail Bar
+  // Bioclimatic Pergola over Copper Cocktail Bar + Illuminated Poolside Resort Canopy & Chandeliers
   for (const [px, pz] of [[2.2, -11.5], [8.8, -11.5], [2.2, -6.8], [8.8, -6.8]]) {
     box(p4, 0.18, 3.6, 0.18, px, 1.8, pz, matSteel);
   }
   for (let lz = -11.4; lz <= -6.8; lz += 0.48) {
-    box(p4, 6.8, 0.08, 0.18, 5.5, 3.6, lz, matSteel);
+    box(p4, 6.8, 0.12, 0.20, 5.5, 3.6, lz, matWoodDark);
+    if (Math.abs((lz + 11.4) % 1.44) < 0.1) {
+      box(p4, 6.4, 0.035, 0.05, 5.5, 3.52, lz, matWarmBulb, false, false);
+    }
   }
+  box(p4, 6.85, 0.05, 4.85, 5.5, 3.66, -9.15, matBrass, false, false);
+  addGrandChandelier(p4, 4.2, -9.2, { lowestY: 2.28, bodyHeight: 0.98, modelId: 'Chandelier_01', ceilingY: 3.58 });
+  addGrandChandelier(p4, 6.8, -9.2, { lowestY: 2.28, bodyHeight: 0.98, modelId: 'Chandelier_01', ceilingY: 3.58 });
+
+  // Poolside & Lounger Architectural Pergola Canopy (West Wing X = -10.4..-0.8, Z = -9.8..-4.2) + Hanging Chandeliers & Candelabras
+  for (const [px, pz] of [[-10.4, -9.6], [-0.8, -9.6], [-10.4, -4.4], [-0.8, -4.4]]) {
+    box(p4, 0.18, 3.55, 0.18, px, 1.775, pz, matWoodDark);
+    box(p4, 0.22, 0.06, 0.22, px, 3.52, pz, matBrass, false);
+  }
+  for (let lz = -9.5; lz <= -4.5; lz += 0.50) {
+    box(p4, 9.8, 0.12, 0.18, -5.6, 3.55, lz, matWoodDark);
+    if (Math.abs((lz + 9.5) % 1.5) < 0.1) {
+      box(p4, 9.2, 0.035, 0.05, -5.6, 3.47, lz, matWarmBulb, false, false);
+    }
+  }
+  addGrandChandelier(p4, -4.6, -7.2, { lowestY: 2.32, bodyHeight: 1.02, modelId: 'Chandelier_01', ceilingY: 3.52 });
+  addGrandChandelier(p4, -8.4, -6.9, { lowestY: 2.30, bodyHeight: 0.98, modelId: 'Chandelier_01', ceilingY: 3.52 });
+  addStandingCandelabra(p4, -6.8, 0, -4.85, 1.44, 5);
+  addStandingCandelabra(p4, 0.75, 0, -4.85, 1.44, 5);
+  addStandingCandelabra(p4, 3.1, 0, -9.6, 1.44, 5);
   // Hammered Copper Bar + Backlit Liquor Display + Brass Goblets + Stools
   box(p4, 4.6, 1.08, 1.15, 5.5, 0.54, -9.8, matCopper);
   box(p4, 4.75, 0.06, 1.25, 5.5, 1.1, -9.8, matDarkMarble);
@@ -1612,10 +1872,187 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   addBoutiqueCoatStand(p4, 9.65, 0, -7.55, -0.45, 'ivory');
 
   addPlantPot(p2, -11.6, 0, -5.8, 1.0);
+
+  /**
+   * CONTINUIDAD PERCHERO → CUERPO (Margaux De Vries Dep. 02):
+   * Cuelga físicamente una nueva prenda importada desde internet (con su paleta hexadecimal extraída)
+   * en el Perchero Couture o Valet Stand del piso correspondiente, y devuelve las coordenadas exactas
+   * de cámara macro 100mm (`worldPos`, `camPos`, `camTarget`) para renderizar su ficha en la Bóveda.
+   */
+  function hangCustomGarmentOnRack({ floor = 2, primaryHex = '#1f232b', secondaryHex = '#0B2B20', subtype = 'dress' } = {}) {
+    const fNum = [0, 1, 2, 3, 4].includes(Number(floor)) ? Number(floor) : 2;
+    const racks = coutureRacksByFloor[fNum] || coutureRacksByFloor[2];
+    const rack = racks[0];
+    if (!rack) return null;
+
+    const customMat = new THREE.MeshStandardMaterial({
+      ...pbrVelvet,
+      color: new THREE.Color(primaryHex || '#1f232b'),
+      normalScale: new THREE.Vector2(0.65, 0.65),
+      roughness: subtype === 'corset' || subtype === 'blazer' ? 0.55 : 0.78,
+      metalness: 0.06
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(secondaryHex || '#0B2B20'),
+      roughness: 0.45,
+      metalness: 0.1
+    });
+
+    const slotIdx = (rack.userData.customHangerCount || 0) % 5;
+    rack.userData.customHangerCount = (rack.userData.customHangerCount || 0) + 1;
+
+    const gItem = new THREE.Group();
+    const len = subtype === 'blazer' || subtype === 'corset' ? 0.98 : 1.34;
+    const w = 0.42;
+
+    if (rack.userData.isCoatStand) {
+      gItem.position.set(-0.09, 1.66, 0.07);
+      gItem.rotation.y = 0.42 + slotIdx * 0.55;
+    } else {
+      const gx = -0.42 + slotIdx * 0.21;
+      gItem.position.set(gx, 1.92, 0.025);
+      gItem.rotation.y = 0.62;
+    }
+
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.0045, 8, 16, Math.PI * 1.4), matBrass);
+    hook.position.set(0, 0.028, 0);
+    hook.rotation.y = Math.PI / 2;
+    gItem.add(hook);
+    cyl(gItem, 0.0045, 0.0045, 0.045, 8, 0, -0.02, 0, matBrass, false);
+
+    for (const side of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.014, w * 0.52, 10), matWoodDark);
+      wing.rotation.x = side * (Math.PI / 2 - 0.26);
+      wing.position.set(0, -0.068, side * w * 0.22);
+      gItem.add(wing);
+    }
+
+    const bodyTopY = -0.085;
+    const centerPleat = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.076, len, 14), customMat);
+    centerPleat.scale.set(0.7, 1.0, 2.4);
+    centerPleat.position.set(0, bodyTopY - len * 0.5, 0);
+    centerPleat.castShadow = true;
+    gItem.add(centerPleat);
+
+    for (const side of [-1, 1]) {
+      const sideDrape = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, len * 0.96, 12), trimMat);
+      sideDrape.scale.set(0.64, 1.0, 1.65);
+      sideDrape.position.set(side * 0.01, bodyTopY - len * 0.49, side * (w * 0.28));
+      sideDrape.castShadow = true;
+      gItem.add(sideDrape);
+    }
+
+    const oRing = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.005, 8, 18), matBrass);
+    oRing.rotation.y = Math.PI / 2;
+    oRing.position.set(0.04, bodyTopY - 0.36, 0);
+    gItem.add(oRing);
+
+    rack.add(gItem);
+    rack.updateMatrixWorld(true);
+
+    const floorY = fNum * FLOOR_HEIGHT;
+    const worldRack = new THREE.Vector3();
+    rack.getWorldPosition(worldRack);
+    const fwd = new THREE.Vector3(0, 0, 1.85).applyAxisAngle(new THREE.Vector3(0, 1, 0), rack.rotation.y);
+    const sideOff = new THREE.Vector3(0.45, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rack.rotation.y);
+
+    const worldPos = {
+      x: Number(worldRack.x.toFixed(2)),
+      y: Number((floorY + 1.22).toFixed(2)),
+      z: Number(worldRack.z.toFixed(2))
+    };
+    const camPos = {
+      x: Number((worldRack.x + fwd.x + sideOff.x).toFixed(2)),
+      y: Number((floorY + 1.36).toFixed(2)),
+      z: Number((worldRack.z + fwd.z + sideOff.z).toFixed(2))
+    };
+    const camTarget = { ...worldPos };
+
+    return { worldPos, camPos, camTarget };
+  }
+
+  /**
+   * PIPELINE DE EXTRACCIÓN DE OBJETOS DESDE INTERNET (Mateo Santoro Dep. 04):
+   * Integra en vivo un nuevo cuadro (con la foto subida como óleo enmarcado), planta, escultura o prop
+   * en el piso seleccionado respetando los 12 Conos Ópticos Sagrados, y devuelve sus coordenadas macro.
+   */
+  function spawnCustomObjectInFloor({ floor = 2, subtype = 'painting', imageDataUrl = null, primaryHex = '#1f232b' } = {}) {
+    const fNum = [0, 1, 2, 3, 4].includes(Number(floor)) ? Number(floor) : 2;
+    const group = floorGroups[fNum] || floorGroups[2];
+    const floorY = fNum * FLOOR_HEIGHT;
+
+    // Coordenadas perimetrales seguras (0% invasión de los 12 Conos Ópticos Sagrados)
+    const safePerimeterSlots = {
+      0: { x: -3.2, z: -13.35, wallZ: -14.22, rotY: 0 },
+      1: { x: -8.1, z: -13.25, wallZ: -14.22, rotY: 0 },
+      2: { x: 1.55, z: -13.25, wallZ: -14.22, rotY: 0 },
+      3: { x: -2.95, z: -13.35, wallZ: -14.22, rotY: 0 },
+      4: { x: -2.15, z: -12.65, wallZ: -11.14, rotY: 0 }
+    };
+    const slot = safePerimeterSlots[fNum] || safePerimeterSlots[2];
+
+    if (subtype === 'painting' && imageDataUrl) {
+      const tex = new THREE.TextureLoader().load(imageDataUrl);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const customArtMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.34, metalness: 0.04 });
+      const wy = 2.15;
+      placeGLTFModel(group, 'fancy_picture_frame_01', 1.24, slot.x, wy, slot.wallZ, slot.rotY, {
+        addShadow: false,
+        customArtMat
+      });
+      return {
+        modelId: 'fancy_picture_frame_01',
+        worldPos: { x: slot.x, y: Number((floorY + wy).toFixed(2)), z: slot.wallZ },
+        camPos: { x: Number((slot.x + 0.15).toFixed(2)), y: Number((floorY + wy + 0.05).toFixed(2)), z: Number((slot.wallZ + 1.85).toFixed(2)) },
+        camTarget: { x: slot.x, y: Number((floorY + wy).toFixed(2)), z: slot.wallZ }
+      };
+    }
+
+    if (subtype === 'plant') {
+      addBotanicalVessel(group, 'pachira_aquatica_01', slot.x, 0, slot.z, 1.18, 'basalt', 0.35);
+      return {
+        modelId: 'pachira_aquatica_01',
+        worldPos: { x: slot.x, y: Number((floorY + 0.95).toFixed(2)), z: slot.z },
+        camPos: { x: Number((slot.x + 1.45).toFixed(2)), y: Number((floorY + 1.22).toFixed(2)), z: Number((slot.z + 1.55).toFixed(2)) },
+        camTarget: { x: slot.x, y: Number((floorY + 0.95).toFixed(2)), z: slot.z }
+      };
+    }
+
+    if (subtype === 'sculpture') {
+      addSculpturePlinth(group, 'marble_bust_01', 1.1, 0.64, slot.x, slot.z, 0.25, 'basalt');
+      return {
+        modelId: 'marble_bust_01',
+        worldPos: { x: slot.x, y: Number((floorY + 1.36).toFixed(2)), z: slot.z },
+        camPos: { x: Number((slot.x + 0.85).toFixed(2)), y: Number((floorY + 1.48).toFixed(2)), z: Number((slot.z + 1.55).toFixed(2)) },
+        camTarget: { x: slot.x, y: Number((floorY + 1.36).toFixed(2)), z: slot.z }
+      };
+    }
+
+    // Default furniture/prop: side table with brass vase & custom color accent
+    placeGLTFModel(group, 'side_table_tall_01', 0.72, slot.x, 0, slot.z, 0.2, { addShadow: true });
+    placeGLTFModel(group, 'brass_vase_01', 0.32, slot.x, 0.72, slot.z, 0.3, { addShadow: false });
+    const accentDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.16, 0.02, 20),
+      new THREE.MeshStandardMaterial({ color: new THREE.Color(primaryHex || '#1f232b'), roughness: 0.4 })
+    );
+    accentDisc.position.set(slot.x, 0.73, slot.z);
+    group.add(accentDisc);
+
+    return {
+      modelId: 'brass_vase_01',
+      worldPos: { x: slot.x, y: Number((floorY + 0.88).toFixed(2)), z: slot.z },
+      camPos: { x: Number((slot.x + 0.75).toFixed(2)), y: Number((floorY + 1.12).toFixed(2)), z: Number((slot.z + 1.25).toFixed(2)) },
+      camTarget: { x: slot.x, y: Number((floorY + 0.88).toFixed(2)), z: slot.z }
+    };
+  }
+
   return {
     floorGroups,
     waterMeshes,
     frontGlassPanels,
-    mirrorReflector
+    mirrorReflector,
+    coutureRacksByFloor,
+    hangCustomGarmentOnRack,
+    spawnCustomObjectInFloor
   };
 }

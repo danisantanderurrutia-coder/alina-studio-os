@@ -166,93 +166,114 @@ export const ALINA_WARDROBE_CATALOG = [
   {
     id: 'charcoal_silk_slip',
     name: 'Vestido Lencero de Seda Charmeuse Carbón',
+    handle: '@look_charcoal_silk_slip',
+    vaultObjectId: 'obj-look-charcoal-silk-slip',
+    rackLocation: { floor: 2, spotId: 'vanity', rackType: 'addCoutureGarmentRack(atelier)', coords: { x: -3.45, y: 9.8, z: -13.22 } },
     category: 'Intimidad Residencial',
     funnel: 'SFW / Puente Sensorial',
     spots: ['vanity', 'suite', 'kitchen'],
     swatches: ['#1f232b', '#c86446', '#d4af37'],
     fluxTokens:
-      'wearing a bias-cut dark charcoal silk charmeuse slip robe with delicate matte satin drape and minimalist brushed brass collarbone chain',
+      'wearing a bias-cut dark charcoal silk charmeuse slip robe (#1f232b) with delicate matte satin drape and minimalist warm brushed-brass collarbone chain (#d4af37)',
     higgsfieldPhysics:
-      'fluid dark silk charmeuse settles softly over collarbone with subtle specular sheen on breathing, fine brass chain resting steady',
-    stylistNote: 'Refleja la luz cálida 2700K–3600K del tocador y la suite con transiciones suaves sin brillos plásticos.'
+      'fluid dark silk charmeuse settles softly over collarbone with subtle specular sheen on breathing, fine brushed-brass chain resting steady, zero moiré',
+    stylistNote: 'Refleja la luz cálida 2700K–3600K del tocador y la suite con transiciones suaves sin brillos plásticos. Colgado físicamente en el perchero atelier del Piso 2.'
   },
   {
     id: 'clinical_blazer_corset',
     name: 'Blazer Desestructurado Negro sobre Corsé Mate',
+    handle: '@look_clinical_blazer_corset',
+    vaultObjectId: 'obj-look-clinical-blazer-corset',
+    rackLocation: { floor: 3, spotId: 'podcast', rackType: 'addBoutiqueCoatStand(leather)', coords: { x: -1.15, y: 14.7, z: -5.85 } },
     category: 'Autoridad Clínica',
     funnel: 'Top-Funnel SFW (Reels / Podcast)',
     spots: ['podcast', 'cafe', 'walk_cafe'],
-    swatches: ['#14161c', '#0b2b20', '#c8963e'],
+    swatches: ['#111216', '#0B2B20', '#d4af37'],
     fluxTokens:
-      'wearing a tailored unstructured matte black wool-crepe blazer over a sleek emerald-black structured bodice and subtle vintage brass hoop earrings',
+      'wearing a tailored unstructured matte obsidian-black wool-crepe blazer (#111216) over a sleek forest-emerald structured bodice (#0B2B20) and subtle vintage brushed-brass hoop earrings (#d4af37)',
     higgsfieldPhysics:
-      'tailored matte wool lapel holds crisp architectural line while subtle brass earring catches warm key light with minimal sway',
-    stylistNote: 'El uniforme insignia de «The Mind Sanctuary»: proyecta rigor intelectual y magnetismo sin revelar de más en redes abiertas.'
+      'tailored matte wool lapel holds crisp architectural line while subtle brushed-brass earring catches warm 3200K key light with minimal sway, zero moiré',
+    stylistNote: 'El uniforme insignia de «The Mind Sanctuary»: proyecta rigor intelectual y magnetismo. Reposando en el valet stand de nogal del Piso 3.'
   },
   {
     id: 'boudoir_leather_choker',
     name: 'Corsé Sastre en Cuero Satinado & Choker O-Ring Latón',
+    handle: '@look_boudoir_leather_choker',
+    vaultObjectId: 'obj-look-boudoir-leather-choker',
+    rackLocation: { floor: 3, spotId: 'boudoir', rackType: 'addCoutureGarmentRack(boudoir)', coords: { x: 9.25, y: 14.7, z: -7.55 } },
     category: 'Dominatrix Consciente (SSC)',
     funnel: 'Fanvue VIP / Telegram Nocturno',
     spots: ['boudoir', 'cabaret', 'parking'],
-    swatches: ['#111216', '#c8963e', '#7e22ce'],
+    swatches: ['#111216', '#d4af37', '#0B2B20'],
     fluxTokens:
-      'wearing a bespoke satin-finish black leather architectural corset with clean seams and a handcrafted black leather choker featuring a warm brushed brass center O-ring',
+      'wearing a bespoke satin-finish black full-grain leather architectural corset (#111216) with clean seams and a handcrafted black leather choker featuring a warm brushed-brass center O-ring (#d4af37)',
     higgsfieldPhysics:
-      'supple satin-black leather bodice maintains sculpted form, warm candle highlights glinting steadily on the brushed brass O-ring',
-    stylistNote: 'Cuero de grano natural semimate (jamás vinilo espejo) para que ControlNet Normal conserve textura orgánica.'
+      'supple satin-black leather bodice maintains sculpted form, warm 2200K candle highlights glinting steadily on the brushed-brass O-ring',
+    stylistNote: 'Cuero de grano natural semimate (jamás vinilo espejo) para que ControlNet Normal conserve textura orgánica. Colgado en el perchero Couture SSC del Boudoir.'
   },
   {
     id: 'emerald_velvet_evening',
     name: 'Vestido Nocturne de Terciopelo Verde Esmeralda',
+    handle: '@look_emerald_velvet_evening',
+    vaultObjectId: 'obj-look-emerald-velvet-evening',
+    rackLocation: { floor: 0, spotId: 'cabaret', rackType: 'addCoutureGarmentRack(boudoir)', coords: { x: 11.55, y: 0, z: -1.65 } },
     category: 'Gala & Speakeasy',
     funnel: 'Capítulos Especiales / VIP',
     spots: ['cabaret', 'bar', 'parking'],
-    swatches: ['#0b3b2c', '#d4af37', '#18181b'],
+    swatches: ['#0B2B20', '#d4af37', '#111216'],
     fluxTokens:
-      'wearing a floor-length deep emerald velvet evening gown with sculpted off-shoulder neckline and antique gold cuff bracelet',
+      'wearing a floor-length deep forest-emerald silk-velvet evening gown (#0B2B20) with sculpted off-shoulder neckline and antique brushed-brass cuff bracelet (#d4af37)',
     higgsfieldPhysics:
-      'plush deep emerald velvet absorbs shadow with soft directional nap sheen, antique gold cuff glinting subtly',
-    stylistNote: 'Armonía análoga-complementaria perfecta con sus ojos esmeralda y su melena cobriza bajo luces de cabaret.'
+      'plush deep emerald velvet absorbs shadow with soft directional nap sheen, antique brushed-brass cuff glinting subtly under 2800K key light',
+    stylistNote: 'Armonía análoga-complementaria perfecta con sus ojos esmeralda y su melena cobriza. Presente en los percheros Couture de PB Cabaret, Piso 2 y Piso 3.'
   },
   {
     id: 'tulum_black_linen_wrap',
     name: 'Resort Wrap de Lino Lavado Negro & Pareo Ligero',
+    handle: '@look_tulum_black_linen_wrap',
+    vaultObjectId: 'obj-look-tulum-black-linen-wrap',
+    rackLocation: { floor: 4, spotId: 'pool', rackType: 'addCoutureGarmentRack(resort)', coords: { x: -11.55, y: 19.6, z: -6.9 } },
     category: 'Penthouse & Retiro Sensorial',
     funnel: 'Lifestyle / Inner Circle',
     spots: ['pool', 'bar'],
-    swatches: ['#1c1e24', '#e5dec9', '#0ea5e9'],
+    swatches: ['#1f232b', '#ebe4d5', '#d4af37'],
     fluxTokens:
-      'wearing a minimalist black washed-linen resort bikini top paired with a flowing sheer dark linen sarong wrap and thin gold body chain',
+      'wearing a minimalist charcoal-black washed-linen resort bikini top (#1f232b) paired with a flowing raw-ivory and dark linen sarong wrap (#ebe4d5) and thin brushed-brass body chain (#d4af37)',
     higgsfieldPhysics:
-      'lightweight washed black linen wrap drifts gently in warm rooftop evening breeze, subtle water caustics reflecting on fabric edge',
-    stylistNote: 'La trama abierta del lino lavado da a Flux una micro-textura táctil inmediata al sol poniente o junto a la piscina.'
+      'lightweight washed black linen wrap drifts gently in warm 4300K rooftop evening breeze, subtle water caustics reflecting on fabric edge',
+    stylistNote: 'La trama orgánica del lino lavado da a Flux micro-textura táctil inmediata sin moiré. Colgado en el Cabana Rack de teca y latón del Piso 4.'
   },
   {
     id: 'eixample_cream_trench',
     name: 'Camisa de Seda Marfil & Pantalón Palazzo Tabaco',
+    handle: '@look_eixample_cream_trench',
+    vaultObjectId: 'obj-look-eixample-cream-trench',
+    rackLocation: { floor: 1, spotId: 'cafe', rackType: 'addBoutiqueCoatStand(ivory)', coords: { x: -9.15, y: 4.9, z: -13.15 } },
     category: 'Lifestyle Cosmopolita Diurno',
     funnel: 'Descubrimiento SFW (Instagram / X)',
     spots: ['cafe', 'walk_cafe', 'kitchen'],
-    swatches: ['#ebe4d5', '#5c3a24', '#c86446'],
+    swatches: ['#ebe4d5', '#5c3a24', '#d4af37'],
     fluxTokens:
-      'wearing an effortlessly unbuttoned warm ivory raw-silk shirt tucked into high-waisted espresso-brown palazzo trousers with tortoiseshell glasses resting at collar',
+      'wearing an effortlessly unbuttoned warm raw-ivory silk shirt (#ebe4d5) tucked into high-waisted tobacco-leather-belted espresso palazzo trousers (#5c3a24) with warm brushed-brass buckle (#d4af37)',
     higgsfieldPhysics:
-      'soft ivory raw-silk collar and sleeves respond with natural gentle air movement during stride, clean fabric folds',
-    stylistNote: 'Luminosidad editorial europea para mañanas en Le Velvet Café y cocina de autor.'
+      'soft raw-ivory silk collar and sleeves respond with natural gentle air movement during stride, clean fabric folds with zero moiré',
+    stylistNote: 'Luminosidad editorial europea para mañanas en Le Velvet Café y cocina de autor. Colgado en el perchero bistró del Piso 1.'
   },
   {
     id: 'spa_minimal_towel_silk',
     name: 'Recogido Húmedo Spa & Envoltura de Lino Crudo',
+    handle: '@look_spa_minimal_towel_silk',
+    vaultObjectId: 'obj-look-spa-minimal-towel-silk',
+    rackLocation: { floor: 2, spotId: 'bath', rackType: 'addBoutiqueCoatStand(ivory)', coords: { x: -5.85, y: 9.8, z: -13.15 } },
     category: 'Ritual Terapéutico & Spa',
     funnel: 'Puente Sensorial / VIP',
     spots: ['bath'],
-    swatches: ['#e7e1d6', '#2d333f', '#ffa94d'],
+    swatches: ['#ebe4d5', '#1f232b', '#d4af37'],
     fluxTokens:
-      'copper hair loosely pinned up with damp tendrils framing her cheekbones, wrapped modestly in a plush raw oatmeal Belgian linen spa sheet with warm dewy skin sheen',
+      'copper hair loosely pinned up with damp tendrils framing her cheekbones, wrapped modestly in a plush raw-ivory Belgian linen spa sheet (#ebe4d5) with warm dewy skin sheen and fine brushed-brass hairpin (#d4af37)',
     higgsfieldPhysics:
-      'damp copper hair tendrils stay softly settled against collarbone, warm candlelit water reflections shimmering gently across dewy shoulders',
-    stylistNote: 'Textura húmeda natural calibrada para chiaroscuro de velas a 2200K sobre piedra basáltica.'
+      'damp copper hair tendrils stay softly settled against collarbone, warm 2600K candlelit water reflections shimmering gently across dewy shoulders',
+    stylistNote: 'Textura húmeda natural calibrada para chiaroscuro de velas a 2600K sobre piedra basáltica. Prenda física colgada en el perchero Spa del Piso 2.'
   }
 ];
 

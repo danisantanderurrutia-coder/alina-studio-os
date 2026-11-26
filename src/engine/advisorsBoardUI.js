@@ -638,7 +638,7 @@ export function mountAdvisorsBoardUI(root, ctx) {
     });
   }
 
-  function setSubTab(tabName) {
+  function setSubTab(tabName, silent = false) {
     activeSubTab = tabName;
     root.querySelectorAll('.adv-sub-btn').forEach((b) => {
       const act = b.dataset.asub === activeSubTab;
@@ -646,6 +646,7 @@ export function mountAdvisorsBoardUI(root, ctx) {
         ? 'adv-sub-btn px-3 py-1.5 rounded-lg bg-[#c86446] text-white font-semibold transition-all whitespace-nowrap shadow'
         : 'adv-sub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all whitespace-nowrap';
     });
+    if (!silent) ctx.onSubTabChanged?.(activeSubTab);
     renderBody();
   }
 
@@ -683,6 +684,8 @@ export function mountAdvisorsBoardUI(root, ctx) {
 
   return {
     render,
+    setSubTab,
+    getSubTab: () => activeSubTab,
     onSpotChanged: render
   };
 }

@@ -256,7 +256,7 @@ export const SANCTUARY_FLOORS = {
     floorNumber: 0,
     floorName: 'PLANTA BAJA • CABARET & PARKING',
     subtitle: 'Nocturne Speakeasy & Exterior',
-    badge: 'Portado de Unity',
+    badge: 'Speakeasy & Exterior',
     badgeColor: 'rose',
     description: 'Parking exterior 28m×18m con 8 líneas amarillas, 4 coches, 3 farolas, marquesina VIP con alfombra roja, pista neón, barra y piano de cola.',
     floorY: 0.0,

@@ -4,7 +4,7 @@ import * as S from './cinematographySolver.js';
 import catalog from '../data/cinematographyCatalog.json';
 import { FLOOR_HEIGHT, BUILDING_WIDTH, BUILDING_DEPTH, BUILDING_CENTER_Z } from '../data/sanctuaryData.js';
 
-/** Convierte la intensidad "Unity-like" del catálogo a candelas de Three (física r155+). */
+/** Convierte la intensidad base del catálogo a candelas físicas de Three.js (r155+). */
 const THREE_INTENSITY_SCALE = 5.0;
 const BUILDING = { floorHeight: FLOOR_HEIGHT, width: BUILDING_WIDTH, depth: BUILDING_DEPTH, centerZ: BUILDING_CENTER_Z };
 

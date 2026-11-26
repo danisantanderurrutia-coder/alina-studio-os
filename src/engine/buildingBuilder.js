@@ -1081,7 +1081,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   }
 
   // =========================================================================
-  // NIVEL 0 (PLANTA BAJA): PARKING EXTERIOR + CABARET NOCTURNE (PORTADO UNITY)
+  // NIVEL 0 (PLANTA BAJA): PARKING EXTERIOR + CABARET NOCTURNE (ESCALA MÉTRICA 1:1)
   // =========================================================================
   const pb = new THREE.Group();
   pb.position.y = 0;

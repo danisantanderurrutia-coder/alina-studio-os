@@ -1,6 +1,6 @@
 // Módulo UI de la Bóveda de Objetos Renderizados ("Objetos") para Higgsfield & B-Roll Zero-Face.
 // Permite subir renders externos (PNG/JPG/WebP), capturar objetos 1:1 o 9:16 desde el visor 3D
-// (Three.js o Unity 6 URP), editar sus tokens fijos e inyectarlos en los prompts de Alina.
+// en Three.js WebGL2, editar sus tokens fijos e inyectarlos en los prompts de Alina.
 
 import { OBJECT_CATEGORIES } from '../data/alinaLoreData.js';
 import { buildCanonicalObjectTokenLock } from './promptBuilder.js';

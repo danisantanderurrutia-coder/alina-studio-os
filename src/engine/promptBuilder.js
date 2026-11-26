@@ -1,5 +1,5 @@
 // Generador de prompts Flux.1 Dev y Higgsfield I2V directamente desde capturas reales
-// del visor 3D (Motor A: Three.js WebGL y Motor B: Unity 6 URP WebGL).
+// del visor métrico 1:1 en Three.js WebGL2.
 
 const TOKEN_LOCK =
   '28yo Dutch-Latin woman Alina Van Dijk, vivid copper red hair with natural soft waves, vivid emerald green eyes, light natural freckles across nose, subtle crimson lips, realistic skin micro-pores';
@@ -145,7 +145,7 @@ export function buildCanonicalObjectTokenLock({
 }
 
 /**
- * Calcula tipo de plano, ángulo vertical y focal equivalente desde telemetría 3D o preset de Unity.
+ * Calcula tipo de plano, ángulo vertical y focal equivalente desde telemetría 3D o preset de cámara.
  */
 export function describeCaptureFraming({ camera, spot, camPreset = '85mm', cinemaShot = null }) {
   if (cinemaShot) {
@@ -197,12 +197,12 @@ export function describeCaptureFraming({ camera, spot, camPreset = '85mm', cinem
     ...preset,
     distance: d,
     elevationDeg: camPreset === 'top' ? 72 : 4,
-    source: `Unity 6 URP (${camPreset})`
+    source: `Three.js 1:1 (${camPreset})`
   };
 }
 
 /**
- * Analiza el PNG capturado (Unity 6 URP o Three.js) para medir clave lumínica, contraste y balance cálido/frío.
+ * Analiza el PNG capturado en Three.js WebGL2 para medir clave lumínica, contraste y balance cálido/frío.
  */
 export function analyzeCapturedImage(dataUrl) {
   return new Promise((resolve) => {

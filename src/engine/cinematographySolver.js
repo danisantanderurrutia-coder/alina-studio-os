@@ -3,7 +3,7 @@
  * Se copia tal cual a alina-studio-os/src/engine/cinematographySolver.js
  * (ver scripts de sincronización en SPEC §6). Probado por validate_cinematography.mjs.
  *
- * Convenciones (idénticas a alina-sanctuary.blueprint.json / Three.js / Unity):
+ * Convenciones métricas 1:1 (alina-sanctuary.blueprint.json / Three.js WebGL2):
  *  - 1 unidad = 1 metro, Y arriba, alinaRotY en radianes, frente de Alina F = (sin rotY, 0, cos rotY).
  *  - azimuthOffsetDeg se mide desde el frente de Alina hacia su derecha-de-pantalla R = (cos rotY, 0, -sin rotY).
  */

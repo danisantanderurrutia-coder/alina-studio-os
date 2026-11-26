@@ -167,11 +167,194 @@ function refreshViewportLayout() {
   }, 140);
 }
 
+let suppressHashSync = false;
+
+function setHashSilently(slug) {
+  if (suppressHashSync) return;
+  const targetHash = slug.startsWith('#') ? slug : `#${slug}`;
+  if (window.location.hash !== targetHash) {
+    history.replaceState(null, '', targetHash);
+  }
+}
+
+function openDocsModalAtTab(tabId = 'docs-1') {
+  const docsModal = document.getElementById('docs-modal');
+  if (!docsModal) return;
+  docsModal.classList.remove('hidden');
+  document.querySelectorAll('.docs-tab-btn').forEach((b) => {
+    const isActive = b.dataset.tab === tabId;
+    b.className = isActive
+      ? 'docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0'
+      : 'docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0';
+  });
+  document.querySelectorAll('.docs-pane').forEach((pane) => {
+    pane.classList.toggle('hidden', pane.id !== `pane-${tabId}`);
+  });
+}
+
+function applySlugFromLocationHash() {
+  const raw = decodeURIComponent(window.location.hash || '').replace(/^#+/, '').trim().toLowerCase();
+  if (!raw) return;
+
+  suppressHashSync = true;
+  try {
+    // 1. Pestañas del Modal de Guía Técnica
+    const docsSlugMap = {
+      guia: 'docs-1',
+      'guia-arquitectura': 'docs-1',
+      'guia-optica': 'docs-2',
+      'guia-camaras': 'docs-3',
+      'guia-pases': 'docs-4',
+      'guia-regla-1-2': 'docs-5',
+      'guia-boveda': 'docs-6',
+      'guia-errores': 'docs-7',
+      'anti-patrones': 'docs-7',
+      'guia-sequencer-fusion': 'docs-8'
+    };
+    if (docsSlugMap[raw]) {
+      openDocsModalAtTab(docsSlugMap[raw]);
+      return;
+    }
+
+    // 2. Capítulos individuales (#capitulo-1, #capitulo-2...)
+    const chapMatch = raw.match(/^capitulo-(\d+)$/);
+    if (chapMatch) {
+      const num = Number(chapMatch[1]);
+      const targetChap = state.chapters.find((c) => Number(c.number) === num);
+      switchMainView('cinema');
+      if (targetChap) chaptersUI?.selectChapter(targetChap.id);
+      else chaptersUI?.setSubTab('chapters');
+      return;
+    }
+
+    // 3. Spots directos (#spot-vanity, #spot-walk-cafe, etc.)
+    if (raw.startsWith('spot-')) {
+      const rawId = raw.slice(5);
+      const sp = findSpotById(rawId) || findSpotById(rawId.replace(/-/g, '_'));
+      if (sp) {
+        switchMainView('plato');
+        if (state.activeFloor !== sp.floor) selectFloor(sp.floor);
+        selectSpot(sp);
+        return;
+      }
+    }
+
+    // 4. Pisos y vistas arquitectónicas globales
+    const floorSlugMap = {
+      'piso-4': 4, penthouse: 4, rooftop: 4,
+      'piso-3': 3, 'mind-sanctuary': 3,
+      'piso-2': 2, residencia: 2,
+      'piso-1': 1, 'velvet-cafe': 1,
+      'planta-baja': 0, 'piso-0': 0, nocturne: 0
+    };
+    if (Object.prototype.hasOwnProperty.call(floorSlugMap, raw)) {
+      switchMainView('plato');
+      state.sliced = true;
+      syncSliceButtonUI();
+      selectFloor(floorSlugMap[raw]);
+      return;
+    }
+    if (raw === 'casa-de-munecas' || raw === 'dollhouse') {
+      switchMainView('plato');
+      setCameraPreset('dollhouse');
+      return;
+    }
+    if (raw === 'exterior' || raw === 'fachada') {
+      switchMainView('plato');
+      setCameraPreset('overview');
+      return;
+    }
+
+    // 5. Sub-secciones de Cine & Capítulos
+    if (raw === 'cine' || raw === 'capitulos' || raw === 'historia' || raw === 'cine/capitulos') {
+      state.cinemaSubView = 'chapters';
+      document.body.dataset.cinemaSub = 'chapters';
+      switchMainView('cinema');
+      chaptersUI?.setSubTab('chapters');
+      return;
+    }
+    if (raw === 'blueprint' || raw === 'grafo' || raw === 'sequencer' || raw === 'cine/blueprint') {
+      state.cinemaSubView = 'blueprint';
+      document.body.dataset.cinemaSub = 'blueprint';
+      switchMainView('cinema');
+      chaptersUI?.setSubTab('blueprint');
+      return;
+    }
+    if (raw === 'director' || raw === 'fotografia' || raw === 'animatic' || raw === 'cine/director') {
+      state.cinemaSubView = 'director';
+      document.body.dataset.cinemaSub = 'director';
+      switchMainView('cinema');
+      chaptersUI?.setSubTab('director');
+      return;
+    }
+    if (raw === 'biblia' || raw === 'alina' || raw === 'reglas' || raw === 'zero-waste' || raw === 'cine/biblia') {
+      state.cinemaSubView = 'bible';
+      document.body.dataset.cinemaSub = 'bible';
+      switchMainView('cinema');
+      chaptersUI?.setSubTab('bible');
+      return;
+    }
+
+    // 6. Sub-secciones de Consejo de Asesores
+    if (raw === 'asesores' || raw === 'mesa-redonda' || raw === 'produccion' || raw === 'asesores/spot') {
+      switchMainView('advisors');
+      advisorsUI?.setSubTab?.('spot_audit', true);
+      return;
+    }
+    if (raw === 'vestuario' || raw === 'armario' || raw === 'looks' || raw === 'asesores/vestuario') {
+      switchMainView('advisors');
+      advisorsUI?.setSubTab?.('wardrobe', true);
+      return;
+    }
+    if (raw === 'hods' || raw === 'jefes' || raw === 'consejo' || raw === 'asesores/hods') {
+      switchMainView('advisors');
+      advisorsUI?.setSubTab?.('council_hods', true);
+      return;
+    }
+
+    // 7. Vistas principales restantes
+    if (raw === 'prompts' || raw === 'estudio-prompts' || raw === 'higgsfield') {
+      switchMainView('prompts');
+      return;
+    }
+    if (raw === 'objetos' || raw === 'boveda' || raw === 'props' || raw === 'objects') {
+      switchMainView('objects');
+      return;
+    }
+    if (raw === 'plato' || raw === 'inicio' || raw === 'santuario-3d') {
+      switchMainView('plato');
+    }
+  } finally {
+    suppressHashSync = false;
+  }
+}
+
 function switchMainView(viewName) {
   const valid = ['plato', 'prompts', 'objects', 'cinema', 'advisors'];
   const next = valid.includes(viewName) ? viewName : 'plato';
   state.activeView = next;
   document.body.dataset.view = next;
+
+  const viewHashMap = {
+    plato: 'plato',
+    prompts: 'prompts',
+    objects: 'objetos',
+    cinema:
+      state.cinemaSubView === 'blueprint'
+        ? 'blueprint'
+        : state.cinemaSubView === 'director'
+          ? 'director'
+          : state.cinemaSubView === 'bible'
+            ? 'biblia'
+            : 'capitulos',
+    advisors:
+      advisorsUI?.getSubTab?.() === 'wardrobe'
+        ? 'vestuario'
+        : advisorsUI?.getSubTab?.() === 'council_hods'
+          ? 'hods'
+          : 'asesores'
+  };
+  setHashSilently(viewHashMap[next] || 'plato');
 
   document.querySelectorAll('.top-nav-btn').forEach((btn) => {
     const act = btn.dataset.nav === next;
@@ -618,7 +801,7 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
   updateTopCounters();
   renderShotsPanel();
   setStatusText(
-    `✅ <span class="text-emerald-400 font-bold">Captura #${state.shots.length} (${shot.engine === 'unity' ? 'Unity 6 URP' : 'Three.js'}) lista en Estudio Prompts.</span>`
+    `✅ <span class="text-emerald-400 font-bold">Captura #${state.shots.length} (Three.js 1:1) lista en Estudio Prompts.</span>`
   );
 }
 
@@ -707,9 +890,7 @@ function renderShotsPanel() {
     btn.innerHTML = `
       <img src="${s.image}" alt="Toma ${num}" class="block w-12 object-cover bg-black" style="aspect-ratio: 9/16;">
       <span class="absolute top-0.5 left-0.5 px-1 rounded bg-black/80 text-[8px] font-mono text-white">#${num}</span>
-      <span class="absolute bottom-0.5 right-0.5 px-1 rounded text-[7px] font-mono font-bold ${
-        s.engine === 'unity' ? 'bg-pink-500/85 text-white' : 'bg-emerald-600/85 text-white'
-      }">${s.engine === 'unity' ? 'U6' : '3D'}</span>
+      <span class="absolute bottom-0.5 right-0.5 px-1 rounded text-[7px] font-mono font-bold bg-emerald-600/85 text-white">3D</span>
     `;
     btn.addEventListener('click', () => {
       state.selectedShotId = s.id;
@@ -734,10 +915,8 @@ function renderShotsPanel() {
 
   document.getElementById('shotMetaTitle').textContent = `${shot.spot.icon} ${shot.spot.name}`;
   const engTag = document.getElementById('shotEngineTag');
-  engTag.textContent = shot.engine === 'unity' ? 'UNITY 6 URP' : 'THREE.JS';
-  engTag.className = shot.engine === 'unity'
-    ? 'text-[9px] font-mono px-1.5 py-0.5 rounded border border-pink-500/40 bg-pink-500/15 text-pink-300 shrink-0 font-bold'
-    : 'text-[9px] font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shrink-0 font-bold';
+  engTag.textContent = 'THREE.JS 1:1';
+  engTag.className = 'text-[9px] font-mono px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shrink-0 font-bold';
 
   document.getElementById('shotMetaFraming').textContent =
     `${shot.framing.shot} • ${shot.framing.mm}mm • ${shot.framing.angle}`;
@@ -803,7 +982,6 @@ function restoreShotToViewport(shot) {
     document.getElementById('currentFloorTag').textContent = SANCTUARY_FLOORS[shot.floor].floorName;
     updateFloorCardStyles();
     applyThreeJSSlicing();
-    unityBridge?.sendFloor(shot.floor);
   }
 
   state.activeSpot = shot.spot;
@@ -834,7 +1012,7 @@ function buildShotExportPayload(shot) {
 
   return {
     captured_at: shot.createdAt,
-    engine: shot.engine === 'unity' ? 'Motor B: Unity 6 URP WebGL' : 'Motor A: Three.js WebGL + alina.glb',
+    engine: 'Three.js Metric 1:1 WebGL2 + alina.glb',
     character: 'Alina Van Dijk',
     chapter: linkedChapter ? { number: linkedChapter.number, title: linkedChapter.title } : null,
     floor: shot.floorName,
@@ -1592,6 +1770,8 @@ async function init() {
       onSubTabChanged: (sub) => {
         state.cinemaSubView = sub;
         document.body.dataset.cinemaSub = sub;
+        const subSlugMap = { chapters: 'capitulos', blueprint: 'blueprint', director: 'director', bible: 'biblia' };
+        setHashSilently(subSlugMap[sub] || 'cine');
         if (sub === 'blueprint') blueprintUI?.render();
         refreshViewportLayout();
       },
@@ -1637,6 +1817,10 @@ async function init() {
   // Montar Consejo de Asesores de Producción Cinematográfica (8 Jefes de Departamento)
   advisorsUI = mountAdvisorsBoardUI(document.getElementById('col-advisors'), {
     getActiveSpot: () => state.activeSpot,
+    onSubTabChanged: (sub) => {
+      const advSlugMap = { spot_audit: 'asesores', wardrobe: 'vestuario', council_hods: 'hods' };
+      setHashSilently(advSlugMap[sub] || 'asesores');
+    },
     selectSpotById: (spotId) => {
       const sp = findSpotById(spotId);
       if (!sp) return;
@@ -1811,8 +1995,12 @@ async function init() {
   chaptersUI.renderChapters();
   renderShotsPanel();
 
-  // Inicializar Piso 2 en el visor 3D
+  // Inicializar Piso 2 en el visor 3D y aplicar slug inicial de la URL si existe
   selectFloor(2);
+  window.addEventListener('hashchange', () => applySlugFromLocationHash());
+  if (window.location.hash) {
+    applySlugFromLocationHash();
+  }
 
   try {
     await alina.load('./models/alina.glb');

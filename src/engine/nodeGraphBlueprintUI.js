@@ -166,9 +166,23 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
     zoom: 0.86,
     positions: structuredClone(DEFAULT_NODE_POSITIONS),
     checklist: PREFLIGHT_CHECKLIST.map((_, i) => i < 4), // 4 checks técnicos pre-validados por solver
-    passPreviews: {}, // beatId -> { beauty, depth, normals, mask }
+    passPreviews: {}, // cacheKey -> { beauty, endBeauty, depth, normals, mask }
     draggingNode: null,
-    panning: null
+    panning: null,
+    // Estado del reproductor interactivo del Pipeline ("▶ Play Pipeline")
+    tourRunning: false,
+    tourAbort: false,
+    execStage: '', // '' | 'sources' | 'render2real' | 'higgsfield' | 'gate' | 'reel_loop'
+    execBanner: '',
+    execNodeIds: new Set(),
+    compiledScenes: [], // [{ beatIdx, role, label, durationSec, voiceSlice, cameraLabel, lensLabel, moveId, grade, startImg, endImg, depthImg, startThumb }]
+    monitorOpen: false,
+    monitorPlaying: false,
+    monitorSplit3D: true,
+    monitorFilterScene: -1, // -1 = Reel completo 4 escenas, 0..3 = escena individual
+    monitorRaf: 0,
+    monitorT0: 0,
+    recordingDemo: false
   };
 
   function getChapters() {
@@ -295,16 +309,375 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
     };
 
     const thumbs = {
-      beauty: ctx.camCtrl.renderVertical916DataURL(360, 640, 'beauty', { dof: dofSpec }),
+      beauty: ctx.camCtrl.renderVertical916DataURL(432, 768, 'beauty', { dof: dofSpec }),
       depth: ctx.camCtrl.renderVertical916DataURL(360, 640, 'depth', { depthBoundsM: payload.depthBoundsM }),
       normals: ctx.camCtrl.renderVertical916DataURL(360, 640, 'normals'),
-      mask: ctx.camCtrl.renderVertical916DataURL(360, 640, 'mask')
+      mask: ctx.camCtrl.renderVertical916DataURL(360, 640, 'mask'),
+      endBeauty: null
     };
+
+    // Capturar también t=1 (End Frame) para animar el recorrido óptico real (Dolly / Slider / Rack Focus) en el Monitor
+    if (shot.shotRole === 'B-Roll' && vaultObj?.camPos && vaultObj?.camTarget) {
+      ctx.camCtrl.isTransitioning = false;
+      ctx.camCtrl.camera.position.set(vaultObj.camPos.x + 0.15, vaultObj.camPos.y + 0.02, vaultObj.camPos.z - 0.06);
+      ctx.camCtrl.controls.target.set(vaultObj.camTarget.x, vaultObj.camTarget.y, vaultObj.camTarget.z);
+      ctx.camCtrl.controls.update();
+    } else {
+      ctx.cinema.seekNormalized(1, { cleanKeyframe: true });
+    }
+    const endDofSpec = {
+      enabled: true,
+      focalLengthMm: shot.focalLengthMm,
+      apertureFStop: shot.apertureFStop,
+      focusDistM: payload.dof.endFocusDistM,
+      sensorHeightMm: 36.0
+    };
+    thumbs.endBeauty = ctx.camCtrl.renderVertical916DataURL(432, 768, 'beauty', { dof: endDofSpec });
+    if (shot.shotRole !== 'B-Roll') ctx.cinema.seekNormalized(0, { cleanKeyframe: true });
 
     if (ctx.alina?.root) ctx.alina.root.visible = prevAlinaVis;
     ctx.camCtrl.render();
     state.passPreviews[beatId] = thumbs;
     return thumbs;
+  }
+
+  function loadImageAsync(dataUrl) {
+    return new Promise((resolve) => {
+      if (!dataUrl) { resolve(null); return; }
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => resolve(null);
+      im.src = dataUrl;
+    });
+  }
+
+  // ==========================================================================
+  // MOTOR DEL MONITOR 9:16 EN VIVO (TRANSFORMA SCREENSHOTS 3D EN REEL DE 4 ESCENAS)
+  // ==========================================================================
+  function stopMonitorLoop() {
+    if (state.monitorRaf) {
+      cancelAnimationFrame(state.monitorRaf);
+      state.monitorRaf = 0;
+    }
+    state.monitorPlaying = false;
+  }
+
+  function renderMonitorFrame(sceneClip, localT, globalElapsedSec, totalDurSec) {
+    const canvas = root.querySelector('#bp-monitor-canvas');
+    if (!canvas || !sceneClip || !sceneClip.startImg) return;
+    const c2 = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    c2.save();
+    c2.fillStyle = '#05070c';
+    c2.fillRect(0, 0, W, H);
+
+    // 1. Movimiento cinemático simulado desde los Screenshots 3D (Start <-> End + Zoom/Pan suave según MoveId)
+    const mv = sceneClip.moveId;
+    const easeT = -(Math.cos(Math.PI * Math.min(1, Math.max(0, localT))) - 1) / 2;
+    let scale = 1.04;
+    let tx = 0;
+    let ty = 0;
+    if (mv === 'slow_dolly_push_in' || mv === 'rack_focus_macro_to_eyes') {
+      scale = 1.0 + easeT * 0.085;
+    } else if (mv === 'slow_dolly_pull_out') {
+      scale = 1.09 - easeT * 0.08;
+    } else if (mv === 'lateral_slider_truck' || mv === 'subtle_parallax_arc') {
+      scale = 1.07;
+      tx = (easeT - 0.5) * W * 0.07;
+    } else if (mv === 'pedestal_reveal_up') {
+      scale = 1.07;
+      ty = (0.5 - easeT) * H * 0.065;
+    } else if (mv === 'handheld_walking_lubezki') {
+      scale = 1.06;
+      tx = Math.sin(globalElapsedSec * Math.PI * 2 * 1.7) * 4.5;
+      ty = Math.abs(Math.cos(globalElapsedSec * Math.PI * 2 * 1.7)) * 5.5 - 3;
+    } else {
+      // static_breathing: micro-respiración orgánica
+      scale = 1.015 + Math.sin(localT * Math.PI) * 0.014;
+    }
+
+    const drawTransformed = (img, alpha = 1) => {
+      if (!img) return;
+      c2.save();
+      c2.globalAlpha = alpha;
+      c2.translate(W / 2 + tx, H / 2 + ty);
+      c2.scale(scale, scale);
+      c2.drawImage(img, -W / 2, -H / 2, W, H);
+      c2.restore();
+    };
+
+    // Dibujar placa cinemática procesada (interpolación Start -> End + LUT del Director + Halación + Grano 35mm)
+    c2.save();
+    c2.filter = 'contrast(1.13) saturate(1.14) brightness(1.02)';
+    drawTransformed(sceneClip.startImg, 1.0);
+    if (sceneClip.endImg) {
+      drawTransformed(sceneClip.endImg, easeT * 0.88);
+    }
+    c2.restore();
+
+    // Split-Toning & Atmósfera Kelvin del Director (simulación Render-to-Real + Cinema Studio LUT)
+    const g = sceneClip.grade || {};
+    if (g.splitShadowsHex) {
+      c2.save();
+      c2.globalCompositeOperation = 'soft-light';
+      const grad = c2.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, g.splitHighlightsHex || '#ffe0b2');
+      grad.addColorStop(1, g.splitShadowsHex || '#14202e');
+      c2.globalAlpha = 0.36;
+      c2.fillStyle = grad;
+      c2.fillRect(0, 0, W, H);
+      c2.restore();
+    }
+
+    // Resplandor cálido / shimmer de luz práctica (velas / bombillas Edison)
+    const shimmer = 0.06 + Math.sin(globalElapsedSec * 7.5) * 0.025;
+    const glow = c2.createRadialGradient(W * 0.5, H * 0.28, 10, W * 0.5, H * 0.45, H * 0.65);
+    glow.addColorStop(0, `rgba(255, 198, 145, ${shimmer})`);
+    glow.addColorStop(1, 'rgba(4, 6, 12, 0.42)');
+    c2.fillStyle = glow;
+    c2.fillRect(0, 0, W, H);
+
+    // Grano orgánico de película 35mm en tiempo real
+    c2.fillStyle = 'rgba(255,255,255,0.035)';
+    for (let n = 0; n < 90; n++) {
+      const gx = ((Math.sin(n * 91.7 + globalElapsedSec * 37) * 0.5 + 0.5) * W) | 0;
+      const gy = ((Math.cos(n * 47.3 + globalElapsedSec * 53) * 0.5 + 0.5) * H) | 0;
+      c2.fillRect(gx, gy, 1.5, 1.5);
+    }
+
+    // 2. Modo Comparación Split-Wipe (Izquierda: Screenshot 3D Base + Depth | Derecha: Escena Cinemática Generada)
+    if (state.monitorSplit3D) {
+      const splitX = Math.round(W * 0.36);
+      c2.save();
+      c2.beginPath();
+      c2.rect(0, 0, splitX, H);
+      c2.clip();
+      c2.drawImage(sceneClip.startImg, 0, 0, W, H);
+      if (sceneClip.depthImg) {
+        c2.globalAlpha = 0.28;
+        c2.drawImage(sceneClip.depthImg, 0, H - 115, 64, 110);
+      }
+      c2.restore();
+
+      c2.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+      c2.lineWidth = 1.5;
+      c2.beginPath();
+      c2.moveTo(splitX, 0);
+      c2.lineTo(splitX, H);
+      c2.stroke();
+
+      c2.fillStyle = 'rgba(6, 9, 17, 0.82)';
+      c2.fillRect(6, 36, 74, 16);
+      c2.fillRect(splitX + 6, 36, 108, 16);
+      c2.font = 'bold 8.5px ui-monospace, monospace';
+      c2.fillStyle = '#38bdf8';
+      c2.fillText('3D PREVIZ RAW', 10, 47);
+      c2.fillStyle = '#34d399';
+      c2.fillText('HIGGSFIELD SIM', splitX + 10, 47);
+    }
+
+    // 3. HUD Cinematográfico Superior (Rol + Cámara + Lente + Timecode)
+    c2.fillStyle = 'rgba(6, 9, 17, 0.76)';
+    c2.fillRect(0, 0, W, 30);
+    c2.font = 'bold 9.5px ui-monospace, monospace';
+    c2.fillStyle = sceneClip.role === 'A-Roll' ? '#f472b6' : '#fbbf24';
+    c2.fillText(`● ESCENA ${sceneClip.beatIdx + 1}/4 [${sceneClip.role === 'A-Roll' ? 'A-ROLL' : 'ZERO-FACE'}]`, 8, 13);
+    c2.font = '8.5px ui-monospace, monospace';
+    c2.fillStyle = '#cbd5e1';
+    c2.fillText(`${sceneClip.cameraLabel.slice(0, 15)} · ${sceneClip.lensLabel.slice(0, 16)}`, 8, 24);
+    c2.textAlign = 'right';
+    c2.fillStyle = '#34d399';
+    c2.fillText(`${globalElapsedSec.toFixed(1)}s / ${totalDurSec.toFixed(1)}s`, W - 8, 18);
+    c2.textAlign = 'left';
+
+    // 4. Subtítulo Sincronizado de Locución ElevenLabs
+    if (sceneClip.voiceSlice) {
+      const boxH = 54;
+      const gradSub = c2.createLinearGradient(0, H - 90, 0, H);
+      gradSub.addColorStop(0, 'rgba(0,0,0,0)');
+      gradSub.addColorStop(1, 'rgba(4,6,12,0.92)');
+      c2.fillStyle = gradSub;
+      c2.fillRect(0, H - 90, W, 90);
+
+      c2.font = 'italic 600 10.5px -apple-system, BlinkMacSystemFont, sans-serif';
+      c2.fillStyle = '#f8fafc';
+      c2.textAlign = 'center';
+      const words = `«${sceneClip.voiceSlice}»`.split(' ');
+      let line = '';
+      const lines = [];
+      for (const w of words) {
+        const test = line ? `${line} ${w}` : w;
+        if (c2.measureText(test).width > W - 24 && line) {
+          lines.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+      lines.slice(0, 3).forEach((ln, idx) => {
+        c2.fillText(ln, W / 2, H - boxH + 14 + idx * 13);
+      });
+      c2.textAlign = 'left';
+    }
+
+    // Barra de progreso inferior de la escena
+    c2.fillStyle = 'rgba(255,255,255,0.16)';
+    c2.fillRect(0, H - 4, W, 4);
+    c2.fillStyle = sceneClip.role === 'A-Roll' ? '#ec4899' : '#f59e0b';
+    c2.fillRect(0, H - 4, W * Math.min(1, localT), 4);
+    c2.restore();
+  }
+
+  function startReelPlaybackLoop() {
+    stopMonitorLoop();
+    if (!state.compiledScenes.length) return;
+    state.monitorOpen = true;
+    state.monitorPlaying = true;
+    state.monitorT0 = performance.now();
+
+    const tick = () => {
+      if (!state.monitorPlaying || !state.compiledScenes.length) return;
+      const clips =
+        state.monitorFilterScene >= 0 && state.compiledScenes[state.monitorFilterScene]
+          ? [state.compiledScenes[state.monitorFilterScene]]
+          : state.compiledScenes;
+      const totalDur = clips.reduce((s, c) => s + c.durationSec, 0) || 3.0;
+      const elapsed = ((performance.now() - state.monitorT0) / 1000) % totalDur;
+
+      let acc = 0;
+      let activeClip = clips[0];
+      let localT = 0;
+      for (const c of clips) {
+        if (elapsed >= acc && elapsed < acc + c.durationSec) {
+          activeClip = c;
+          localT = (elapsed - acc) / c.durationSec;
+          break;
+        }
+        acc += c.durationSec;
+      }
+
+      // Iluminar en tiempo real el nodo del Beat que está sonando en Unreal Sequencer (Columna 2)
+      root.querySelectorAll('[data-select-beat]').forEach((el) => {
+        const bIdx = Number(el.dataset.selectBeat);
+        el.classList.toggle('ring-2', bIdx === activeClip.beatIdx);
+        el.classList.toggle('ring-emerald-400', bIdx === activeClip.beatIdx);
+      });
+
+      renderMonitorFrame(activeClip, localT, elapsed, totalDur);
+      state.monitorRaf = requestAnimationFrame(tick);
+    };
+    state.monitorRaf = requestAnimationFrame(tick);
+  }
+
+  /**
+   * RECORRIDO INTERACTIVO "▶ PLAY PIPELINE":
+   * Recorre los 4 Beats mostrando visualmente cómo los screenshots 3D viajan por cada nodo
+   * y se transforman en las 4 escenas distintas del episodio.
+   */
+  async function runInteractivePipelineTour() {
+    if (state.tourRunning) {
+      state.tourAbort = true;
+      state.tourRunning = false;
+      state.execStage = '';
+      state.execBanner = '';
+      state.execNodeIds.clear();
+      stopMonitorLoop();
+      render();
+      return;
+    }
+
+    const ch = getCurrentChapter();
+    if (!ch) return;
+    stopMonitorLoop();
+    state.tourRunning = true;
+    state.tourAbort = false;
+    state.compiledScenes = [];
+    state.monitorOpen = true;
+    state.monitorFilterScene = -1;
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const beats = ch.blueprintBeats;
+
+    for (let i = 0; i < beats.length; i++) {
+      if (state.tourAbort) break;
+      const b = beats[i];
+      const ev = evaluateBeat(b, i, ch);
+      const cacheKey = `${ch.id}_${b.beatId}_${b.role}_${b.spotId}_${b.objectId}_${b.directorStyleId}_${b.shotTypeId}_${b.cameraMoveId}`;
+
+      // PASO 1: Fuentes -> Nodo Sequencer Beat
+      state.activeBeatIdx = i;
+      state.execStage = 'sources';
+      state.execNodeIds = new Set(['node-chapter', b.role === 'A-Roll' ? 'node-dna' : 'node-vault', `node-beat-${i}`]);
+      state.execBanner = `⚡ [Escena ${i + 1}/4 · ${b.role}] Paso 1/3: Enrutando ${b.role === 'A-Roll' ? 'ADN Alina + Voz' : `Objeto ${ev.vaultObj?.handle || ''} (Zero-Face)`} → Sequencer…`;
+      render();
+      await sleep(520);
+      if (state.tourAbort) break;
+
+      // PASO 2: Captura de Screenshots 3D -> Capa 1 Render-to-Real
+      state.execStage = 'render2real';
+      state.execNodeIds = new Set([`node-beat-${i}`, 'node-render2real']);
+      state.execBanner = `🩵 [Escena ${i + 1}/4] Paso 2/3: Capturando Screenshots 3D (Start/End PBR CoC, Depth 16b, Normals, Mask)…`;
+      render();
+      await sleep(80);
+      const thumbs = state.passPreviews[cacheKey] || captureLiveThumbnailsForBeat(ev, cacheKey);
+      const [startImg, endImg, depthImg] = await Promise.all([
+        loadImageAsync(thumbs.beauty),
+        loadImageAsync(thumbs.endBeauty || thumbs.beauty),
+        loadImageAsync(thumbs.depth)
+      ]);
+      render();
+      await sleep(480);
+      if (state.tourAbort) break;
+
+      // PASO 3: Capa 2 Higgsfield Cinema Studio 4.0 + Síntesis de Escena en Monitor
+      state.execStage = 'higgsfield';
+      state.execNodeIds = new Set(['node-render2real', 'node-higgsfield', 'node-gate']);
+      const hf = ev.manifest.higgsfieldCinemaStudio;
+      state.execBanner = `🟣 [Escena ${i + 1}/4] Paso 3/3: Aplicando ${hf.cameraLabel} + ${hf.lensLabel} (${ev.manifest.keyframeStrategy.mode}) → Compilando Escena ${i + 1}…`;
+
+      const sceneClip = {
+        beatIdx: i,
+        role: b.role,
+        label: `Escena ${i + 1} (${b.role === 'A-Roll' ? 'A-Roll' : 'Zero-Face'})`,
+        durationSec: Number(b.durationSec) || 3.0,
+        voiceSlice: b.voiceSlice || '',
+        cameraLabel: hf.cameraLabel,
+        lensLabel: hf.lensLabel,
+        moveId: ev.shot.cameraMoveId,
+        grade: ev.payload.volumeGrade,
+        startImg,
+        endImg,
+        depthImg,
+        startThumb: thumbs.beauty
+      };
+      state.compiledScenes.push(sceneClip);
+      render();
+
+      // Previsualizar brevemente el movimiento de esta escena recién compilada en el monitor (700ms)
+      const previewStart = performance.now();
+      while (performance.now() - previewStart < 720 && !state.tourAbort) {
+        const pT = (performance.now() - previewStart) / 720;
+        renderMonitorFrame(sceneClip, pT, pT * sceneClip.durationSec, sceneClip.durationSec);
+        await sleep(32);
+      }
+    }
+
+    state.tourRunning = false;
+    state.execNodeIds.clear();
+    if (!state.tourAbort && state.compiledScenes.length > 0) {
+      state.execStage = 'reel_loop';
+      state.execBanner = `✅ Pipeline completado: Reproduciendo Montaje Final de ${state.compiledScenes.length} Escenas encadenadas (1:2 Zero-Waste).`;
+      render();
+      startReelPlaybackLoop();
+      ctx.setStatus('🎬 <span class="text-emerald-400 font-bold">Recorrido del Pipeline completado:</span> 4 escenas distintas generadas desde los screenshots 3D y reproduciéndose en el Monitor.');
+    } else {
+      state.execStage = '';
+      state.execBanner = '';
+      render();
+    }
   }
 
   /** Captura de alta resolución (1080×1920) para empaquetado .ZIP de un Beat. */
@@ -525,7 +898,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
     });
 
     svg.innerHTML = cables
-      .map((c) => {
+      .map((c, idx) => {
         const { from, to } = c;
         let d;
         if (c.vertical) {
@@ -537,11 +910,19 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
         }
         const midX = (from.x + to.x) * 0.5;
         const midY = (from.y + to.y) * 0.5;
+        const showPulse = state.tourRunning && c.opacity >= 0.9;
         return `
           <g>
-            ${c.glow ? `<path d="${d}" fill="none" stroke="${c.color}" stroke-width="8" stroke-opacity="0.18" />` : ''}
-            <path d="${d}" fill="none" stroke="${c.color}" stroke-width="${c.width}" stroke-opacity="${c.opacity}"
+            ${c.glow || showPulse ? `<path d="${d}" fill="none" stroke="${c.color}" stroke-width="9" stroke-opacity="0.22" />` : ''}
+            <path id="bp-path-${idx}" d="${d}" fill="none" stroke="${c.color}" stroke-width="${c.width}" stroke-opacity="${c.opacity}"
               ${c.dashed ? 'stroke-dasharray="7 5" class="bp-cable-anim"' : ''} stroke-linecap="round" />
+            ${
+              showPulse
+                ? `<circle r="5.5" fill="#ffffff" filter="drop-shadow(0 0 6px ${c.color})">
+                     <animateMotion dur="0.65s" repeatCount="indefinite" path="${d}" />
+                   </circle>`
+                : ''
+            }
             <circle cx="${from.x}" cy="${from.y}" r="5" fill="${c.color}" fill-opacity="${c.opacity}" />
             <circle cx="${to.x}" cy="${to.y}" r="5.5" fill="#060911" stroke="${c.color}" stroke-width="2.2" />
             ${
@@ -606,6 +987,10 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
       const p = state.positions[id] || { x: 0, y: 0 };
       return `left:${p.x}px; top:${p.y}px; width:${widthPx}px;`;
     };
+    const execRing = (id) =>
+      state.execNodeIds.has(id)
+        ? 'ring-4 ring-emerald-400 shadow-[0_0_34px_rgba(16,185,129,0.65)] z-30'
+        : '';
 
     const allSpots = Object.keys(catalog.spotCinematographyMap);
     const hf = activeEval.manifest.higgsfieldCinemaStudio;
@@ -637,16 +1022,27 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
 
       <div id="bp-viewport" class="bp-viewport relative w-full h-[calc(100vh-175px)] min-h-[680px] rounded-2xl border border-white/15 overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing">
 
-        <!-- Etiquetas Superiores de Columnas (Fijas en HUD Superior) -->
+        <!-- Etiquetas Superiores de Columnas + Botón PLAY PIPELINE -->
         <div class="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-          <div class="flex items-center gap-2 bg-black/75 backdrop-blur-md border border-white/10 rounded-xl px-3 py-1.5 text-[11px]">
-            <span class="text-[#f29979] font-bold">⬡ ALINA BLUEPRINT GRAPH</span>
-            <span class="text-slate-500">|</span>
-            <span class="text-purple-300 font-mono text-[10px]">Col 1: Fuentes</span>
-            <span class="text-slate-500">→</span>
-            <span class="text-emerald-300 font-mono text-[10px]">Col 2: Secuencia 1:2 (Unreal Sequencer)</span>
-            <span class="text-slate-500">→</span>
-            <span class="text-sky-300 font-mono text-[10px]">Col 3: 3D-to-Higgsfield (DaVinci Fusion)</span>
+          <div class="pointer-events-auto flex flex-wrap items-center gap-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl px-3 py-1.5 text-[11px]">
+            <button id="bp-play-pipeline-top" class="px-3 py-1 rounded-lg font-bold text-white shadow-lg transition-all flex items-center gap-1.5 ${
+              state.tourRunning
+                ? 'bg-rose-600 hover:bg-rose-500 animate-pulse'
+                : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95'
+            }">
+              <span>${state.tourRunning ? '⏹ Detener Recorrido' : '▶ Play Pipeline (Generar 4 Escenas)'}</span>
+            </button>
+            ${
+              state.compiledScenes.length > 0 && !state.tourRunning
+                ? `<button id="bp-toggle-monitor-top" class="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/35 border border-purple-400/40 text-purple-200 font-semibold text-[10.5px]">
+                     🎞️ ${state.monitorOpen ? 'Ocultar Monitor Reel' : 'Ver Monitor Reel (4 Escenas)'}
+                   </button>`
+                : ''
+            }
+            <span class="text-slate-600 hidden md:inline">|</span>
+            <span class="text-slate-300 font-mono text-[10px] hidden md:inline">
+              ${state.execBanner ? esc(state.execBanner) : 'Pulsa ▶ Play Pipeline para ver cómo los screenshots 3D recorren los nodos y generan el Reel 1:2'}
+            </span>
           </div>
           <div class="pointer-events-auto flex items-center gap-1.5 bg-black/75 backdrop-blur-md border border-emerald-500/30 rounded-xl px-3 py-1 text-[10px] font-mono">
             <span class="${ratio12Ok ? 'text-emerald-300' : 'text-rose-300'}">${aRollCount} A-Roll : ${bRollCount} B-Roll Zero-Face</span>
@@ -664,7 +1060,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
                =============================================================== -->
 
           <!-- NODO 1: ARCO NARRATIVO & VOZ ELEVENLABS (#a855f7) -->
-          <div id="node-chapter" class="bp-node border border-purple-500/45" style="${posStyle('node-chapter', 330)}">
+          <div id="node-chapter" class="bp-node border border-purple-500/45 ${execRing('node-chapter')}" style="${posStyle('node-chapter', 330)}">
             <div data-drag="node-chapter" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-purple-500/15 border-b border-purple-500/30">
               <span class="text-[11px] font-bold text-purple-200 tracking-wide">🟣 CAPÍTULO & LOCUCIÓN VOZ</span>
               <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-200">${esc(ch.week || `Cap. ${ch.number}`)}</span>
@@ -685,7 +1081,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
           </div>
 
           <!-- NODO 2: ADN ALINA & RIG ARKIT (#ec4899 — SOLO CABLEA A A-ROLL) -->
-          <div id="node-dna" class="bp-node border border-pink-500/45" style="${posStyle('node-dna', 330)}">
+          <div id="node-dna" class="bp-node border border-pink-500/45 ${execRing('node-dna')}" style="${posStyle('node-dna', 330)}">
             <div data-drag="node-dna" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-pink-500/15 border-b border-pink-500/30">
               <span class="text-[11px] font-bold text-pink-200 tracking-wide">🩷 ADN ALINA & RIG 3D LOCK</span>
               <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-pink-500/25 text-pink-200">SOLO A-ROLL</span>
@@ -705,7 +1101,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
           </div>
 
           <!-- NODO 3: BÓVEDA DE OBJETOS ZERO-FACE (#f59e0b — SOLO CABLEA A B-ROLL) -->
-          <div id="node-vault" class="bp-node border border-amber-500/45" style="${posStyle('node-vault', 330)}">
+          <div id="node-vault" class="bp-node border border-amber-500/45 ${execRing('node-vault')}" style="${posStyle('node-vault', 330)}">
             <div data-drag="node-vault" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-amber-500/15 border-b border-amber-500/30">
               <span class="text-[11px] font-bold text-amber-200 tracking-wide">🏺 BÓVEDA @OBJETOS (32 ACTIVOS)</span>
               <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/25 text-amber-200">ZERO-FACE B-ROLL</span>
@@ -749,7 +1145,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
               const tEnd = (Number(tStart) + Number(b.durationSec || 0)).toFixed(1);
 
               return `
-              <div id="node-beat-${i}" data-select-beat="${i}" class="bp-node border ${borderCls} transition-shadow" style="${posStyle(`node-beat-${i}`, 345)}">
+              <div id="node-beat-${i}" data-select-beat="${i}" class="bp-node border ${borderCls} ${execRing(`node-beat-${i}`)} transition-shadow" style="${posStyle(`node-beat-${i}`, 345)}">
                 <div data-drag="node-beat-${i}" class="bp-node-header flex items-center justify-between px-3 py-1.5 rounded-t-2xl ${isA ? 'bg-[#c86446]/20 border-b border-[#c86446]/30' : 'bg-amber-500/15 border-b border-amber-500/30'}">
                   <div class="flex items-center gap-1.5">
                     <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isA ? 'bg-pink-500/25 text-pink-200' : 'bg-amber-500/25 text-amber-200'}">${isA ? 'A-ROLL' : 'ZERO-FACE'}</span>
@@ -810,7 +1206,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
                =============================================================== -->
 
           <!-- NODO 4: RENDER-TO-REAL 3D (FLUX.1 DEV + CONTROLNET MULTIPASS) (#38bdf8) -->
-          <div id="node-render2real" class="bp-node border border-sky-500/50" style="${posStyle('node-render2real', 385)}">
+          <div id="node-render2real" class="bp-node border border-sky-500/50 ${execRing('node-render2real')}" style="${posStyle('node-render2real', 385)}">
             <div data-drag="node-render2real" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-sky-500/15 border-b border-sky-500/30">
               <span class="text-[11px] font-bold text-sky-200 tracking-wide">🩵 CAPA 1 · RENDER-TO-REAL (PLANO ${state.activeBeatIdx + 1})</span>
               <button id="bp-btn-render-thumbs" class="text-[9.5px] font-mono px-2 py-0.5 rounded bg-sky-500/30 hover:bg-sky-500/50 text-white font-bold">↻ Capturar 3D</button>
@@ -847,7 +1243,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
           </div>
 
           <!-- NODO 5: HIGGSFIELD CINEMA STUDIO 4.0 & VOZ (#c084fc) -->
-          <div id="node-higgsfield" class="bp-node border border-fuchsia-500/50" style="${posStyle('node-higgsfield', 385)}">
+          <div id="node-higgsfield" class="bp-node border border-fuchsia-500/50 ${execRing('node-higgsfield')}" style="${posStyle('node-higgsfield', 385)}">
             <div data-drag="node-higgsfield" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-fuchsia-500/15 border-b border-fuchsia-500/30">
               <span class="text-[11px] font-bold text-fuchsia-200 tracking-wide">🟣 CAPA 2 · HIGGSFIELD CINEMA 4.0</span>
               <span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${kf.mode === 'START_END' ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/40' : 'bg-amber-500/25 text-amber-200 border border-amber-400/40'}">${kf.mode === 'START_END' ? 'START + END' : 'START ONLY'}</span>
@@ -873,7 +1269,7 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
           </div>
 
           <!-- NODO 6: OUTPUT & PRE-FLIGHT ZERO-WASTE GATE (#10b981) -->
-          <div id="node-gate" class="bp-node border border-emerald-500/55" style="${posStyle('node-gate', 385)}">
+          <div id="node-gate" class="bp-node border border-emerald-500/55 ${execRing('node-gate')}" style="${posStyle('node-gate', 385)}">
             <div data-drag="node-gate" class="bp-node-header flex items-center justify-between px-3.5 py-2 rounded-t-2xl bg-emerald-500/15 border-b border-emerald-500/30">
               <span class="text-[11px] font-bold text-emerald-200 tracking-wide">🟢 PRE-FLIGHT GATE & EXPORT</span>
               <span class="text-[10px] font-mono font-bold ${safetyPct === 100 && ratio12Ok ? 'text-emerald-300' : 'text-amber-300'}">${safetyPct}% Blindaje</span>
@@ -902,8 +1298,64 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
 
         </div>
 
+        <!-- MONITOR FLOTANTE 9:16 DE SALIDA DEL PIPELINE (4 ESCENAS DESDE SCREENSHOTS 3D) -->
+        ${
+          state.monitorOpen
+            ? `<div id="bp-cinema-monitor" class="absolute top-14 right-3.5 z-30 w-[268px] rounded-2xl bg-[#090d16]/95 border border-emerald-500/45 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2.5 space-y-2" style="backdrop-filter: blur(16px);">
+                 <div class="flex items-center justify-between gap-1">
+                   <span class="text-[10px] font-mono font-bold text-emerald-300">🎞️ REEL SALIDA (${state.compiledScenes.length}/4 ESCENAS)</span>
+                   <div class="flex items-center gap-1">
+                     <button id="bp-mon-split" class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${
+                       state.monitorSplit3D
+                         ? 'bg-sky-500/25 border-sky-400/50 text-sky-200'
+                         : 'bg-white/5 border-white/10 text-slate-400'
+                     }" title="Comparar Screenshot 3D Base vs Simulación Cinemática">🔀 3D|Cine</button>
+                     <button id="bp-mon-close" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/15 text-[10px] text-slate-300">✕</button>
+                   </div>
+                 </div>
+
+                 <canvas id="bp-monitor-canvas" width="270" height="480" class="w-full rounded-xl border border-white/15 bg-black block" style="aspect-ratio: 9/16;"></canvas>
+
+                 <!-- Tira de las 4 Escenas generadas desde 3D -->
+                 <div class="grid grid-cols-5 gap-1">
+                   <button data-mon-scene="-1" class="mon-scene-btn py-1 rounded text-[9px] font-mono font-bold border ${
+                     state.monitorFilterScene === -1
+                       ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+                       : 'bg-black/50 border-white/10 text-slate-400'
+                   }">ALL</button>
+                   ${[0, 1, 2, 3]
+                     .map((idx) => {
+                       const sc = state.compiledScenes[idx];
+                       const isAct = state.monitorFilterScene === idx;
+                       return `<button data-mon-scene="${idx}" ${!sc ? 'disabled' : ''} class="mon-scene-btn py-1 rounded text-[9px] font-mono border ${
+                         !sc
+                           ? 'opacity-30 bg-black/30 border-white/5 text-slate-500'
+                           : isAct
+                             ? 'bg-[#c86446]/35 border-[#c86446] text-white font-bold'
+                             : 'bg-black/60 border-white/15 text-slate-200 hover:border-white/40'
+                       }">${idx + 1}·${sc?.role === 'B-Roll' ? '0F' : 'A'}</button>`;
+                     })
+                     .join('')}
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+                   <button id="bp-mon-playpause" class="py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-semibold">
+                     ${state.monitorPlaying ? '⏸ Pausar' : '▶ Reproducir'}
+                   </button>
+                   <button id="bp-mon-rec-webm" class="py-1.5 rounded-lg bg-rose-600/85 hover:bg-rose-500 text-white font-bold">
+                     ${state.recordingDemo ? '● Grabando…' : '⏺ Demo .webm'}
+                   </button>
+                 </div>
+               </div>`
+            : ''
+        }
+
         <!-- FLOATING GLASS HUD INFERIOR -->
         <div class="absolute bottom-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0c101b]/90 border border-white/15 shadow-2xl whitespace-nowrap max-w-[96%] overflow-x-auto" style="backdrop-filter: blur(16px);">
+          <button id="bp-play-pipeline-hud" class="px-3 py-1 rounded-full font-bold text-[11px] text-white shadow ${
+            state.tourRunning ? 'bg-rose-600' : 'bg-emerald-600 hover:bg-emerald-500'
+          }">${state.tourRunning ? '⏹ Stop' : '▶ Play Pipeline'}</button>
+          <span class="text-white/15">|</span>
           <button id="bp-hud-prev-beat" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/15 text-[11px] text-slate-200 font-mono">◀ Beat</button>
           <span class="text-[11px] font-mono font-bold text-[#f29979]">Plano ${state.activeBeatIdx + 1}/4 (${activeBeat.role})</span>
           <button id="bp-hud-next-beat" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/15 text-[11px] text-slate-200 font-mono">Beat ▶</button>
@@ -1146,7 +1598,68 @@ export function mountNodeGraphBlueprintUI(root, ctx) {
       }
     });
 
-    // 9. Floating Glass HUD Inferior
+    // 9. Controles del Reproductor "▶ Play Pipeline" y Monitor 9:16
+    root.querySelector('#bp-play-pipeline-top')?.addEventListener('click', () => runInteractivePipelineTour());
+    root.querySelector('#bp-play-pipeline-hud')?.addEventListener('click', () => runInteractivePipelineTour());
+    root.querySelector('#bp-toggle-monitor-top')?.addEventListener('click', () => {
+      state.monitorOpen = !state.monitorOpen;
+      render();
+      if (state.monitorOpen && state.compiledScenes.length) startReelPlaybackLoop();
+      else stopMonitorLoop();
+    });
+    root.querySelector('#bp-mon-close')?.addEventListener('click', () => {
+      state.monitorOpen = false;
+      stopMonitorLoop();
+      render();
+    });
+    root.querySelector('#bp-mon-split')?.addEventListener('click', () => {
+      state.monitorSplit3D = !state.monitorSplit3D;
+      render();
+      if (state.compiledScenes.length) startReelPlaybackLoop();
+    });
+    root.querySelector('#bp-mon-playpause')?.addEventListener('click', () => {
+      if (state.monitorPlaying) {
+        stopMonitorLoop();
+        render();
+      } else {
+        startReelPlaybackLoop();
+        const btn = root.querySelector('#bp-mon-playpause');
+        if (btn) btn.textContent = '⏸ Pausar';
+      }
+    });
+    root.querySelectorAll('.mon-scene-btn').forEach((b) => {
+      b.addEventListener('click', () => {
+        state.monitorFilterScene = Number(b.dataset.monScene);
+        if (state.monitorFilterScene >= 0) state.activeBeatIdx = state.monitorFilterScene;
+        render();
+        startReelPlaybackLoop();
+      });
+    });
+    root.querySelector('#bp-mon-rec-webm')?.addEventListener('click', () => {
+      const canvas = root.querySelector('#bp-monitor-canvas');
+      if (!canvas || state.recordingDemo || !state.compiledScenes.length) return;
+      state.recordingDemo = true;
+      state.monitorFilterScene = -1;
+      startReelPlaybackLoop();
+      const recBtn = root.querySelector('#bp-mon-rec-webm');
+      if (recBtn) recBtn.textContent = '● Grabando…';
+      const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+      const mr = new MediaRecorder(canvas.captureStream(30), { mimeType: mime, videoBitsPerSecond: 4_500_000 });
+      const chunks = [];
+      mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      mr.onstop = () => {
+        state.recordingDemo = false;
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        downloadBlob(blob, `alina_pipeline_demo_cap${ch.number}_9x16.webm`);
+        if (recBtn) recBtn.textContent = '⏺ Demo .webm';
+        ctx.setStatus('✅ <span class="text-emerald-400 font-bold">Video Demo .webm (4 escenas encadenadas) descargado.</span>');
+      };
+      mr.start(200);
+      const totalMs = state.compiledScenes.reduce((s, c) => s + c.durationSec, 0) * 1000;
+      setTimeout(() => { if (mr.state !== 'inactive') mr.stop(); }, Math.min(14000, totalMs));
+    });
+
+    // 10. Floating Glass HUD Inferior
     root.querySelector('#bp-hud-prev-beat').onclick = () => {
       state.activeBeatIdx = (state.activeBeatIdx + beats.length - 1) % beats.length;
       render();

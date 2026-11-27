@@ -53,6 +53,9 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
         <button data-csub="director" class="csub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
           🎬 Director de Fotografía & Animatic
         </button>
+        <button data-csub="atlas" class="csub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
+          🎥 Encuadres & Movimientos (45)
+        </button>
         <button data-csub="bible" class="csub-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition-all">
           👤 Biblia de Alina & Reglas
         </button>
@@ -74,6 +77,7 @@ export function mountChaptersCinemaUI(subNavRoot, chaptersPaneRoot, biblePaneRoo
     ctx.onSubTabChanged(subTab);
     if (subTab === 'chapters') renderChaptersView();
     if (subTab === 'blueprint') ctx.onOpenBlueprint?.(selectedChapterId);
+    if (subTab === 'atlas') ctx.onOpenAtlas?.();
     if (subTab === 'bible') renderBibleView();
   }
 

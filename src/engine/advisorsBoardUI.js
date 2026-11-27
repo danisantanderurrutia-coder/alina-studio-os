@@ -17,6 +17,7 @@ import { SANCTUARY_FLOORS } from '../data/sanctuaryData.js';
 import {
   extractPaletteAndTokensFromDataUrl,
   fetchWebImageAsDataUrl,
+  processReferenceImageForHiggsfield,
   readAndResizeImageFile
 } from './shotsStorage.js';
 
@@ -400,9 +401,13 @@ export function mountAdvisorsBoardUI(root, ctx) {
                   <option value="1">Piso 1 · Perchero Bistró Café</option>
                   <option value="0">Planta Baja · Perchero Cabaret VIP</option>
                 </select>
-                <input id="imp-ward-cat" type="text" value="Couture Importado"
-                  class="bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200">
+                <select id="imp-ward-bgmode" class="bg-black/50 border border-emerald-500/40 rounded-lg px-2 py-1 text-xs text-emerald-200 font-semibold" title="Preparación de la foto de ropa para Higgsfield Elements / Virtual Try-On">
+                  <option value="white_sheet">⬜ Fondo Blanco (#FFFFFF Higgsfield)</option>
+                  <option value="auto_cutout">✂️ Recorte PNG Transparente (RGBA)</option>
+                  <option value="original">🖼 Conservar Foto Original</option>
+                </select>
               </div>
+              <input id="imp-ward-cat" type="hidden" value="Couture Importado">
             </div>
 
             <div class="md:col-span-8 p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
@@ -536,10 +541,14 @@ export function mountAdvisorsBoardUI(root, ctx) {
       const title = $('imp-ward-name')?.value?.trim() || 'Look Couture Importado';
       const subtype = $('imp-ward-subtype')?.value || 'dress';
       const floor = Number($('imp-ward-floor')?.value ?? 2);
+      const bgMode = $('imp-ward-bgmode')?.value || 'white_sheet';
       const category = $('imp-ward-cat')?.value?.trim() || 'Couture Importado';
       if (!pendingImportAnalysis) {
         await runWardrobeImageAnalysis(pendingImportDataUrl, title);
       }
+      const processedRefUrl = pendingImportDataUrl
+        ? await processReferenceImageForHiggsfield(pendingImportDataUrl, bgMode, 1080)
+        : null;
       const fluxTokens = $('imp-ward-flux')?.value?.trim() || pendingImportAnalysis.fluxTokens;
       const higgsfieldPhysics = $('imp-ward-physics')?.value?.trim() || pendingImportAnalysis.higgsfieldPhysics;
       const swatches = pendingImportAnalysis?.triadSwatches || ['#1f232b', '#0B2B20', '#d4af37'];
@@ -552,7 +561,7 @@ export function mountAdvisorsBoardUI(root, ctx) {
         swatches,
         fluxTokens,
         higgsfieldPhysics,
-        referenceDataUrl: pendingImportDataUrl
+        referenceDataUrl: processedRefUrl
       });
       showWardrobeImporter = false;
       pendingImportDataUrl = null;

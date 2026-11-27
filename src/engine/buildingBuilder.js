@@ -269,11 +269,15 @@ export function buildSanctuaryArchitecture(scene, lighting) {
   lighting.registerEmissive(matNeonCyan, { dayIntensity: 0.3, nightIntensity: 2.0 });
 
   // Helper to add shadows & mesh cleanly
+  let _inBaseArchitecture = false;
   function box(parent, w, h, d, x, y, z, mat, cast = true, receive = true) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y, z);
     m.castShadow = cast;
     m.receiveShadow = receive;
+    m.userData.maskId = _inBaseArchitecture
+      ? (h <= 0.36 && y <= 0.15 ? 'floor' : 'architecture')
+      : (w * d > 18 && h < 0.12 ? 'floor' : 'furniture');
     parent.add(m);
     return m;
   }
@@ -283,11 +287,13 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     m.position.set(x, y, z);
     m.castShadow = cast;
     m.receiveShadow = true;
+    m.userData.maskId = _inBaseArchitecture ? 'architecture' : (rTop <= 0.35 && h <= 1.2 ? 'prop' : 'furniture');
     parent.add(m);
     return m;
   }
 
   function addFloorBase(group, floorIndex, floorMat) {
+    _inBaseArchitecture = true;
     // Main interior slab
     box(group, BUILDING_WIDTH, 0.26, BUILDING_DEPTH, 0, -0.13, BUILDING_CENTER_Z, floorMat, false, true);
     // Exterior cornice band on front open-side cutaway edge + brushed brass hairline accent
@@ -384,6 +390,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
       box(group, BUILDING_WIDTH - 0.6, 0.88, 0.32, 0, FLOOR_HEIGHT - 0.52, bz, beamMat, false, true);
       box(group, BUILDING_WIDTH - 0.8, 0.035, 0.06, 0, FLOOR_HEIGHT - 0.97, bz, matBrass, false, false);
     }
+    _inBaseArchitecture = false;
   }
 
   function addContactShadow(parent, x, z, radiusX = 0.75, radiusZ = 0.75, y = 0.015) {
@@ -454,8 +461,12 @@ export function buildSanctuaryArchitecture(scene, lighting) {
         'wooden_display_shelves_01'
       ]);
       const allowMeshShadow = !hangFromCeiling && castShadowModels.has(modelId);
+      const semanticTag = castShadowModels.has(modelId) && modelId !== 'gothic_statue' && modelId !== 'street_lamp_01'
+        ? 'furniture'
+        : 'prop';
       obj.traverse((child) => {
         if (child.isMesh) {
+          child.userData.maskId = semanticTag;
           child.castShadow = allowMeshShadow;
           child.receiveShadow = true;
           const matName = String(child.material?.name || '').toLowerCase();
@@ -503,6 +514,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
           new THREE.PlaneGeometry(Math.max(0.22, spanW * 0.78), Math.max(0.28, size1.y * 0.78)),
           customArtMat
         );
+        canvas.userData.maskId = 'prop';
         canvas.rotation.y = rotYRad;
         const depthHalf = Math.min(size1.x, size1.z) * 0.5 + 0.004;
         const fwd = new THREE.Vector3(0, 0, depthHalf).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotYRad);
@@ -2046,6 +2058,370 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     };
   }
 
+  /**
+   * GENERADOR DE ESTUDIO AISLADO 1:1 (ISOLATED TURNTABLE / PACKSHOT STUDIO):
+   * Construye un ejemplar limpio y aislado de cualquiera de los 32 objetos canónicos
+   * (con su macetero de basalto/latón, plinto de museo, perchero Couture con la prenda
+   * colgada o arreglo de escritorio sobre peana de nogal/mármol) sin muros, techos ni paredes
+   * detrás, para renderizar PNGs transparentes (RGBA Cutout) o en Fondo Blanco Puro (#FFFFFF)
+   * óptimos para Higgsfield Elements / Flux Redux / IP-Adapter.
+   */
+  async function buildIsolatedObjectTurntableGroup(objDef = {}) {
+    const g = new THREE.Group();
+    const id = String(objDef.id || '');
+    const modelId = String(objDef.modelId || '');
+    const wardrobeId = String(objDef.wardrobeId || '');
+
+    const addGLTF = async (mid, targetH, x = 0, y = 0, z = 0, rotY = 0, customArtMat = null) => {
+      try {
+        const gltf = await loadCachedGLTF(mid);
+        const obj = gltf.scene.clone(true);
+        if (mid === 'pachira_aquatica_01') {
+          for (const ch of [...obj.children]) {
+            if (!ch.name.endsWith('_d') && !ch.name.endsWith('_c')) obj.remove(ch);
+            else ch.position.set(0, 0, 0);
+          }
+        } else if (mid === 'calathea_orbifolia_01' || mid === 'anthurium_botany_01') {
+          for (const ch of [...obj.children]) {
+            if (!ch.name.endsWith('_a') && !ch.name.endsWith('_b')) obj.remove(ch);
+            else ch.position.set(0, 0, 0);
+          }
+        }
+        const wrap = new THREE.Group();
+        wrap.add(obj);
+        obj.rotation.set(0, rotY, 0);
+        wrap.updateMatrixWorld(true);
+        const b0 = new THREE.Box3().setFromObject(obj);
+        const s0 = new THREE.Vector3();
+        b0.getSize(s0);
+        obj.scale.multiplyScalar(targetH / Math.max(0.05, s0.y));
+        wrap.updateMatrixWorld(true);
+        const b1 = new THREE.Box3().setFromObject(obj);
+        const c1 = new THREE.Vector3();
+        b1.getCenter(c1);
+        obj.position.set(x - c1.x, y - b1.min.y, z - c1.z);
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            const matName = String(child.material?.name || '').toLowerCase();
+            if (customArtMat && matName.includes('artwork')) {
+              child.material = customArtMat;
+            } else if (matName.includes('glass')) {
+              const isGreen = matName.includes('green');
+              const isAmber = matName.includes('orange') || matName.includes('yellow');
+              child.material = new THREE.MeshPhysicalMaterial({
+                color: isGreen ? 0x14532d : isAmber ? 0xb45309 : 0xdbeafe,
+                roughness: 0.08,
+                metalness: 0.05,
+                transparent: true,
+                opacity: isGreen || isAmber ? 0.84 : 0.38
+              });
+            }
+          }
+        });
+        g.add(obj);
+        return obj;
+      } catch (e) {
+        console.warn('[IsolatedTurntable GLTF]', mid, e);
+        return null;
+      }
+    };
+
+    const addSingleCoutureGarmentStand = (mainMat, accentMat, { len = 1.32, isCorset = false, withChoker = false, withHat = false } = {}) => {
+      // Peana circular de nogal/basalto y aro de latón cepillado (#d4af37)
+      cyl(g, 0.34, 0.38, 0.055, 28, 0, 0.0275, 0, matDarkMarble);
+      cyl(g, 0.35, 0.35, 0.018, 28, 0, 0.06, 0, matBrass);
+      const railH = 1.78;
+      for (const sx of [-0.46, 0.46]) {
+        cyl(g, 0.018, 0.022, railH, 14, sx, railH * 0.5, 0, matBrass);
+        const fin = new THREE.Mesh(new THREE.SphereGeometry(0.034, 14, 14), matBrass);
+        fin.position.set(sx, railH + 0.02, 0);
+        g.add(fin);
+      }
+      const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.96, 14), matBrass);
+      topRail.rotation.z = Math.PI / 2;
+      topRail.position.set(0, railH - 0.02, 0);
+      g.add(topRail);
+
+      // Percha esculpida de nogal + gancho de latón + prenda protagonista de frente (ancho a lo largo de X)
+      const gItem = new THREE.Group();
+      gItem.position.set(0, railH - 0.02, 0);
+      gItem.rotation.y = Math.PI / 2 - 0.18;
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.005, 10, 18, Math.PI * 1.4), matBrass);
+      hook.position.set(0, 0.03, 0);
+      hook.rotation.y = Math.PI / 2;
+      gItem.add(hook);
+      for (const side of [-1, 1]) {
+        const wing = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.016, 0.24, 12), matWoodDark);
+        wing.rotation.x = side * (Math.PI / 2 - 0.25);
+        wing.position.set(0, -0.065, side * 0.11);
+        gItem.add(wing);
+      }
+      const bodyTopY = -0.085;
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(isCorset ? 0.095 : 0.082, isCorset ? 0.125 : 0.165, len, 24), mainMat);
+      torso.scale.set(0.55, 1.0, 2.05);
+      torso.position.set(0, bodyTopY - len * 0.5, 0);
+      gItem.add(torso);
+
+      for (const side of [-1, 1]) {
+        const pleat = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.092, len * 0.96, 18), accentMat || mainMat);
+        pleat.scale.set(0.52, 1.0, 1.55);
+        pleat.position.set(0.014, bodyTopY - len * 0.49, side * 0.14);
+        pleat.rotation.x = side * 0.04;
+        gItem.add(pleat);
+
+        const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.034, Math.min(0.64, len * 0.56), 14), mainMat);
+        sleeve.position.set(0, bodyTopY - 0.29, side * 0.23);
+        sleeve.rotation.x = side * 0.12;
+        gItem.add(sleeve);
+      }
+
+      // Cinturón / O-Ring central en latón cepillado (#d4af37)
+      const beltRing = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.0065, 10, 22), matBrass);
+      beltRing.rotation.y = Math.PI / 2;
+      beltRing.position.set(0.052, bodyTopY - 0.36, 0);
+      gItem.add(beltRing);
+
+      if (withChoker) {
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.078, 0.042, 22), matBlackLeather);
+        collar.position.set(0, bodyTopY + 0.01, 0);
+        gItem.add(collar);
+        const oRing = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.0045, 10, 20), matBrass);
+        oRing.rotation.y = Math.PI / 2;
+        oRing.position.set(0.08, bodyTopY + 0.01, 0);
+        gItem.add(oRing);
+      }
+      if (withHat) {
+        const hat = new THREE.Group();
+        hat.position.set(0.32, railH + 0.05, 0);
+        hat.rotation.set(0.15, 0.2, -0.18);
+        cyl(hat, 0.18, 0.19, 0.012, 22, 0, 0, 0, matObsidianSilk);
+        cyl(hat, 0.09, 0.10, 0.09, 18, 0, 0.048, 0, matObsidianSilk);
+        cyl(hat, 0.102, 0.103, 0.016, 18, 0, 0.015, 0, matBrass);
+        g.add(hat);
+      }
+      g.add(gItem);
+    };
+
+    // 1. PLANTAS BOTÁNICAS EN MACETERO DE BASALTO / MARFIL / TERRACOTA + ARO DE LATÓN
+    if (id === 'obj-pachira-basalto' || modelId === 'pachira_aquatica_01') {
+      const potH = 0.42, potR = 0.26;
+      cyl(g, potR, potR * 0.76, potH, 24, 0, potH * 0.5, 0, matDarkMarble);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(potR * 0.99, 0.016, 10, 28), matBrass);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, potH - 0.01, 0);
+      g.add(rim);
+      await addGLTF('pachira_aquatica_01', 1.65, 0, potH - 0.04, 0, 0.35);
+      return g;
+    }
+    if (id === 'obj-anthurium-marfil-vanity' || modelId === 'anthurium_botany_01') {
+      const potH = 0.36, potR = 0.23;
+      cyl(g, potR, potR * 0.76, potH, 24, 0, potH * 0.5, 0, matCreamLinen);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(potR * 0.99, 0.015, 10, 28), matBrass);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, potH - 0.01, 0);
+      g.add(rim);
+      await addGLTF('anthurium_botany_01', 0.78, 0, potH - 0.04, 0, 0.25);
+      return g;
+    }
+    if (id === 'obj-calathea-terracota-spa' || modelId === 'calathea_orbifolia_01') {
+      const potH = 0.36, potR = 0.23;
+      cyl(g, potR, potR * 0.76, potH, 24, 0, potH * 0.5, 0, matTerracotta);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(potR * 0.99, 0.015, 10, 28), matBrass);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, potH - 0.01, 0);
+      g.add(rim);
+      await addGLTF('calathea_orbifolia_01', 0.76, 0, potH - 0.04, 0, 0.4);
+      return g;
+    }
+
+    // 2. ESCULTURAS SOBRE PEDESTAL COMPACTO DE NOGAL / BASALTO + MOLDURA DE LATÓN
+    if (id === 'obj-busto-marmol' || modelId === 'marble_bust_01') {
+      box(g, 0.52, 0.16, 0.52, 0, 0.08, 0, matWoodDark);
+      box(g, 0.56, 0.035, 0.56, 0, 0.175, 0, matBrass);
+      await addGLTF('marble_bust_01', 0.74, 0, 0.19, 0, 0.18);
+      return g;
+    }
+    if (id === 'obj-cabeza-ecuestre-nogal' || modelId === 'horse_head') {
+      box(g, 0.54, 0.16, 0.54, 0, 0.08, 0, matWoodDark);
+      box(g, 0.58, 0.035, 0.58, 0, 0.175, 0, matBrass);
+      await addGLTF('horse_head', 0.76, 0, 0.19, 0, 0.45);
+      return g;
+    }
+    if (id === 'obj-escultura-bronce-ray' || modelId === 'bronze_ray_statue') {
+      box(g, 0.52, 0.16, 0.52, 0, 0.08, 0, matDarkMarble);
+      box(g, 0.56, 0.035, 0.56, 0, 0.175, 0, matBrass);
+      await addGLTF('bronze_ray_statue', 0.78, 0, 0.19, 0, 0.3);
+      return g;
+    }
+    if (id === 'obj-escultura-gotica-rooftop' || (modelId === 'gothic_statue' && id !== 'obj-cuero-choker')) {
+      box(g, 0.72, 0.18, 0.72, 0, 0.09, 0, matDarkMarble);
+      box(g, 0.76, 0.04, 0.76, 0, 0.195, 0, matBrass);
+      await addGLTF('gothic_statue', 1.45, 0, 0.21, 0, 0.15);
+      return g;
+    }
+
+    // 3. LOS 7 LOOKS DEL ARMARIO CÁPSULA (@look_*) Y PERCHEROS COUTURE AISLADOS
+    if (wardrobeId === 'charcoal_silk_slip' || id === 'obj-look-charcoal-silk-slip') {
+      addSingleCoutureGarmentStand(matObsidianSilk, matCharcoalLinen, { len: 1.28 });
+      return g;
+    }
+    if (wardrobeId === 'clinical_blazer_corset' || id === 'obj-look-clinical-blazer-corset') {
+      addSingleCoutureGarmentStand(matObsidianSilk, matEmeraldVelvet, { len: 1.02, isCorset: true });
+      return g;
+    }
+    if (wardrobeId === 'boudoir_leather_choker' || id === 'obj-look-boudoir-leather-choker' || id === 'obj-cuero-choker') {
+      addSingleCoutureGarmentStand(matBlackLeather, matEmeraldVelvet, { len: 1.05, isCorset: true, withChoker: true });
+      return g;
+    }
+    if (wardrobeId === 'emerald_velvet_evening' || id === 'obj-look-emerald-velvet-evening') {
+      addSingleCoutureGarmentStand(matEmeraldVelvet, matObsidianSilk, { len: 1.42 });
+      return g;
+    }
+    if (wardrobeId === 'tulum_black_linen_wrap' || id === 'obj-look-tulum-black-linen-wrap') {
+      addSingleCoutureGarmentStand(matCharcoalLinen, matCreamLinen, { len: 1.32 });
+      return g;
+    }
+    if (wardrobeId === 'eixample_cream_trench' || id === 'obj-look-eixample-cream-trench') {
+      addSingleCoutureGarmentStand(matCreamLinen, matCognacLeather, { len: 1.24, withHat: true });
+      return g;
+    }
+    if (wardrobeId === 'spa_minimal_towel_silk' || id === 'obj-look-spa-minimal-towel-silk') {
+      addSingleCoutureGarmentStand(matCreamLinen, matCognacLeather, { len: 1.18 });
+      return g;
+    }
+    if (id === 'obj-perchero-atelier-vanity') {
+      const tempParent = new THREE.Group();
+      addCoutureGarmentRack(tempParent, 0, 0, 0, 0.25, 'atelier');
+      g.add(tempParent);
+      return g;
+    }
+
+    // 4. BODEGONES Y PROPS DE MESA / ESTUDIO / CAFÉ / SPA / AUDIO (AISLADOS SOBRE PEANA DE NOGAL/MÁRMOL)
+    if (id === 'obj-espresso-diario' || id === 'obj-porcelana-isla-marquina' || modelId === 'tea_set_01') {
+      const trayMat = id === 'obj-porcelana-isla-marquina' ? matDarkMarble : matWhiteMarble;
+      cyl(g, 0.62, 0.65, 0.04, 32, 0, 0.02, 0, trayMat);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.635, 0.013, 10, 36), matBrass);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, 0.04, 0);
+      g.add(rim);
+      await addGLTF('tea_set_01', 0.24, -0.05, 0.04, 0.04, 0.35);
+      await addGLTF('brass_goblets', 0.21, 0.16, 0.04, -0.08, -0.25);
+      return g;
+    }
+    if (id === 'obj-libros-whisky' || modelId === 'book_encyclopedia_set_01') {
+      box(g, 0.78, 0.045, 0.46, 0, 0.0225, 0, matWoodDark);
+      box(g, 0.80, 0.016, 0.48, 0, 0.01, 0, matBrass);
+      await addGLTF('book_encyclopedia_set_01', 0.38, -0.1, 0.045, 0, 0.12);
+      await addGLTF('brass_candleholders', 0.32, 0.24, 0.045, 0.04, -0.2);
+      return g;
+    }
+    if (id === 'obj-shibari-aceite' || modelId === 'ceramic_vase_01') {
+      box(g, 0.76, 0.045, 0.48, 0, 0.0225, 0, matTeak);
+      box(g, 0.78, 0.015, 0.50, 0, 0.01, 0, matBrass);
+      await addGLTF('ceramic_vase_01', 0.38, -0.14, 0.045, 0, 0.2);
+      await addGLTF('wooden_lantern_01', 0.42, 0.18, 0.045, 0.02, -0.25);
+      return g;
+    }
+    if (id === 'obj-shure-sm7b' || modelId === 'desk_lamp_arm_01') {
+      box(g, 0.72, 0.05, 0.48, 0, 0.025, 0, matWoodDark);
+      box(g, 0.74, 0.016, 0.50, 0, 0.01, 0, matBrass);
+      // Micrófono Shure SM7B esculpido en primer término + lámpara articulada de estudio
+      cyl(g, 0.09, 0.11, 0.025, 20, -0.14, 0.06, 0.04, matDarkMarble);
+      cyl(g, 0.014, 0.016, 0.34, 12, -0.14, 0.23, 0.04, matSteel);
+      cyl(g, 0.024, 0.024, 0.03, 14, -0.14, 0.40, 0.04, matBrass);
+      const micCap = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.16, 18), matObsidianSilk);
+      micCap.rotation.z = Math.PI / 3;
+      micCap.position.set(-0.08, 0.43, 0.04);
+      g.add(micCap);
+      const yokeRing = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.005, 8, 18), matBrass);
+      yokeRing.position.set(-0.11, 0.42, 0.04);
+      g.add(yokeRing);
+      await addGLTF('desk_lamp_arm_01', 0.52, 0.16, 0.05, -0.04, -0.45);
+      return g;
+    }
+    if (id === 'obj-camara-reloj' || modelId === 'mantel_clock_01') {
+      box(g, 0.76, 0.045, 0.46, 0, 0.0225, 0, matWoodDark);
+      box(g, 0.78, 0.015, 0.48, 0, 0.01, 0, matBrass);
+      await addGLTF('mantel_clock_01', 0.36, -0.14, 0.045, 0, 0.18);
+      await addGLTF('Camera_01', 0.24, 0.18, 0.045, 0.05, -0.32);
+      return g;
+    }
+    if (id === 'obj-copas-laton-bar' || id === 'obj-reservado-vip-cabaret' || modelId === 'brass_goblets') {
+      cyl(g, 0.44, 0.46, 0.045, 28, 0, 0.0225, 0, matDarkMarble);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.014, 10, 32), matCopper);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, 0.042, 0);
+      g.add(rim);
+      await addGLTF('brass_goblets', 0.28, -0.12, 0.045, 0.04, 0.25);
+      await addGLTF('wine_bottles_01', 0.38, 0.14, 0.045, -0.04, -0.2);
+      return g;
+    }
+    if (id === 'obj-vitrina-gotica-boudoir' || modelId === 'GothicCabinet_01') {
+      await addGLTF('GothicCabinet_01', 1.85, 0, 0, 0, 0.22);
+      return g;
+    }
+    if (id === 'obj-consola-vanity-barroca' || modelId === 'ClassicConsole_01') {
+      await addGLTF('ClassicConsole_01', 0.88, 0, 0, 0, 0.2);
+      await addGLTF('brass_vase_01', 0.34, 0, 0.88, 0, 0.1);
+      return g;
+    }
+    if (id === 'obj-butaca-lectura-suite' || modelId === 'mid_century_lounge_chair') {
+      await addGLTF('mid_century_lounge_chair', 0.88, -0.18, 0, 0, 0.35);
+      await addGLTF('side_table_tall_01', 0.68, 0.38, 0, -0.08, -0.2);
+      return g;
+    }
+    if (id === 'obj-faroles-teca-pool' || modelId === 'wooden_lantern_01') {
+      box(g, 0.68, 0.04, 0.48, 0, 0.02, 0, matTeak);
+      box(g, 0.70, 0.015, 0.50, 0, 0.01, 0, matBrass);
+      await addGLTF('wooden_lantern_01', 0.52, -0.12, 0.04, 0, 0.28);
+      await addGLTF('brass_goblets', 0.26, 0.18, 0.04, 0.05, -0.2);
+      return g;
+    }
+    if (id === 'obj-libreria-busto-cafe' || modelId === 'steel_frame_shelves_03') {
+      await addGLTF('steel_frame_shelves_03', 1.95, 0, 0, 0, 0.22);
+      await addGLTF('book_encyclopedia_set_01', 0.22, -0.22, 0.62, 0, 0.22);
+      await addGLTF('antique_ceramic_vase_01', 0.26, 0.22, 0.62, 0, 0.22);
+      await addGLTF('marble_bust_01', 0.34, 0, 1.06, 0, 0.22);
+      return g;
+    }
+    if (id === 'obj-libreria-nogal-clinica' || modelId === 'Shelf_01') {
+      await addGLTF('Shelf_01', 1.98, 0, 0, 0, 0.22);
+      await addGLTF('book_encyclopedia_set_01', 0.22, -0.10, 0.56, 0, 0.22);
+      await addGLTF('antique_ceramic_vase_01', 0.24, 0.18, 0.56, 0, 0.22);
+      await addGLTF('horse_statue_01', 0.22, -0.14, 1.08, 0, 0.22);
+      await addGLTF('book_encyclopedia_set_01', 0.22, 0.08, 1.08, 0, 0.22);
+      return g;
+    }
+    if (id === 'obj-salon-lectura-walk-cafe' || modelId === 'ArmChair_01') {
+      await addGLTF('ArmChair_01', 0.92, -0.22, 0, 0, 0.35);
+      await addGLTF('coffee_table_round_01', 0.52, 0.38, 0, 0.08, 0);
+      await addGLTF('ceramic_vase_01', 0.26, 0.38, 0.52, 0.08, 0.2);
+      return g;
+    }
+    if (id === 'obj-catenarias-farola-parking' || modelId === 'street_lamp_01') {
+      // Par de catenarias VIP en latón cepillado con cordón de terciopelo + farola clásica
+      for (const sx of [-0.38, 0.38]) {
+        cyl(g, 0.14, 0.16, 0.035, 20, sx, 0.0175, 0.15, matBrass);
+        cyl(g, 0.022, 0.024, 0.96, 14, sx, 0.49, 0.15, matBrass);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.042, 14, 14), matBrass);
+        cap.position.set(sx, 0.98, 0.15);
+        g.add(cap);
+      }
+      const rope = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.024, 12, 28, Math.PI), matCrimsonVelvet);
+      rope.rotation.z = Math.PI;
+      rope.position.set(0, 0.88, 0.15);
+      g.add(rope);
+      await addGLTF('street_lamp_01', 1.65, 0, 0, -0.18, 0.2);
+      return g;
+    }
+
+    // Fallback para cualquier otro modelo GLTF
+    await addGLTF(modelId || 'brass_vase_01', 1.0, 0, 0, 0, 0.25);
+    return g;
+  }
+
   return {
     floorGroups,
     waterMeshes,
@@ -2053,6 +2429,7 @@ export function buildSanctuaryArchitecture(scene, lighting) {
     mirrorReflector,
     coutureRacksByFloor,
     hangCustomGarmentOnRack,
-    spawnCustomObjectInFloor
+    spawnCustomObjectInFloor,
+    buildIsolatedObjectTurntableGroup
   };
 }

@@ -8,6 +8,7 @@ import {
   deleteObjectFromDB,
   extractPaletteAndTokensFromDataUrl,
   fetchWebImageAsDataUrl,
+  processReferenceImageForHiggsfield,
   readAndResizeImageFile,
   saveObjectToDB
 } from './shotsStorage.js';
@@ -39,7 +40,7 @@ export function mountObjectsVaultUI(root, ctx) {
 
         <div class="flex flex-wrap items-center gap-2 text-xs">
           <button id="btn-obj-toggle-web-import" type="button" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-[#c86446] hover:opacity-95 text-white font-bold shadow transition-all">
-            🌐 Importar Foto / URL Web → 3D + Bóveda
+            🌐 Ruta B (4 Pasos): Traer Objeto/Ropa de Internet
           </button>
           <button id="btn-obj-toggle-3d" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 font-semibold transition-all">
             👁 Mostrar Visor 3D para Capturar
@@ -54,13 +55,73 @@ export function mountObjectsVaultUI(root, ctx) {
         </div>
       </div>
 
-      <!-- IMPORTADOR DIRECTO DE FOTOS / URL DE ROPA U OBJETOS (2D WEB -> 3D + BÓVEDA) -->
+      <!-- PANEL GUÍA DE LAS 2 RUTAS OPERATIVAS DE OBJETOS (RUTA A: 3 PASOS · RUTA B: 4 PASOS) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs">
+        <!-- RUTA A (3 PASOS): OBJETOS NATIVOS DEL MODELO 3D -->
+        <div class="p-3.5 rounded-2xl bg-black/50 border border-emerald-500/30 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+              🏛️ RUTA A (3 Pasos) · Objeto Nativo del Modelo 3D
+            </span>
+            <span class="text-[10px] font-mono text-slate-400">32 objetos canónicos listos</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 pt-0.5">
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-emerald-300">PASO 1 · Existe en 3D</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">El objeto existe en el edificio 3D (<code class="font-mono">worldPos XYZ</code>) y la Bóveda tiene su <strong>PNG RGBA + Depth 16-bit</strong> aislado.</p>
+            </div>
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-amber-300">PASO 2 · Crear Realista</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">Se genera fotorrealista en <strong>Flux / ComfyUI</strong> (con <code class="font-mono">Depth 0.68</code> + <code class="font-mono">object_token_lock</code>) y se bloquea como <code class="font-mono">🔒 Master Still</code>.</p>
+            </div>
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-cyan-300">PASO 3 · Insertar en Video</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">Se anima como <strong>B-Roll 100mm Macro (≤3.5s)</strong> o se pasa en <strong>Fondo Blanco (#FFFFFF)</strong> a Higgsfield Elements.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RUTA B (4 PASOS): OBJETOS / ROPA TRAÍDOS DIRECTAMENTE DE INTERNET -->
+        <div class="p-3.5 rounded-2xl bg-black/50 border border-pink-500/35 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 font-bold">
+              🌐 RUTA B (4 Pasos) · Objeto o Ropa Traído de Internet
+            </span>
+            <button id="btn-obj-open-route-b" type="button" class="text-[10px] font-mono font-bold text-pink-300 hover:text-white underline">
+              Abrir Importador Ruta B ↓
+            </button>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 pt-0.5">
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-pink-300">1 · Internet</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">Eliges foto o URL de ropa, planta, cuadro o mueble en la web.</p>
+            </div>
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-amber-300">2 · Recorte + LLM</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">Pegas aquí (o pasas a Antigravity): se recorta en <strong>PNG / Fondo Blanco</strong> y el LLM extrae su ADN Tríada.</p>
+            </div>
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-emerald-300">3 · Insertar en 3D</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">Se cuelga en el <strong>Perchero Couture 3D</strong> o se instancia en el piso elegido.</p>
+            </div>
+            <div class="p-2 rounded-xl bg-white/[0.03] border border-white/10">
+              <div class="text-[10px] font-mono font-bold text-cyan-300">4 · Video Higgsfield</div>
+              <p class="text-[10px] text-slate-400 mt-0.5 leading-snug">La ficha en <strong>Fondo Blanco (#FFFFFF)</strong> + <code class="font-mono">@handle</code> entra directo al video de Higgsfield.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORTADOR DIRECTO DE FOTOS / URL DE ROPA U OBJETOS (RUTA B DE 4 PASOS: INTERNET -> ANTIGRAVITY/LLM CUTOUT -> 3D -> HIGGSFIELD) -->
       <div id="obj-web-importer-bar" class="hidden p-4 rounded-2xl bg-black/65 border border-pink-500/40 space-y-3 text-xs">
         <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10">
           <div>
-            <span class="text-[10px] font-mono uppercase tracking-wider text-pink-300 font-bold">Pipeline 2D Web → Motor 3D + Bóveda (Mateo Santoro & Margaux De Vries)</span>
-            <h4 class="text-xs font-bold text-white mt-0.5">Sube una foto o pega URL de internet: extrae paleta Hexadecimal + ADN Material y lo integra en el Perchero o Sala 3D</h4>
+            <span class="text-[10px] font-mono uppercase tracking-wider text-pink-300 font-bold">🌐 RUTA B EN 4 PASOS: 1. Foto Internet → 2. Recorte PNG/Blanco + LLM (Antigravity) → 3. Insertar en Modelo 3D → 4. Video Higgsfield</span>
+            <h4 class="text-xs font-bold text-white mt-0.5">Pega con Ctrl+V / Cmd+V cualquier imagen copiada de internet, sube archivo o pega URL: recorta el fondo y extrae su ADN Material</h4>
           </div>
+          <button id="btn-imp-copy-antigravity" type="button" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[10px] font-mono font-bold" title="Copia el comando listo para pegárselo a Antigravity en el chat si quieres que el agente descargue, recorte e integre el activo por código">
+            🤖 Copiar Comando para Antigravity LLM
+          </button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
           <div class="md:col-span-5 space-y-2">
@@ -73,7 +134,7 @@ export function mountObjectsVaultUI(root, ctx) {
                 class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#c86446]">
               <button id="btn-imp-obj-web-fetch" type="button" class="px-2.5 py-1.5 rounded-xl bg-[#c86446] hover:opacity-95 text-white font-bold shrink-0">Extraer</button>
             </div>
-            <div class="grid grid-cols-3 gap-1.5">
+            <div class="grid grid-cols-4 gap-1.5">
               <input id="imp-obj-web-name" type="text" placeholder="Nombre del activo"
                 class="col-span-1 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-white">
               <select id="imp-obj-web-type" class="col-span-1 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200">
@@ -89,6 +150,11 @@ export function mountObjectsVaultUI(root, ctx) {
                 <option value="4">Piso 4 · Penthouse Rooftop</option>
                 <option value="1">Piso 1 · Le Velvet Café</option>
                 <option value="0">Planta Baja · Cabaret Nocturne</option>
+              </select>
+              <select id="imp-obj-web-bgmode" class="col-span-1 bg-black/50 border border-emerald-500/40 rounded-lg px-2 py-1 text-xs text-emerald-200 font-semibold" title="Modo de preparación de la imagen de referencia para Higgsfield">
+                <option value="white_sheet">⬜ Ficha Fondo Blanco (#FFFFFF Higgsfield)</option>
+                <option value="auto_cutout">✂️ Recorte PNG Transparente (Auto-Cutout RGBA)</option>
+                <option value="original">🖼 Conservar Foto Original</option>
               </select>
             </div>
           </div>
@@ -224,16 +290,16 @@ export function mountObjectsVaultUI(root, ctx) {
         <div data-id="${esc(obj.id)}" class="obj-card group cursor-pointer rounded-xl border p-2.5 bg-[#151821] hover:bg-[#1a1e29] transition-all flex flex-col gap-2 ${
           isSel ? 'border-[#c86446] copper-glow' : 'border-white/10'
         }">
-          <div class="relative w-full aspect-square rounded-lg overflow-hidden bg-black border border-white/10">
-            <img src="${displayImg}" data-obj-id="${esc(obj.id)}" alt="${esc(obj.name)}" class="vault-card-img w-full h-full object-cover">
+          <div class="relative w-full aspect-square rounded-lg overflow-hidden border border-white/15" style="background: radial-gradient(circle at 50% 42%, #232834 0%, #10131a 72%, #090b10 100%);">
+            <img src="${displayImg}" data-obj-id="${esc(obj.id)}" alt="${esc(obj.name)}" class="vault-card-img w-full h-full object-contain p-1.5 drop-shadow-[0_10px_18px_rgba(0,0,0,0.65)]">
             <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-[#f29979] border border-white/10">${esc(obj.handle)}</span>
             <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-[9px] font-mono text-slate-300 border border-white/10">${floorTag}</span>
             ${
               hasMaster
-                ? '<span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-500 text-black text-[9px] font-mono font-extrabold shadow">🔒 MASTER STILL</span>'
+                ? '<span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-500 text-black text-[9px] font-mono font-extrabold shadow">🔒 REF / MASTER</span>'
                 : obj.isPlaceholderImage
                   ? '<span class="absolute bottom-1.5 inset-x-1.5 text-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 text-[9px] font-mono border border-amber-400/30">Pendiente render</span>'
-                  : '<span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-600/90 text-white text-[9px] font-mono font-bold">3D PREVIZ 1:1</span>'
+                  : '<span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-600/90 text-white text-[9px] font-mono font-bold">PNG RGBA 1:1</span>'
             }
           </div>
           <div class="min-w-0">
@@ -278,8 +344,10 @@ export function mountObjectsVaultUI(root, ctx) {
     const hasMaster = Boolean(obj.masterApprovedStill);
     const hasDepth = Boolean(obj.previzDepthRender);
     const previzSrc = obj.previzRender || obj.image;
+    const whiteSrc = obj.previzWhiteRender || String(previzSrc || '').replace(/_beauty\.png$/i, '_white.png');
     let shownImg = obj.masterApprovedStill || previzSrc;
     if (inspectorPreviewMode === 'previz') shownImg = previzSrc;
+    else if (inspectorPreviewMode === 'white') shownImg = whiteSrc;
     else if (inspectorPreviewMode === 'depth' && hasDepth) shownImg = obj.previzDepthRender;
     else if (inspectorPreviewMode === 'master' && hasMaster) shownImg = obj.masterApprovedStill;
 
@@ -292,16 +360,17 @@ export function mountObjectsVaultUI(root, ctx) {
     box.innerHTML = `
       <div class="flex items-start gap-3 pb-3 border-b border-white/10">
         <div class="space-y-1.5 shrink-0">
-          <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-black border border-white/15">
-            <img id="insp-obj-img" src="${shownImg}" alt="${esc(obj.name)}" class="w-full h-full object-cover">
+          <div class="relative w-24 h-24 rounded-xl overflow-hidden border border-white/15" style="${inspectorPreviewMode === 'white' ? 'background:#ffffff;' : 'background: radial-gradient(circle at 50% 42%, #232834 0%, #10131a 72%, #090b10 100%);'}">
+            <img id="insp-obj-img" src="${shownImg}" alt="${esc(obj.name)}" class="w-full h-full object-contain p-1">
             <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[8px] font-mono ${hasMaster ? 'text-amber-300' : 'text-emerald-300'}">
-              ${inspectorPreviewMode === 'depth' ? 'DEPTH 16B' : hasMaster && inspectorPreviewMode !== 'previz' ? '🔒 MASTER' : '3D PREVIZ'}
+              ${inspectorPreviewMode === 'depth' ? 'DEPTH 16B' : inspectorPreviewMode === 'white' ? '⬜ WHITE BG' : hasMaster && inspectorPreviewMode !== 'previz' ? '🔒 REF/MASTER' : 'PNG RGBA'}
             </span>
           </div>
-          <div class="grid grid-cols-3 gap-1 text-[9px] font-mono">
-            <button id="insp-tab-previz" type="button" class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'previz' || (inspectorPreviewMode === 'active' && !hasMaster) ? 'border-emerald-500 bg-emerald-500/20 text-emerald-200 font-bold' : 'border-white/10 bg-white/5 text-slate-400'}">Beauty</button>
+          <div class="grid grid-cols-4 gap-1 text-[8.5px] font-mono">
+            <button id="insp-tab-previz" type="button" class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'previz' || (inspectorPreviewMode === 'active' && !hasMaster) ? 'border-emerald-500 bg-emerald-500/20 text-emerald-200 font-bold' : 'border-white/10 bg-white/5 text-slate-400'}">PNG</button>
+            <button id="insp-tab-white" type="button" class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'white' ? 'border-white bg-white text-black font-bold' : 'border-white/10 bg-white/5 text-slate-300'}" title="Vista en Fondo Blanco Puro (#FFFFFF) para Higgsfield Elements">Blanco</button>
             <button id="insp-tab-depth" type="button" ${hasDepth ? '' : 'disabled'} class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'depth' ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200 font-bold' : 'border-white/10 bg-white/5 text-slate-400 disabled:opacity-35'}">Depth</button>
-            <button id="insp-tab-master" type="button" ${hasMaster ? '' : 'disabled'} class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'master' || (inspectorPreviewMode === 'active' && hasMaster) ? 'border-amber-400 bg-amber-500/25 text-amber-200 font-bold' : 'border-white/10 bg-white/5 text-slate-400 disabled:opacity-35'}">Master</button>
+            <button id="insp-tab-master" type="button" ${hasMaster ? '' : 'disabled'} class="px-1 py-0.5 rounded border ${inspectorPreviewMode === 'master' || (inspectorPreviewMode === 'active' && hasMaster) ? 'border-amber-400 bg-amber-500/25 text-amber-200 font-bold' : 'border-white/10 bg-white/5 text-slate-400 disabled:opacity-35'}">Ref</button>
           </div>
         </div>
 
@@ -334,6 +403,34 @@ export function mountObjectsVaultUI(root, ctx) {
           </div>
         </div>
       </div>
+
+      <!-- STEPPER DE PIPELINE ACTIVO EN EL INSPECTOR (RUTA A 3 PASOS vs RUTA B 4 PASOS) -->
+      ${
+        obj.id.startsWith('obj-web-') || String(obj.usage || '').includes('Web/Foto')
+          ? `<div class="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/35 space-y-1.5 text-[10px]">
+              <div class="flex items-center justify-between font-mono font-bold text-pink-300">
+                <span>🌐 RUTA B (4 PASOS · INTERNET → ANTIGRAVITY/LLM → 3D → HIGGSFIELD)</span>
+                <span class="text-emerald-300">4/4 LISTO</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1 font-mono text-[9px]">
+                <div class="px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">✔ 1. Web Foto</div>
+                <div class="px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">✔ 2. Recorte LLM</div>
+                <div class="px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">✔ 3. En 3D (P${obj.floor ?? 2})</div>
+                <div class="px-1.5 py-1 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/40">🎬 4. Higgsfield</div>
+              </div>
+            </div>`
+          : `<div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1.5 text-[10px]">
+              <div class="flex items-center justify-between font-mono font-bold text-emerald-300">
+                <span>🏛️ RUTA A (3 PASOS · MODELO 3D → REALISTA FLUX → VIDEO HIGGSFIELD)</span>
+                <span class="${hasMaster ? 'text-amber-300' : 'text-cyan-300'}">${hasMaster ? 'PASO 3/3 LISTO' : 'PASO 1/3 → FALTA MASTER'}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1 font-mono text-[9px]">
+                <div class="px-1.5 py-1 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">✔ 1. Existe en 3D (PNG+Depth)</div>
+                <div class="px-1.5 py-1 rounded ${hasMaster ? 'bg-amber-500/25 text-amber-200 border border-amber-400/40' : 'bg-white/5 text-slate-300 border border-white/10'}">${hasMaster ? '🔒 2. Realista Creado' : '⏳ 2. Crear Realista (Subir Master)'}</div>
+                <div class="px-1.5 py-1 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/40">🎬 3. Insertar en Video</div>
+              </div>
+            </div>`
+      }
 
       <!-- MASTER STILL LOCK PANEL (MEJORA DE FLUJO 2 — REGLA 1:2 ZERO-WASTE) -->
       <div class="p-2.5 rounded-xl border ${hasMaster ? 'bg-amber-500/10 border-amber-400/40' : 'bg-white/[0.03] border-white/10'} space-y-1.5 text-[10px]">
@@ -434,6 +531,10 @@ export function mountObjectsVaultUI(root, ctx) {
 
     $('insp-tab-previz')?.addEventListener('click', () => {
       inspectorPreviewMode = 'previz';
+      renderInspector();
+    });
+    $('insp-tab-white')?.addEventListener('click', () => {
+      inspectorPreviewMode = 'white';
       renderInspector();
     });
     $('insp-tab-depth')?.addEventListener('click', () => {
@@ -659,6 +760,39 @@ export function mountObjectsVaultUI(root, ctx) {
     showWebImporter = !showWebImporter;
     $('obj-web-importer-bar').classList.toggle('hidden', !showWebImporter);
   };
+  $('btn-obj-open-route-b')?.addEventListener('click', () => {
+    showWebImporter = true;
+    $('obj-web-importer-bar').classList.remove('hidden');
+  });
+
+  // Soporte de pegado directo desde el portapapeles (Ctrl+V / Cmd+V) para Ruta B Paso 2
+  window.addEventListener('paste', async (ev) => {
+    if ($('obj-web-importer-bar')?.classList.contains('hidden')) return;
+    const items = Array.from(ev.clipboardData?.items || []);
+    const imgItem = items.find((it) => it.type.startsWith('image/'));
+    if (imgItem) {
+      const file = imgItem.getAsFile();
+      if (file) {
+        const dataUrl = await readAndResizeImageFile(file);
+        await runVaultWebAnalysis(dataUrl, $('imp-obj-web-name')?.value || 'Objeto Pegado Web');
+        ctx.setStatus('📋 <span class="text-emerald-400 font-bold">Ruta B · Paso 2: Imagen pegada desde el portapapeles y analizada por LLM/Tríada.</span>');
+      }
+    }
+  });
+
+  $('btn-imp-copy-antigravity')?.addEventListener('click', () => {
+    const title = $('imp-obj-web-name')?.value?.trim() || 'Prenda / Objeto Web';
+    const rawType = $('imp-obj-web-type')?.value || 'garment';
+    const floor = $('imp-obj-web-floor')?.value || '2';
+    const url = $('imp-obj-web-url')?.value?.trim() || '[PEGA_URL_O_ADJUNTA_FOTO]';
+    const brief = `RUTA B (4 PASOS - ANTIGRAVITY LLM):
+1. Objeto de internet: "${title}" (${url})
+2. Recórtalo en PNG transparente (RGBA) + Ficha en Fondo Blanco (#FFFFFF) y armoniza su ADN Material a la Tríada de Alina (#111216, #1f232b, #0B2B20, #ebe4d5, #5c3a24) + Latón Cepillado (#d4af37).
+3. Insértalo en el Modelo 3D (Tipo: ${rawType}, Piso ${floor}) respetando los 12 Conos Ópticos.
+4. Déjalo registrado en la Bóveda con su @handle y prompt 100mm macro listo para el video de Higgsfield.`;
+    navigator.clipboard.writeText(brief);
+    ctx.setStatus('🤖 <span class="text-amber-300 font-bold">Comando de Ruta B (4 Pasos) copiado para Antigravity LLM.</span>');
+  });
 
   async function runVaultWebAnalysis(dataUrl, suggestedName) {
     pendingWebDataUrl = dataUrl;
@@ -704,9 +838,13 @@ export function mountObjectsVaultUI(root, ctx) {
     const title = $('imp-obj-web-name')?.value?.trim() || 'Activo Importado Web';
     const rawType = $('imp-obj-web-type')?.value || 'garment';
     const floor = Number($('imp-obj-web-floor')?.value ?? ctx.getActiveFloor() ?? 2);
+    const bgMode = $('imp-obj-web-bgmode')?.value || 'white_sheet';
     if (!pendingWebAnalysis) {
       await runVaultWebAnalysis(pendingWebDataUrl, title);
     }
+    const processedRefUrl = pendingWebDataUrl
+      ? await processReferenceImageForHiggsfield(pendingWebDataUrl, bgMode, 1080)
+      : null;
     const tokenLock = $('imp-obj-web-token')?.value?.trim() || pendingWebAnalysis.fluxTokens;
     const swatches = pendingWebAnalysis?.triadSwatches || ['#1f232b', '#0B2B20', '#d4af37'];
 
@@ -719,7 +857,7 @@ export function mountObjectsVaultUI(root, ctx) {
         swatches,
         fluxTokens: tokenLock,
         higgsfieldPhysics: pendingWebAnalysis.higgsfieldPhysics,
-        referenceDataUrl: pendingWebDataUrl
+        referenceDataUrl: processedRefUrl
       });
       if (created?.id) selectedId = created.id;
     } else {
@@ -730,7 +868,7 @@ export function mountObjectsVaultUI(root, ctx) {
         swatches,
         promptToken: tokenLock,
         motionPrompt: pendingWebAnalysis.higgsfieldPhysics,
-        referenceDataUrl: pendingWebDataUrl
+        referenceDataUrl: processedRefUrl
       });
       if (created?.id) selectedId = created.id;
     }

@@ -315,7 +315,8 @@ export class CinemaDirector {
     cam.position.set(pos.x, pos.y, pos.z);
     this.camCtrl.controls.target.set(tgt.x, tgt.y, tgt.z);
     this.camCtrl.isTransitioning = false;
-    cam.fov = c.verticalFovDeg;
+    const endFov = c.endVerticalFovDeg ?? c.verticalFovDeg;
+    cam.fov = c.verticalFovDeg + (endFov - c.verticalFovDeg) * k;
     cam.updateProjectionMatrix();
     this.camCtrl.controls.update();
     if (c.rollDeg) cam.rotateZ(THREE.MathUtils.degToRad(c.rollDeg));

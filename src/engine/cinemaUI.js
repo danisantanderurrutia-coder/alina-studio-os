@@ -5,16 +5,33 @@ import { catalog } from './cinemaDirector.js';
 import sampleScenes from '../data/sampleScenes.json';
 
 const ix = S.indexCatalog(catalog);
-const LENSES = [24, 28, 35, 40, 50, 85, 100];
+const LENSES = [16, 24, 28, 35, 40, 50, 85, 100];
 const FOCUS_MODES = {
   iris_lock: 'Iris (lock)',
   macro_prop_lock: 'Prop macro (lock)',
   rack_prop_to_iris: 'Rack prop → iris',
+  rack_iris_to_prop: 'Rack iris → prop',
   mirror_reflection_plane: 'Plano del espejo'
 };
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? 'selected' : ''}>${esc(label)}</option>`;
+function groupedOpts(items, selectedId, labelFn) {
+  const groups = new Map();
+  for (const item of items) {
+    const catName = item.category || 'General';
+    if (!groups.has(catName)) groups.set(catName, []);
+    groups.get(catName).push(item);
+  }
+  return [...groups.entries()]
+    .map(
+      ([catName, list]) =>
+        `<optgroup label="${esc(catName)}">${list
+          .map((it) => opt(it.id, labelFn(it), it.id === selectedId))
+          .join('')}</optgroup>`
+    )
+    .join('');
+}
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -64,10 +81,10 @@ export function mountCinemaPanel(root, ctx) {
     <div class="grid grid-cols-2 gap-2 text-[11px]">
       <label class="space-y-1"><span class="text-slate-400">Director</span>
         <select id="cin-dir" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${catalog.directorStyles.map((d) => opt(d.id, d.name.split('—')[0].trim(), d.id === ui.directorId)).join('')}</select></label>
-      <label class="space-y-1"><span class="text-slate-400">Toma / Encuadre</span>
-        <select id="cin-shot" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${catalog.shotTypes.map((s) => opt(s.id, s.label.split('(')[0].trim(), s.id === ui.shotTypeId)).join('')}</select></label>
-      <label class="space-y-1"><span class="text-slate-400">Desplazamiento</span>
-        <select id="cin-move" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${catalog.cameraMoves.map((m) => opt(m.id, m.label.split('(')[0].trim(), m.id === ui.moveId)).join('')}</select></label>
+      <label class="space-y-1"><span class="text-slate-400">Toma / Encuadre (30)</span>
+        <select id="cin-shot" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${groupedOpts(catalog.shotTypes, ui.shotTypeId, (s) => `${s.shortLabel || s.label.split('(')[0].trim()} · ${s.defaultFocalMm}mm`)}</select></label>
+      <label class="space-y-1"><span class="text-slate-400">Desplazamiento (15)</span>
+        <select id="cin-move" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${groupedOpts(catalog.cameraMoves, ui.moveId, (m) => m.shortLabel || m.label.split('(')[0].trim())}</select></label>
       <label class="space-y-1"><span class="text-slate-400">Iluminación</span>
         <select id="cin-light" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 text-white">${catalog.lightingSchemes.map((l) => opt(l.id, l.label.split('(')[0].trim(), l.id === ui.lightId)).join('')}</select></label>
       <label class="space-y-1"><span class="text-slate-400">Lente (Gate 35mm)</span>
@@ -180,9 +197,11 @@ export function mountCinemaPanel(root, ctx) {
       ? 'mirror_reflection_plane'
       : mv.id === 'rack_focus_macro_to_eyes'
         ? 'rack_prop_to_iris'
-        : role === 'B-Roll'
-          ? 'macro_prop_lock'
-          : 'iris_lock';
+        : mv.id === 'rack_focus_eyes_to_prop'
+          ? 'rack_iris_to_prop'
+          : role === 'B-Roll'
+            ? 'macro_prop_lock'
+            : 'iris_lock';
     if (ui.focusOverride !== 'auto') focusMode = ui.focusOverride;
 
     const sh = {
@@ -201,7 +220,12 @@ export function mountCinemaPanel(root, ctx) {
       focusMode,
       mirrorShot: isMirror,
       motionStrength: mv.recommendedMotionStrength,
-      foregroundFraming: Boolean(ui.foregroundFraming || focusMode === 'rack_prop_to_iris'),
+      foregroundFraming: Boolean(
+        ui.foregroundFraming ||
+        st.autoForeground ||
+        focusMode === 'rack_prop_to_iris' ||
+        focusMode === 'rack_iris_to_prop'
+      ),
       foregroundPropId: ui.foregroundPropId || undefined
     };
     if (isMirror) sh.controlNetOverrides = { depthWeight: meta.specialFlags.controlNetDepthWeightOverride ?? 0.35 };
@@ -678,13 +702,40 @@ export function mountCinemaPanel(root, ctx) {
       ui.lightId = d.defaultLightingSchemeId;
       ui.lens = LENSES.reduce((a, b) => (Math.abs(b - st.defaultFocalMm) < Math.abs(a - st.defaultFocalMm) ? b : a));
       ui.aperture = st.defaultAperture;
-      ui.role = 'A';
+      ui.role = st.shotRoleDefault === 'B-Roll' ? 'B0' : 'A';
       ui.focusOverride = 'auto';
-      ui.foregroundFraming = true;
+      ui.foregroundFraming = Boolean(foregroundPropId || st.autoForeground);
       ui.foregroundPropId = foregroundPropId || null;
       syncSelectors();
       apply(currentShot(), false);
     },
+    selectQuickShotAndMove({ shotTypeId, moveId, play = false }) {
+      if (shotTypeId && ix.shotTypes.has(shotTypeId)) {
+        const st = ix.shotTypes.get(shotTypeId);
+        ui.shotTypeId = st.id;
+        ui.lens = LENSES.reduce((a, b) => (Math.abs(b - st.defaultFocalMm) < Math.abs(a - st.defaultFocalMm) ? b : a));
+        ui.aperture = st.defaultAperture;
+        ui.role = st.shotRoleDefault === 'B-Roll' ? 'B0' : 'A';
+        if (st.autoForeground) ui.foregroundFraming = true;
+      }
+      if (moveId && ix.moves.has(moveId)) {
+        ui.moveId = moveId;
+        if (moveId === 'rack_focus_macro_to_eyes' || moveId === 'rack_focus_eyes_to_prop') {
+          ui.foregroundFraming = true;
+        }
+      }
+      syncSelectors();
+      const shotObj = currentShot();
+      apply(shotObj, false);
+      if (play) {
+        hudShow(true);
+        $('cin-hud-title').textContent = `${ix.shotTypes.get(ui.shotTypeId)?.shortLabel || ui.shotTypeId}`;
+        $('cin-hud-sub').textContent = `${ix.moves.get(ui.moveId)?.shortLabel || ui.moveId} · ${ui.lens}mm`;
+        dir.play(() => hudShow(false));
+      }
+      return shotObj;
+    },
+    getState: () => ({ shotTypeId: ui.shotTypeId, moveId: ui.moveId, lens: ui.lens, directorId: ui.directorId }),
     isPlayingScene: () => ui.playingScene
   };
 }

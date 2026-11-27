@@ -149,13 +149,8 @@ try {
     const evalRes = await cdp('Runtime.evaluate', {
       expression: `(async () => {
         const api = window.__ALINA_STUDIO__;
-        const obj = api.state.objects.find(o => o.id === ${JSON.stringify(item.id)});
-        if (!obj) return null;
-        api.selectFloor(obj.floor);
-        const sp = api.findSpotById(obj.spotId);
-        if (sp) api.selectSpot(sp);
-        await new Promise(r => setTimeout(r, 120));
-        return JSON.stringify(api.renderVaultObject1080(${JSON.stringify(item.id)}));
+        const res = await api.renderVaultObject1080(${JSON.stringify(item.id)});
+        return JSON.stringify(res);
       })()`,
       awaitPromise: true,
       returnByValue: true
@@ -171,7 +166,13 @@ try {
       fs.writeFileSync(path.join(OUT_PUBLIC_DIR, depthName), Buffer.from(b64Depth, 'base64'));
       fs.writeFileSync(path.join(OUT_DOCS_DIR, beautyName), Buffer.from(b64Beauty, 'base64'));
       fs.writeFileSync(path.join(OUT_DOCS_DIR, depthName), Buffer.from(b64Depth, 'base64'));
-      console.log(`  ✓ Rendered ${item.handle} (${item.id}) -> Beauty + Depth 1080x1080`);
+      if (data.whiteBg) {
+        const b64White = data.whiteBg.replace(/^data:image\/png;base64,/, '');
+        const whiteName = `${item.id}_white.png`;
+        fs.writeFileSync(path.join(OUT_PUBLIC_DIR, whiteName), Buffer.from(b64White, 'base64'));
+        fs.writeFileSync(path.join(OUT_DOCS_DIR, whiteName), Buffer.from(b64White, 'base64'));
+      }
+      console.log(`  ✓ Rendered ISOLATED PNG ${item.handle} (${item.id}) -> RGBA Cutout + White BG + Depth 1080x1080`);
     }
   }
 

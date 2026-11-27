@@ -11,13 +11,15 @@
 import { indexCatalog, sensorGateFor } from './cinematographySolver.js';
 
 export const SEMANTIC_MASK_PALETTE = {
-  environment: { id: 0, hex: '#000000', rgb: [0, 0, 0], label: 'Architecture & Furniture' },
+  environment: { id: 0, hex: '#1E293B', rgb: [30, 41, 59], label: 'Room Architecture (Walls & Ceiling)' },
   skin:        { id: 1, hex: '#FF3B30', rgb: [255, 59, 48], label: 'Alina Skin (Face/Neck/Hands)' },
   eyes:        { id: 2, hex: '#34C759', rgb: [52, 199, 89], label: 'Alina Emerald Iris & Sclera' },
   hair:        { id: 3, hex: '#FFCC00', rgb: [255, 204, 0], label: 'Alina Copper Hair Strands' },
   wardrobe:    { id: 4, hex: '#007AFF', rgb: [0, 122, 255], label: 'Alina Wardrobe Fabric' },
   foreground:  { id: 5, hex: '#AF52DE', rgb: [175, 82, 222], label: 'Foreground Bokeh Prop' },
-  mirror:      { id: 6, hex: '#00C7BE', rgb: [0, 199, 190], label: 'Planar Mirror Active Disc' }
+  mirror:      { id: 6, hex: '#00C7BE', rgb: [0, 199, 190], label: 'Planar Mirror Active Disc' },
+  prop:        { id: 7, hex: '#FF9500', rgb: [255, 149, 0], label: 'Hero Vault Props, Art & Botanicals' },
+  furniture:   { id: 8, hex: '#14B8A6', rgb: [20, 184, 166], label: 'Set Furniture & Surfaces' }
 };
 
 export const DIRECTOR_GEAR_MAP = {
@@ -122,13 +124,18 @@ export function computeOpticalCoCPixels({
 export function resolveKeyframeStrategy({ shot, payload }) {
   const mvId = shot.cameraMoveId;
   const isMirror = Boolean(shot.mirrorShot || shot.shotTypeId === 'ots_mirror');
-  const isRack = shot.focusMode === 'rack_prop_to_iris' || mvId === 'rack_focus_macro_to_eyes';
+  const isRack =
+    shot.focusMode === 'rack_prop_to_iris' ||
+    shot.focusMode === 'rack_iris_to_prop' ||
+    mvId === 'rack_focus_macro_to_eyes' ||
+    mvId === 'rack_focus_eyes_to_prop';
   const isWalkingOrDance =
     mvId === 'handheld_walking_lubezki' || ['Walk', 'Rumba', 'HipHop'].includes(shot.animation);
 
   // Caso 4: Locomoción humana o handheld walking -> prohibido End Frame rígido (evita foot-sliding y morphing)
   if (isWalkingOrDance && !isMirror && !isRack) {
     const isHandheld = mvId === 'handheld_walking_lubezki';
+    const isLandscape = (payload?.aspectRatio || '9:16') === '16:9';
     return {
       mode: 'START_ONLY',
       exportEndFrame: false,
@@ -138,8 +145,8 @@ export function resolveKeyframeStrategy({ shot, payload }) {
       overscanHandheldPost: isHandheld
         ? {
             enabled: true,
-            renderResolution: { width: 1124, height: 1998 },
-            deliveryCrop: { width: 1080, height: 1920 },
+            renderResolution: isLandscape ? { width: 1998, height: 1124 } : { width: 1124, height: 1998 },
+            deliveryCrop: isLandscape ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 },
             frequencyHz: payload.camera.handheldHz || 1.7,
             amplitudePx: 14,
             maxClipDurationSec: 3.0
@@ -165,7 +172,19 @@ export function resolveKeyframeStrategy({ shot, payload }) {
       overscanHandheldPost: null
     };
   }
-  if (['slow_dolly_pull_out', 'subtle_parallax_arc', 'pedestal_reveal_up', 'lateral_slider_truck'].includes(mvId)) {
+  const START_END_MOVES = [
+    'slow_dolly_pull_out',
+    'vertigo_dolly_zoom_subtle',
+    'subtle_parallax_arc',
+    'subtle_parallax_arc_left',
+    'pedestal_reveal_up',
+    'pedestal_sink_down',
+    'crane_jib_high_to_eye',
+    'lateral_slider_truck',
+    'reveal_from_behind_wall',
+    'fpv_slow_glide_through'
+  ];
+  if (START_END_MOVES.includes(mvId)) {
     return {
       mode: 'START_END',
       exportEndFrame: true,
@@ -211,14 +230,21 @@ export function resolveHiggsfieldMove({ shot, keyframeMode, catalog }) {
   const baseNormalized = Math.min(0.72, Math.max(0.18, +((rawStrength - 1.0) / 3.5).toFixed(2)));
 
   const MOVE_TABLE = {
-    static_breathing:         { id: 'static_locked',   uiLabel: 'Static / Subtle Breathing', guidedId: 'none_keyframe_guided' },
-    slow_dolly_push_in:       { id: 'dolly_in_slow',   uiLabel: 'Dolly In (Slow)',           guidedId: 'subtle_dolly_in' },
-    slow_dolly_pull_out:      { id: 'dolly_out_slow',  uiLabel: 'Dolly Out (Slow)',          guidedId: 'subtle_dolly_out' },
-    subtle_parallax_arc:      { id: 'arc_right_subtle',uiLabel: 'Orbit / Arc (Low)',         guidedId: 'keyframe_arc_guided' },
-    pedestal_reveal_up:       { id: 'crane_up_slow',   uiLabel: 'Crane / Pedestal Up',       guidedId: 'keyframe_pedestal_up' },
-    lateral_slider_truck:     { id: 'truck_right',     uiLabel: 'Truck Right (Slider)',      guidedId: 'keyframe_truck_guided' },
-    handheld_walking_lubezki: { id: 'tracking_forward',uiLabel: 'Tracking / Handheld Low',   guidedId: 'tracking_forward' },
-    rack_focus_macro_to_eyes: { id: 'rack_focus_lock', uiLabel: 'Static + Optical Rack Focus', guidedId: 'none_keyframe_guided' }
+    static_breathing:           { id: 'static_locked',    uiLabel: 'Static / Subtle Breathing',       guidedId: 'none_keyframe_guided' },
+    slow_dolly_push_in:         { id: 'dolly_in_slow',    uiLabel: 'Dolly In (Slow)',                 guidedId: 'subtle_dolly_in' },
+    slow_dolly_pull_out:        { id: 'dolly_out_slow',   uiLabel: 'Dolly Out (Slow)',                guidedId: 'subtle_dolly_out' },
+    vertigo_dolly_zoom_subtle:  { id: 'dolly_zoom_subtle',uiLabel: 'Vertigo / Dolly-Zoom (Subtle)',   guidedId: 'none_keyframe_guided' },
+    subtle_parallax_arc:        { id: 'arc_right_subtle', uiLabel: 'Orbit / Arc Right (+14°)',        guidedId: 'keyframe_arc_guided' },
+    subtle_parallax_arc_left:   { id: 'arc_left_subtle',  uiLabel: 'Orbit / Arc Left (-14°)',         guidedId: 'keyframe_arc_guided' },
+    pedestal_reveal_up:         { id: 'crane_up_slow',    uiLabel: 'Crane / Pedestal Up',             guidedId: 'keyframe_pedestal_up' },
+    pedestal_sink_down:         { id: 'crane_down_slow',  uiLabel: 'Crane / Pedestal Down',           guidedId: 'keyframe_pedestal_down' },
+    crane_jib_high_to_eye:      { id: 'jib_descent_slow', uiLabel: 'Mini-Jib High → Eye-Level',       guidedId: 'keyframe_crane_guided' },
+    lateral_slider_truck:       { id: 'truck_right',      uiLabel: 'Truck Right (Slider)',            guidedId: 'keyframe_truck_guided' },
+    reveal_from_behind_wall:    { id: 'slider_reveal',    uiLabel: 'Lateral Reveal Past Edge',        guidedId: 'keyframe_truck_guided' },
+    handheld_walking_lubezki:   { id: 'tracking_forward', uiLabel: 'Tracking / Handheld Low',         guidedId: 'tracking_forward' },
+    fpv_slow_glide_through:     { id: 'gimbal_glide_in',  uiLabel: 'Gimbal Architectural Glide',      guidedId: 'subtle_dolly_in' },
+    rack_focus_macro_to_eyes:   { id: 'rack_focus_lock',  uiLabel: 'Static + Rack Focus (Prop→Iris)', guidedId: 'none_keyframe_guided' },
+    rack_focus_eyes_to_prop:    { id: 'rack_focus_out',   uiLabel: 'Static + Rack Focus (Iris→Prop)', guidedId: 'none_keyframe_guided' }
   };
 
   const entry = MOVE_TABLE[shot.cameraMoveId] || MOVE_TABLE.static_breathing;
@@ -352,7 +378,9 @@ export function compileHiggsfieldStructuredPrompt({ shot, spot, payload, catalog
  */
 export function buildComfyRenderToRealJob({ shot, spot, payload, catalog, keyframeStrategy }) {
   const gear = DIRECTOR_GEAR_MAP[shot.directorStyleId] || DIRECTOR_GEAR_MAP.fincher_cronenweth;
-  const gate = sensorGateFor(catalog, '9:16');
+  const aspectRatio = payload?.aspectRatio || '9:16';
+  const gate = sensorGateFor(catalog, aspectRatio);
+  const imgH = aspectRatio === '16:9' ? 1080 : 1920;
   const isWater = ['bath', 'pool'].includes(shot.spotId) && shot.shotRole === 'B-Roll';
   const isMirror = Boolean(shot.mirrorShot || shot.shotTypeId === 'ots_mirror');
 
@@ -363,7 +391,8 @@ export function buildComfyRenderToRealJob({ shot, spot, payload, catalog, keyfra
         apertureFStop: shot.apertureFStop,
         focusDistM: payload.dof.startFocusDistM,
         sampleDistM: fgDist,
-        sensorHeightMm: gate.sensorHeightMm
+        sensorHeightMm: gate.sensorHeightMm,
+        imageHeightPx: imgH
       })
     : 0;
   const startCoCBgPx = computeOpticalCoCPixels({
@@ -371,14 +400,16 @@ export function buildComfyRenderToRealJob({ shot, spot, payload, catalog, keyfra
     apertureFStop: shot.apertureFStop,
     focusDistM: payload.dof.startFocusDistM,
     sampleDistM: payload.dof.startFocusDistM + 3.2,
-    sensorHeightMm: gate.sensorHeightMm
+    sensorHeightMm: gate.sensorHeightMm,
+    imageHeightPx: imgH
   });
   const endCoCBgPx = computeOpticalCoCPixels({
     focalMm: shot.focalLengthMm,
     apertureFStop: shot.apertureFStop,
     focusDistM: payload.dof.endFocusDistM,
     sampleDistM: payload.dof.endFocusDistM + 3.2,
-    sensorHeightMm: gate.sensorHeightMm
+    sensorHeightMm: gate.sensorHeightMm,
+    imageHeightPx: imgH
   });
 
   return {
@@ -478,7 +509,9 @@ export function buildComfyRenderToRealJob({ shot, spot, payload, catalog, keyfra
 /**
  * Ensambla el manifiesto maestro Higgsfield Pack completo para un plano resuelto.
  */
-export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId = null }) {
+export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId = null, aspectRatio: aspectOverride = null }) {
+  const aspectRatio = aspectOverride || payload?.aspectRatio || '9:16';
+  const resTag = aspectRatio === '16:9' ? '1920x1080' : '1080x1920';
   const baseGear = DIRECTOR_GEAR_MAP[shot.directorStyleId] || DIRECTOR_GEAR_MAP.fincher_cronenweth;
   const isMacroBroll = shot.shotRole === 'B-Roll' && shot.focalLengthMm >= 95;
   const lensProfile = isMacroBroll ? 'laowa_macro' : baseGear.lensProfile;
@@ -490,17 +523,18 @@ export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId 
   const comfyJob = buildComfyRenderToRealJob({ shot, spot, payload, catalog, keyframeStrategy });
 
   const hfDurationGen = shot.durationSec <= 3.0 ? 3 : 5;
-  const startFile = 'frames_higgsfield_ready/start_real_1080x1920.png';
-  const endFile = keyframeStrategy.exportEndFrame ? 'frames_higgsfield_ready/end_real_1080x1920.png' : null;
+  const startFile = `frames_higgsfield_ready/start_real_${resTag}.png`;
+  const endFile = keyframeStrategy.exportEndFrame ? `frames_higgsfield_ready/end_real_${resTag}.png` : null;
 
   return {
-    schemaVersion: '2.1.0',
+    schemaVersion: '2.2.0',
     generatedAt: new Date().toISOString(),
     sceneId,
     shotId: shot.shotId,
     spotId: shot.spotId,
     spotName: spot?.name || shot.spotId,
     shotRole: shot.shotRole,
+    aspectRatio,
     engine: 'Three.js Metric 1:1 Previz (Single-Source)',
     zeroWasteAudit: payload.zeroWaste,
     keyframeStrategy: {
@@ -513,7 +547,7 @@ export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId 
     },
     higgsfieldCinemaStudio: {
       endpoint: 'higgsfield/cinema-studio/4.0',
-      aspectRatio: '9:16',
+      aspectRatio,
       resolution: '1080p',
       durationGenerateSec: hfDurationGen,
       editorialTrimSec: shot.durationSec,
@@ -533,7 +567,7 @@ export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId 
     },
     structuredPrompt,
     opticsTelemetry: {
-      sensorGateMm: sensorGateFor(catalog, '9:16'),
+      sensorGateMm: sensorGateFor(catalog, aspectRatio),
       verticalFovDeg: payload.camera.verticalFovDeg,
       startPosM: payload.camera.startPos,
       endPosM: payload.camera.endPos,
@@ -547,20 +581,20 @@ export function buildHiggsfieldManifest({ shot, spot, payload, catalog, sceneId 
     },
     raw3DPasses: {
       start: {
-        beauty: 'frames_3d_raw/start_beauty_1080x1920.png',
-        depth: 'frames_3d_raw/start_depth_1080x1920.png',
-        normals: 'frames_3d_raw/start_normals_1080x1920.png',
-        mask: 'frames_3d_raw/start_mask_1080x1920.png',
-        openposePng: shot.shotRole === 'A-Roll' ? 'frames_3d_raw/start_openpose_1080x1920.png' : null,
+        beauty: `frames_3d_raw/start_beauty_${resTag}.png`,
+        depth: `frames_3d_raw/start_depth_${resTag}.png`,
+        normals: `frames_3d_raw/start_normals_${resTag}.png`,
+        mask: `frames_3d_raw/start_mask_${resTag}.png`,
+        openposePng: shot.shotRole === 'A-Roll' ? `frames_3d_raw/start_openpose_${resTag}.png` : null,
         openposeJson: shot.shotRole === 'A-Roll' ? 'frames_3d_raw/start_openpose.json' : null
       },
       end: keyframeStrategy.exportEndFrame
         ? {
-            beauty: 'frames_3d_raw/end_beauty_1080x1920.png',
-            depth: 'frames_3d_raw/end_depth_1080x1920.png',
-            normals: 'frames_3d_raw/end_normals_1080x1920.png',
-            mask: 'frames_3d_raw/end_mask_1080x1920.png',
-            openposePng: shot.shotRole === 'A-Roll' ? 'frames_3d_raw/end_openpose_1080x1920.png' : null,
+            beauty: `frames_3d_raw/end_beauty_${resTag}.png`,
+            depth: `frames_3d_raw/end_depth_${resTag}.png`,
+            normals: `frames_3d_raw/end_normals_${resTag}.png`,
+            mask: `frames_3d_raw/end_mask_${resTag}.png`,
+            openposePng: shot.shotRole === 'A-Roll' ? `frames_3d_raw/end_openpose_${resTag}.png` : null,
             openposeJson: shot.shotRole === 'A-Roll' ? 'frames_3d_raw/end_openpose.json' : null
           }
         : null

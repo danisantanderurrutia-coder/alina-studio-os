@@ -235,9 +235,10 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
   const F = { x: Math.sin(rotY), y: 0, z: Math.cos(rotY) };
   const R = { x: Math.cos(rotY), y: 0, z: -Math.sin(rotY) };
 
-  // Objetivo
+  // Objetivo: solo 'macro_broll_prop' (targetAnchor === 'prop') salta al prop externo del spot;
+  // los B-Rolls corporales/arquitectónicos ('hands', 'collarbone', 'feet', 'ceiling_lamp') encuadran su altura métrica exacta.
   let target, Fb = F, Rb = R;
-  if (shot.shotRole === 'B-Roll' && spot.macroTarget && spot.macroPos) {
+  if (shot.shotRole === 'B-Roll' && st.targetAnchor === 'prop' && spot.macroTarget && spot.macroPos) {
     target = { ...spot.macroTarget };
     Fb = norm({ x: spot.macroPos.x - spot.macroTarget.x, y: 0, z: spot.macroPos.z - spot.macroTarget.z });
     Rb = norm(cross(UP, Fb));
@@ -254,7 +255,11 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
   const az = azDeg * DEG, el = st.elevationDeg * DEG;
   const horiz = add(mul(Fb, Math.cos(az)), mul(Rb, Math.sin(az)));
   const camDir = norm(add(mul(horiz, Math.cos(el)), mul(UP, Math.sin(el))));
-  const base = add(target, mul(camDir, st.distanceM));
+  const gate = sensorGateFor(catalog, aspectRatio);
+  const gateDistScale = (!shot.mirrorShot && gate.sensorHeightMm < 36)
+    ? Math.min(1.58, 36.0 / gate.sensorHeightMm)
+    : 1.0;
+  const base = add(target, mul(camDir, st.distanceM * gateDistScale));
   const camRight = norm(cross(UP, horiz));
 
   const local = (o) => add(base, add(mul(camRight, o.right), add(mul(UP, o.up), mul(camDir, o.forward))));
@@ -289,12 +294,18 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
   const boundsOk = inBounds(startPos) && inBounds(endPos);
   if (clamped) warnings.push('Wall Guard recortó la trayectoria al volumen interior');
 
-  // Foco (Bokeh DoF)
+  // Foco (Bokeh DoF): soporta rack directo (prop -> iris) e inverso (iris -> prop)
   const subject = shot.shotRole === 'B-Roll' ? target : { x: spot.alinaPos.x, y: target.y, z: spot.alinaPos.z };
   const dS = dist(startPos, subject);
   const dE = dist(endPos, subject);
   let focusStart = dS, focusEnd = dE;
-  if (shot.focusMode === 'rack_prop_to_iris') { focusStart = 0.48 * dE; focusEnd = dE; }
+  if (shot.focusMode === 'rack_prop_to_iris' || mv.focusTransition === 'rack_near_to_subject') {
+    focusStart = 0.48 * dE;
+    focusEnd = dE;
+  } else if (shot.focusMode === 'rack_iris_to_prop' || mv.focusTransition === 'rack_subject_to_near') {
+    focusStart = dS;
+    focusEnd = 0.48 * dE;
+  }
   if (shot.focusMode === 'mirror_reflection_plane' && mirrorPoint) {
     const gap = dist(mirrorPoint, subject);
     focusStart = dist(startPos, mirrorPoint) + gap;
@@ -319,7 +330,8 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
 
   // Salto 3: Foreground Framing (Props reales en primer término con desenfoque / bokeh)
   let foregroundProp = null;
-  if (shot.foregroundFraming && catalog.foregroundProps) {
+  const wantForeground = shot.foregroundFraming !== undefined ? Boolean(shot.foregroundFraming) : Boolean(st.autoForeground);
+  if (wantForeground && catalog.foregroundProps) {
     const propId = shot.foregroundPropId || selectForegroundPropId(shot.spotId);
     const propSpec = catalog.foregroundProps[propId] || catalog.foregroundProps.monstera_leaf;
     if (propSpec) {
@@ -358,13 +370,19 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
     uFar: +Math.max(maxFocus + 8.0, maxFocus * 2.8).toFixed(3)
   };
 
+  const startFocalMm = shot.focalLengthMm;
+  const endFocalMm = mv.endFocalScale ? +(shot.focalLengthMm * mv.endFocalScale).toFixed(1) : shot.focalLengthMm;
+  const startVov = +verticalFovDeg(startFocalMm, aspectRatio, catalog).toFixed(2);
+  const endVov = +verticalFovDeg(endFocalMm, aspectRatio, catalog).toFixed(2);
+
   return {
     shotId: shot.shotId,
     spotId: shot.spotId,
+    aspectRatio,
     baseMode,
     animation: shot.animation,
     mirrorShot: Boolean(shot.mirrorShot),
-    foregroundFraming: Boolean(shot.foregroundFraming),
+    foregroundFraming: Boolean(wantForeground),
     foregroundProp,
     alinaRotY: +rotY.toFixed(4),
     alinaRotYDeg: +(rotY / DEG).toFixed(2),
@@ -372,8 +390,10 @@ export function solveShot({ shot, spot, catalog, building, aspectRatio = '9:16',
     camera: {
       startPos: r3(startPos), startTarget: r3(target),
       endPos: r3(endPos), endTarget: r3(target),
-      verticalFovDeg: +verticalFovDeg(shot.focalLengthMm, aspectRatio, catalog).toFixed(2),
-      focalMm: shot.focalLengthMm,
+      verticalFovDeg: startVov,
+      endVerticalFovDeg: endVov,
+      focalMm: startFocalMm,
+      endFocalMm,
       rollDeg: st.rollDeg,
       durationSec: shot.durationSec,
       easing: mv.easing,

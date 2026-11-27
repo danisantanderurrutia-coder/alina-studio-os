@@ -47,16 +47,24 @@ export class CameraAndExportController {
       this.isTransitioning = false;
     });
 
-    this.activePass = 'beauty'; // 'beauty' | 'depth' | 'normals' | 'mask'
+    this.activePass = 'beauty'; // 'beauty' | 'bokeh' | 'depth' | 'heatmap' | 'normals' | 'mask'
     this.isDepthPass = false;
     this.lockedDepthBounds = null;
+    this.liveBokehSpec = {
+      focalLengthMm: 85,
+      apertureFStop: 1.4,
+      focusDistM: null,
+      sensorHeightMm: 20.25
+    };
 
     this.depthMaterial = this._createSkinnedLinearDepthMaterial();
+    this.heatmapMaterial = this._createSkinnedTurboHeatmapMaterial();
     this.metricDepthMaterial = this._createMetricDepthMaterial(0.0);
     this.metricMirrorDepthMaterial = this._createMetricDepthMaterial(1.0);
     this.normalsMaterial = this._createSkinnedNormalsMaterial();
     this.maskMaterials = this._createSemanticMaskMaterials();
     this._bokeh = this._createOpticalBokehPipeline();
+    this._liveDepthRT = null;
     this._activeMaskRestore = null;
 
     this._bindResize();
@@ -65,8 +73,8 @@ export class CameraAndExportController {
   _createSkinnedLinearDepthMaterial() {
     return new THREE.ShaderMaterial({
       uniforms: {
-        uNear: { value: 0.6 },
-        uFar: { value: 24.0 }
+        uNear: { value: 0.4 },
+        uFar: { value: 22.0 }
       },
       vertexShader: SKINNED_COMMON_VERT,
       fragmentShader: `
@@ -75,8 +83,49 @@ export class CameraAndExportController {
         varying float vViewZ;
         void main() {
           float d = clamp((vViewZ - uNear) / max(uFar - uNear, 0.001), 0.0, 1.0);
-          float val = 1.0 - pow(d, 0.82);
+          float val = 1.0 - pow(d, 0.78);
           gl_FragColor = vec4(vec3(val), 1.0);
+        }
+      `
+    });
+  }
+
+  _createSkinnedTurboHeatmapMaterial() {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uNear: { value: 0.4 },
+        uFar: { value: 22.0 }
+      },
+      vertexShader: SKINNED_COMMON_VERT,
+      fragmentShader: `
+        uniform float uNear;
+        uniform float uFar;
+        varying float vViewZ;
+
+        // Polinomio Turbo de Google Research (cálido primer plano -> cian/índigo fondo)
+        vec3 turboColormap(float x) {
+          const vec4 kRedVec4 = vec4(0.13572138, 4.61539260, -42.66032258, 132.13108234);
+          const vec4 kGreenVec4 = vec4(0.09140261, 2.19418839, 4.84296658, -14.18503333);
+          const vec4 kBlueVec4 = vec4(0.10667330, 12.64194608, -60.58204836, 110.36276771);
+          const vec2 kRedVec2 = vec2(-152.94239396, 59.28637943);
+          const vec2 kGreenVec2 = vec2(4.27729857, 2.82956604);
+          const vec2 kBlueVec2 = vec2(-89.90310912, 27.34824973);
+
+          x = clamp(x, 0.0, 1.0);
+          vec4 v4 = vec4(1.0, x, x * x, x * x * x);
+          vec2 v2 = v4.zw * v4.z;
+          return clamp(vec3(
+            dot(v4, kRedVec4)   + dot(v2, kRedVec2),
+            dot(v4, kGreenVec4) + dot(v2, kGreenVec2),
+            dot(v4, kBlueVec4)  + dot(v2, kBlueVec2)
+          ), 0.0, 1.0);
+        }
+
+        void main() {
+          float d = clamp((vViewZ - uNear) / max(uFar - uNear, 0.001), 0.0, 1.0);
+          float proximity = 1.0 - pow(d, 0.72);
+          vec3 col = turboColormap(proximity);
+          gl_FragColor = vec4(col, 1.0);
         }
       `
     });
@@ -207,7 +256,10 @@ export class CameraAndExportController {
 
   _createSemanticMaskMaterials() {
     return {
-      environment: this._createFlatMaskMat('#000000'),
+      environment: this._createFlatMaskMat('#1E293B'),
+      floor: this._createFlatMaskMat('#0F172A'),
+      furniture: this._createFlatMaskMat('#14B8A6'),
+      prop: this._createFlatMaskMat('#FF9500'),
       skin: this._createFlatMaskMat('#FF3B30'),
       eyes: this._createFlatMaskMat('#34C759'),
       hair: this._createFlatMaskMat('#FFCC00'),
@@ -337,6 +389,22 @@ export class CameraAndExportController {
         obj.material = this.maskMaterials.foreground;
         return;
       }
+      if (tag === 'prop') {
+        obj.material = this.maskMaterials.prop;
+        return;
+      }
+      if (tag === 'furniture') {
+        obj.material = this.maskMaterials.furniture;
+        return;
+      }
+      if (tag === 'floor') {
+        obj.material = this.maskMaterials.floor;
+        return;
+      }
+      if (tag === 'architecture') {
+        obj.material = this.maskMaterials.environment;
+        return;
+      }
       if (tag === 'alina') {
         const orig = Array.isArray(obj.material) ? obj.material[0] : obj.material;
         const mName = (orig?.name || '').toLowerCase();
@@ -356,7 +424,18 @@ export class CameraAndExportController {
         }
         return;
       }
-      obj.material = this.maskMaterials.environment;
+      // Heurística de respaldo para objetos dinámicos (prendas en perchero, cuadros importados, velas, agua)
+      let cur = obj;
+      let isDynamicProp = false;
+      while (cur) {
+        const nm = (cur.name || '').toLowerCase();
+        if (nm.includes('rack') || nm.includes('garment') || nm.includes('prop') || nm.includes('art') || nm.includes('plant')) {
+          isDynamicProp = true;
+          break;
+        }
+        cur = cur.parent;
+      }
+      obj.material = isDynamicProp ? this.maskMaterials.prop : this.maskMaterials.environment;
     });
     return saved;
   }
@@ -398,17 +477,24 @@ export class CameraAndExportController {
   }
 
   updateDepthRangeForFocus(focusPoint, lockedBounds = null) {
+    let uNear, uFar;
     if (lockedBounds && lockedBounds.uNear != null && lockedBounds.uFar != null) {
-      this.depthMaterial.uniforms.uNear.value = lockedBounds.uNear;
-      this.depthMaterial.uniforms.uFar.value = lockedBounds.uFar;
-      return;
+      uNear = lockedBounds.uNear;
+      uFar = lockedBounds.uFar;
+    } else {
+      const dist = this.camera.position.distanceTo(focusPoint);
+      uNear = Math.max(0.18, dist * 0.32);
+      uFar = Math.max(dist + 6.5, dist * 2.9);
     }
-    const dist = this.camera.position.distanceTo(focusPoint);
-    this.depthMaterial.uniforms.uNear.value = Math.max(0.4, dist * 0.28);
-    this.depthMaterial.uniforms.uFar.value = Math.max(dist + 8.0, dist * 2.8);
+    this.depthMaterial.uniforms.uNear.value = uNear;
+    this.depthMaterial.uniforms.uFar.value = uFar;
+    if (this.heatmapMaterial) {
+      this.heatmapMaterial.uniforms.uNear.value = uNear;
+      this.heatmapMaterial.uniforms.uFar.value = uFar;
+    }
   }
 
-  /** Cambia el pase activo del visor en tiempo real ('beauty' | 'depth' | 'normals' | 'mask'). */
+  /** Cambia el pase activo del visor en tiempo real ('beauty' | 'bokeh' | 'depth' | 'heatmap' | 'normals' | 'mask'). */
   setRenderPass(pass = 'beauty', focusPoint = null, lockedBounds = null) {
     if (this._activeMaskRestore) {
       this._restoreSceneMaterials(this._activeMaskRestore);
@@ -416,10 +502,10 @@ export class CameraAndExportController {
     }
     this.scene.overrideMaterial = null;
     this.activePass = pass;
-    this.isDepthPass = pass === 'depth';
+    this.isDepthPass = pass === 'depth' || pass === 'heatmap';
     this.lockedDepthBounds = lockedBounds;
 
-    const isUtility = pass !== 'beauty';
+    const isUtility = pass !== 'beauty' && pass !== 'bokeh';
     this.scene.traverse((obj) => {
       if (obj.userData?.hideOnDepthPass) obj.visible = !isUtility;
     });
@@ -431,6 +517,13 @@ export class CameraAndExportController {
       this.scene.overrideMaterial = this.depthMaterial;
       this.lighting.setDepthFogDisabled(true);
       this.renderer.setClearColor(0x000000, 1);
+    } else if (pass === 'heatmap') {
+      if (focusPoint || lockedBounds) {
+        this.updateDepthRangeForFocus(focusPoint || this.controls.target, lockedBounds);
+      }
+      this.scene.overrideMaterial = this.heatmapMaterial;
+      this.lighting.setDepthFogDisabled(true);
+      this.renderer.setClearColor(0x090d18, 1);
     } else if (pass === 'normals') {
       this.scene.overrideMaterial = this.normalsMaterial;
       this.lighting.setDepthFogDisabled(true);
@@ -438,7 +531,7 @@ export class CameraAndExportController {
     } else if (pass === 'mask') {
       this._activeMaskRestore = this._applySemanticMasksToScene();
       this.lighting.setDepthFogDisabled(true);
-      this.renderer.setClearColor(0x000000, 1);
+      this.renderer.setClearColor(0x060911, 1);
     } else {
       this.lighting.setDepthFogDisabled(false);
     }
@@ -469,17 +562,33 @@ export class CameraAndExportController {
   }
 
   render() {
-    if (this.activePass === 'depth') {
+    if (this.activePass === 'depth' || this.activePass === 'heatmap') {
       this.updateDepthRangeForFocus(this.controls.target, this.lockedDepthBounds);
     }
     this.renderer.render(this.scene, this.camera);
+    if (this.activePass === 'bokeh') {
+      const dbSize = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+      const w = Math.max(2, Math.round(dbSize.x));
+      const h = Math.max(2, Math.round(dbSize.y));
+      const focusDistM = this.liveBokehSpec.focusDistM || Math.max(0.35, this.camera.position.distanceTo(this.controls.target));
+      this._applyOpticalBokehOnCanvas(w, h, this.camera, {
+        focalLengthMm: this.liveBokehSpec.focalLengthMm || 85,
+        apertureFStop: this.liveBokehSpec.apertureFStop || 1.4,
+        focusDistM,
+        sensorHeightMm: w >= h ? 20.25 : 36.0
+      });
+    }
   }
 
   /**
-   * Renderiza un fotograma vertical 9:16 (por defecto 1080×1920) en el pase solicitado:
-   *   passOrForceDepth: false/'beauty' | true/'depth' | 'normals' | 'mask'
-   *   options: { dof: { enabled, focalLengthMm, apertureFStop, focusDistM }, depthBoundsM: { uNear, uFar } }
+   * Renderiza un fotograma en cualquier resolución / relación de aspecto (16:9 YouTube 1920×1080 o 9:16 Móvil 1080×1920):
+   *   passOrForceDepth: false/'beauty' | 'bokeh' | true/'depth' | 'heatmap' | 'normals' | 'mask'
+   *   options: { dof: { enabled, focalLengthMm, apertureFStop, focusDistM, sensorHeightMm }, depthBoundsM: { uNear, uFar } }
    */
+  renderFrameDataURL(width = 1920, height = 1080, passOrForceDepth = null, options = {}) {
+    return this.renderVertical916DataURL(width, height, passOrForceDepth, options);
+  }
+
   renderVertical916DataURL(width = 1080, height = 1920, passOrForceDepth = null, options = {}) {
     const pass =
       passOrForceDepth === true
@@ -500,7 +609,7 @@ export class CameraAndExportController {
       this._activeMaskRestore = null;
     }
 
-    const isUtility = pass !== 'beauty';
+    const isUtility = pass !== 'beauty' && pass !== 'bokeh';
     const prevHidden = [];
     this.scene.traverse((obj) => {
       if (obj.userData?.hideOnDepthPass) {
@@ -524,6 +633,13 @@ export class CameraAndExportController {
       this.scene.background = null;
       this.renderer.setClearColor(0x000000, 1);
       this.renderer.render(this.scene, cam916);
+    } else if (pass === 'heatmap') {
+      this.updateDepthRangeForFocus(this.controls.target, options.depthBoundsM || null);
+      this.scene.overrideMaterial = this.heatmapMaterial;
+      this.lighting.setDepthFogDisabled(true);
+      this.scene.background = null;
+      this.renderer.setClearColor(0x090d18, 1);
+      this.renderer.render(this.scene, cam916);
     } else if (pass === 'normals') {
       this.scene.overrideMaterial = this.normalsMaterial;
       this.lighting.setDepthFogDisabled(true);
@@ -535,17 +651,24 @@ export class CameraAndExportController {
       tempMaskSaved = this._applySemanticMasksToScene();
       this.lighting.setDepthFogDisabled(true);
       this.scene.background = null;
-      this.renderer.setClearColor(0x000000, 1);
+      this.renderer.setClearColor(0x060911, 1);
       this.renderer.render(this.scene, cam916);
       this._restoreSceneMaterials(tempMaskSaved);
     } else {
-      // Beauty Pass (con Bokeh Óptico CoC real si options.dof está activo)
+      // Beauty Pass o Bokeh Pass explícito
       this.scene.overrideMaterial = null;
       this.lighting.setDepthFogDisabled(false);
       this.renderer.render(this.scene, cam916);
 
-      if (options.dof && options.dof.enabled) {
-        this._applyOpticalBokehOnCanvas(width, height, cam916, options.dof);
+      const wantBokeh = pass === 'bokeh' || Boolean(options.dof && options.dof.enabled);
+      if (wantBokeh) {
+        const dofSpec = options.dof || {
+          focalLengthMm: this.liveBokehSpec.focalLengthMm || 85,
+          apertureFStop: this.liveBokehSpec.apertureFStop || 1.4,
+          focusDistM: Math.max(0.35, cam916.position.distanceTo(this.controls.target)),
+          sensorHeightMm: width >= height ? 20.25 : 36.0
+        };
+        this._applyOpticalBokehOnCanvas(width, height, cam916, dofSpec);
       }
     }
 
@@ -562,29 +685,35 @@ export class CameraAndExportController {
     if (this.activePass === 'mask') {
       this._activeMaskRestore = this._applySemanticMasksToScene();
     }
-    this.renderer.render(this.scene, this.camera);
+    this.render();
 
     return dataURL;
   }
 
   _applyOpticalBokehOnCanvas(width, height, cam916, dof) {
-    // 1. Copiar Beauty ya tonemapeado en sRGB desde el canvas actual
-    const copyCanvas = document.createElement('canvas');
-    copyCanvas.width = width;
-    copyCanvas.height = height;
-    copyCanvas.getContext('2d').drawImage(this.renderer.domElement, 0, 0);
-    const beautyTex = new THREE.CanvasTexture(copyCanvas);
+    // 1. Copiar Beauty ya tonemapeado en sRGB desde el canvas actual (reutilizando buffer para 0% GC en vivo)
+    if (!this._bokehCopyCanvas) this._bokehCopyCanvas = document.createElement('canvas');
+    if (this._bokehCopyCanvas.width !== width || this._bokehCopyCanvas.height !== height) {
+      this._bokehCopyCanvas.width = width;
+      this._bokehCopyCanvas.height = height;
+    }
+    this._bokehCopyCanvas.getContext('2d').drawImage(this.renderer.domElement, 0, 0, width, height);
+    const beautyTex = new THREE.CanvasTexture(this._bokehCopyCanvas);
     beautyTex.minFilter = THREE.LinearFilter;
     beautyTex.magFilter = THREE.LinearFilter;
     beautyTex.colorSpace = THREE.NoColorSpace;
 
-    // 2. Renderizar mapa de profundidad métrica (en metros + flag espejo) a un RenderTarget offscreen
-    const depthRT = new THREE.WebGLRenderTarget(width, height, {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
-      type: THREE.UnsignedByteType,
-      depthBuffer: true
-    });
+    // 2. Renderizar mapa de profundidad métrica (en metros + flag espejo) a un RenderTarget cacheado
+    if (!this._liveDepthRT || this._liveDepthRT.width !== width || this._liveDepthRT.height !== height) {
+      if (this._liveDepthRT) this._liveDepthRT.dispose();
+      this._liveDepthRT = new THREE.WebGLRenderTarget(width, height, {
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
+        type: THREE.UnsignedByteType,
+        depthBuffer: true
+      });
+    }
+    const depthRT = this._liveDepthRT;
 
     const prevBg = this.scene.background;
     const prevFog = this.scene.fog;
@@ -635,7 +764,6 @@ export class CameraAndExportController {
     this.renderer.toneMapping = prevToneMapping;
 
     beautyTex.dispose();
-    depthRT.dispose();
   }
 
   /**

@@ -51,6 +51,7 @@
     #col-chapters,
     #col-blueprint,
     #col-director,
+    #col-atlas,
     #col-bible,
     #compactFloorBar {
       display: none;
@@ -70,13 +71,14 @@
     body[data-view="objects"].objects-with-3d #col-viewer { display: flex; }
     body[data-view="objects"].objects-with-3d #compactFloorBar { display: flex; }
 
-    /* 4) VISTA CINE & CAPÍTULOS: Sub-menú + (Capítulos | Grafo Blueprint | Director+Visor | Biblia) */
+    /* 4) VISTA CINE & CAPÍTULOS: Sub-menú + (Capítulos | Grafo Blueprint | Director+Visor | Atlas Encuadres | Biblia) */
     body[data-view="cinema"] #cinema-subnav-wrap { display: block; }
     body[data-view="cinema"][data-cinema-sub="chapters"] #col-chapters { display: block; }
     body[data-view="cinema"][data-cinema-sub="blueprint"] #col-blueprint { display: block; }
     body[data-view="cinema"][data-cinema-sub="director"] #col-viewer { display: flex; }
     body[data-view="cinema"][data-cinema-sub="director"] #col-director { display: flex; }
     body[data-view="cinema"][data-cinema-sub="director"] #compactFloorBar { display: flex; }
+    body[data-view="cinema"][data-cinema-sub="atlas"] #col-atlas { display: block; }
     body[data-view="cinema"][data-cinema-sub="bible"] #col-bible { display: block; }
 
     /* 5) VISTA CONSEJO DE ASESORES: Completa (12 cols), o Visor 3D (5 cols) + Consejo (7 cols) */
@@ -133,7 +135,7 @@
       box-shadow: 0 0 0 1px rgba(200, 100, 70, 0.35);
     }
   </style>
-  <script type="module" crossorigin src="./assets/index-BgaBdVPC.js"></script>
+  <script type="module" crossorigin src="./assets/index-DMdZBaV9.js"></script>
 </head>
 <body data-view="plato" data-cinema-sub="chapters" class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
@@ -303,11 +305,21 @@
 
           <!-- Controles Inferiores de Cámara y Captura -->
           <div class="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap items-center justify-between gap-2 z-20">
-            <div class="flex items-center gap-1 bg-black/85 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
-              <button data-cam="85mm" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">85mm</button>
-              <button data-cam="macro" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Macro</button>
-              <button data-cam="top" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cenital</button>
-              <button data-cam="reset" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Centrar</button>
+            <div class="flex flex-wrap items-center gap-1.5 bg-black/85 backdrop-blur-md p-1.5 rounded-xl border border-white/15 text-[11px] shadow-xl max-w-full">
+              <label class="flex items-center gap-1 pl-1">
+                <span class="text-[#f29979] font-mono text-[10px] font-bold">📷</span>
+                <select id="vp-shot-select" aria-label="Selector categorizado de 30 encuadres" class="bg-[#12141a] text-white font-semibold rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-[#c86446] max-w-[195px] sm:max-w-[235px] text-[11px]"></select>
+              </label>
+              <label class="flex items-center gap-1">
+                <span class="text-emerald-300 font-mono text-[10px] font-bold">🎞️</span>
+                <select id="vp-move-select" aria-label="Selector categorizado de 15 movimientos" class="bg-[#12141a] text-slate-200 font-medium rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-emerald-500 max-w-[160px] sm:max-w-[195px] text-[11px]"></select>
+              </label>
+              <button id="btn-vp-play-move" type="button" class="bg-emerald-600/85 hover:bg-emerald-500 px-2.5 py-1 rounded-lg text-white font-mono text-[10px] font-bold transition-colors" title="Previsualizar movimiento de cámara en el visor 3D">
+                ▶ Play
+              </button>
+              <button id="btn-vp-reset-cam" type="button" class="bg-white/10 hover:bg-[#c86446] px-2 py-1 rounded-lg text-slate-200 hover:text-white font-mono text-[10px] transition-colors" title="Restaurar cámara base del Spot">
+                ↺ Base
+              </button>
             </div>
 
             <div class="flex items-center gap-1.5">
@@ -523,7 +535,12 @@
     </aside>
 
     <!-- ===================================================================
-         SECCIÓN 4C ('cinema' -> 'bible'): BIBLIA DE ALINA & DOCTRINA ZERO-WASTE
+         SECCIÓN 4C ('cinema' -> 'atlas'): CATÁLOGO VISUAL DE ENCUADRES & MOVIMIENTOS
+         =================================================================== -->
+    <section id="col-atlas" class="col-span-12 min-w-0"></section>
+
+    <!-- ===================================================================
+         SECCIÓN 4D ('cinema' -> 'bible'): BIBLIA DE ALINA & DOCTRINA ZERO-WASTE
          =================================================================== -->
     <section id="col-bible" class="col-span-12 min-w-0"></section>
 
@@ -758,6 +775,26 @@
 
         <!-- PESTAÑA 6: BÓVEDA DE 32 OBJETOS, DOBLE REGISTRO, FRUSTUM AUTO-TAGGING & IMPORTADOR WEB -->
         <div id="pane-docs-6" class="docs-pane hidden space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 bg-emerald-950/35 border border-emerald-500/40 rounded-xl space-y-1.5">
+              <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider">🏛️ Versión 1 (Ruta A · 3 Pasos): Objeto Nativo del Modelo 3D</h3>
+              <ol class="space-y-1 text-slate-300 text-[11px] list-decimal list-inside">
+                <li><strong>1. Objeto existe en el Modelo 3D:</strong> El activo vive en el edificio 3D (<code class="font-mono text-emerald-300">worldPos XYZ</code>) y la Bóveda tiene su packshot aislado <code class="font-mono">1080×1080</code> (<strong>PNG RGBA transparente + Fondo Blanco #FFFFFF + Depth 16-bit</strong>).</li>
+                <li><strong>2. Objeto es creado de manera realista:</strong> Se pasa su Depth 16-bit + <code class="font-mono">object_token_lock</code> por <strong>Flux / ComfyUI</strong> (<code class="font-mono">CN Depth 0.68@0.58</code>) y el render aprobado se bloquea como <code class="font-mono text-amber-300">🔒 Master Still</code>.</li>
+                <li><strong>3. Objeto se inserta en el video:</strong> Se exporta su ficha en <strong>Fondo Blanco (#FFFFFF)</strong> a <strong>Higgsfield Elements / Flux Redux (0.75)</strong> o se anima como B-Roll <code class="font-mono">100mm Macro (≤ 3.5s)</code>.</li>
+              </ol>
+            </div>
+            <div class="p-3.5 bg-pink-950/35 border border-pink-500/40 rounded-xl space-y-1.5">
+              <h3 class="text-xs font-bold text-pink-300 uppercase tracking-wider">🌐 Versión 2 (Ruta B · 4 Pasos): Objeto o Ropa de Internet</h3>
+              <ol class="space-y-1 text-slate-300 text-[11px] list-decimal list-inside">
+                <li><strong>1. Objeto existe en Internet:</strong> Copias cualquier foto o URL de ropa, planta, cuadro o mueble de la web.</li>
+                <li><strong>2. Se pega en la web usando Antigravity y recortándolo con LLM:</strong> Se recorta automáticamente en <strong>PNG transparente (RGBA)</strong> y en <strong>Ficha Fondo Blanco (#FFFFFF)</strong> mientras el LLM extrae su ADN armonizado a la Tríada de Alina + Latón (<code class="font-mono">#d4af37</code>).</li>
+                <li><strong>3. Objeto se inserta en el Modelo 3D:</strong> Si es prenda, se cuelga físicamente en el <strong>Perchero Couture 3D</strong> del piso; si es cuadro/planta/escultura, se instancia en la sala.</li>
+                <li><strong>4. Objeto se inserta en el video de Higgsfield:</strong> Su ficha limpia en <strong>Fondo Blanco (#FFFFFF)</strong> y su <code class="font-mono">@handle</code> entran directo a Higgsfield Cinema Studio 4.0.</li>
+              </ol>
+            </div>
+          </div>
+
           <div class="p-3.5 bg-black/40 border border-[#c86446]/40 rounded-xl space-y-2">
             <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">1. Ley de Doble Registro (Motor 3D ↔ Imagen Maestra en Bóveda)</h3>
             <p>

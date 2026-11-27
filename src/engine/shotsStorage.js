@@ -301,7 +301,73 @@ export async function deleteChapterFromDB(id) {
 
 // ============================================================================
 // UTILIDAD: Normaliza archivos de imagen subidos desde el ordenador (PNG/JPG/WebP)
+// y ofrece preparación de Fotos de Referencia para Higgsfield (Fondo Blanco #FFFFFF o Recorte PNG RGBA)
 // ============================================================================
+export function processReferenceImageForHiggsfield(dataUrl, mode = 'white_sheet', size = 1080) {
+  return new Promise((resolve) => {
+    if (!dataUrl || mode === 'original') return resolve(dataUrl);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (mode === 'white_sheet') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, size, size);
+        } else {
+          ctx.clearRect(0, 0, size, size);
+        }
+
+        // Centrar la prenda/objeto al 86% del lienzo cuadrado 1080x1080
+        const pad = Math.round(size * 0.07);
+        const avail = size - pad * 2;
+        const scale = Math.min(avail / Math.max(1, img.width), avail / Math.max(1, img.height));
+        const drawW = Math.round(img.width * scale);
+        const drawH = Math.round(img.height * scale);
+        const dx = Math.round((size - drawW) / 2);
+        const dy = Math.round((size - drawH) / 2);
+        ctx.drawImage(img, dx, dy, drawW, drawH);
+
+        if (mode === 'auto_cutout') {
+          // Detectar color de fondo en las 4 esquinas y hacer transparente todo fondo uniforme (blanco/gris claro)
+          const imgData = ctx.getImageData(0, 0, size, size);
+          const d = imgData.data;
+          // Muestrear píxel cerca de la esquina del área dibujada
+          const sx = Math.max(0, Math.min(size - 1, dx + 4));
+          const sy = Math.max(0, Math.min(size - 1, dy + 4));
+          const bIdx = (sy * size + sx) * 4;
+          const bgR = d[bIdx] || 255;
+          const bgG = d[bIdx + 1] || 255;
+          const bgB = d[bIdx + 2] || 255;
+
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2];
+            const distCorner = Math.hypot(r - bgR, g - bgG, b - bgB);
+            const isNearWhite = r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 10 && Math.abs(g - b) < 10;
+            if (isNearWhite || distCorner < 22) {
+              d[i + 3] = 0;
+            } else if (distCorner < 36) {
+              // Feathering suave en el borde
+              d[i + 3] = Math.round(((distCorner - 22) / 14) * d[i + 3]);
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        }
+
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export function readAndResizeImageFile(file, maxEdge = 1440) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

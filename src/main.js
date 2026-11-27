@@ -4,8 +4,9 @@ import { SkyAndLightingController } from './engine/skyAndLighting.js';
 import { buildSanctuaryArchitecture } from './engine/buildingBuilder.js';
 import { AlinaAvatarController } from './engine/alinaLoader.js';
 import { CameraAndExportController } from './engine/cameraAndExport.js';
-import { CinemaDirector } from './engine/cinemaDirector.js';
+import { CinemaDirector, catalog as cinemaCatalog } from './engine/cinemaDirector.js';
 import { mountCinemaPanel } from './engine/cinemaUI.js';
+import { mountFramingAtlasUI } from './engine/framingAtlasUI.js';
 import { buildZipBlob } from './engine/zipWriter.js';
 import {
   analyzeCapturedImage,
@@ -66,7 +67,7 @@ const state = {
   threeLoadMs: 0
 };
 
-let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI, blueprintUI, advisorsUI;
+let scene, renderer, lighting, arch, alina, camCtrl, cinema, cinemaUI, objectsUI, chaptersUI, blueprintUI, atlasUI, advisorsUI;
 const clock = new THREE.Clock();
 let fpsFrames = 0;
 let fpsLastTime = performance.now();
@@ -287,6 +288,13 @@ function applySlugFromLocationHash() {
       chaptersUI?.setSubTab('director');
       return;
     }
+    if (raw === 'encuadres' || raw === 'movimientos' || raw === 'atlas' || raw === 'cine/encuadres') {
+      state.cinemaSubView = 'atlas';
+      document.body.dataset.cinemaSub = 'atlas';
+      switchMainView('cinema');
+      chaptersUI?.setSubTab('atlas');
+      return;
+    }
     if (raw === 'biblia' || raw === 'alina' || raw === 'reglas' || raw === 'zero-waste' || raw === 'cine/biblia') {
       state.cinemaSubView = 'bible';
       document.body.dataset.cinemaSub = 'bible';
@@ -344,9 +352,11 @@ function switchMainView(viewName) {
         ? 'blueprint'
         : state.cinemaSubView === 'director'
           ? 'director'
-          : state.cinemaSubView === 'bible'
-            ? 'biblia'
-            : 'capitulos',
+          : state.cinemaSubView === 'atlas'
+            ? 'encuadres'
+            : state.cinemaSubView === 'bible'
+              ? 'biblia'
+              : 'capitulos',
     advisors:
       advisorsUI?.getSubTab?.() === 'wardrobe'
         ? 'vestuario'
@@ -368,6 +378,7 @@ function switchMainView(viewName) {
   if (next === 'cinema') {
     if (state.cinemaSubView === 'chapters') chaptersUI?.renderChapters();
     if (state.cinemaSubView === 'blueprint') blueprintUI?.render();
+    if (state.cinemaSubView === 'atlas') atlasUI?.render();
     if (state.cinemaSubView === 'bible') chaptersUI?.renderBible();
   }
   if (next === 'prompts') renderShotsPanel();
@@ -1294,6 +1305,80 @@ function bindUIEvents() {
     btn.addEventListener('click', () => setCameraPreset(btn.dataset.cam));
   });
 
+  // Selectores desplegables categorizados en el Visor 3D (30 Encuadres + 15 Movimientos)
+  const vpShotSelect = document.getElementById('vp-shot-select');
+  const vpMoveSelect = document.getElementById('vp-move-select');
+  if (vpShotSelect && vpMoveSelect) {
+    const buildGroupedHtml = (items, fmt) => {
+      const map = new Map();
+      for (const it of items) {
+        const g = it.category || 'General';
+        if (!map.has(g)) map.set(g, []);
+        map.get(g).push(it);
+      }
+      return [...map.entries()]
+        .map(
+          ([gName, arr]) =>
+            `<optgroup label="${gName.replace(/"/g, '&quot;')}">${arr
+              .map((it) => `<option value="${it.id}">${fmt(it)}</option>`)
+              .join('')}</optgroup>`
+        )
+        .join('');
+    };
+
+    vpShotSelect.innerHTML =
+      `<option value="__spot_default__">★ Base del Spot (Órbita Libre)</option>` +
+      buildGroupedHtml(cinemaCatalog.shotTypes, (s) => `${s.shortLabel || s.label} · ${s.defaultFocalMm}mm`);
+    vpMoveSelect.innerHTML = buildGroupedHtml(cinemaCatalog.cameraMoves, (m) => m.shortLabel || m.label);
+    vpMoveSelect.value = 'slow_dolly_push_in';
+
+    vpShotSelect.addEventListener('change', () => {
+      const val = vpShotSelect.value;
+      if (val === '__spot_default__') {
+        cinema?.exit?.();
+        setCameraPreset('85mm');
+        return;
+      }
+      const st = cinemaCatalog.shotTypes.find((x) => x.id === val);
+      cinemaUI?.selectQuickShotAndMove({
+        shotTypeId: val,
+        moveId: vpMoveSelect.value || 'static_breathing',
+        play: false
+      });
+      if (st) {
+        setStatusText(
+          `📷 <span class="text-[#f29979] font-bold">${st.shortLabel || st.label}</span> (${st.defaultFocalMm}mm f/${st.defaultAperture}) aplicado en vivo.`
+        );
+      }
+    });
+
+    vpMoveSelect.addEventListener('change', () => {
+      const shotVal = vpShotSelect.value === '__spot_default__' ? 'mcu_interview' : vpShotSelect.value;
+      if (vpShotSelect.value === '__spot_default__') vpShotSelect.value = 'mcu_interview';
+      cinemaUI?.selectQuickShotAndMove({
+        shotTypeId: shotVal,
+        moveId: vpMoveSelect.value,
+        play: true
+      });
+    });
+
+    document.getElementById('btn-vp-play-move')?.addEventListener('click', () => {
+      const shotVal = vpShotSelect.value === '__spot_default__' ? 'mcu_interview' : vpShotSelect.value;
+      if (vpShotSelect.value === '__spot_default__') vpShotSelect.value = 'mcu_interview';
+      cinemaUI?.selectQuickShotAndMove({
+        shotTypeId: shotVal,
+        moveId: vpMoveSelect.value || 'slow_dolly_push_in',
+        play: true
+      });
+    });
+
+    document.getElementById('btn-vp-reset-cam')?.addEventListener('click', () => {
+      vpShotSelect.value = '__spot_default__';
+      cinema?.exit?.();
+      setCameraPreset('reset');
+    });
+  }
+
   document.querySelectorAll('.anim-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const animName = btn.dataset.anim;
@@ -1397,6 +1482,7 @@ async function init() {
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer({
     antialias: true,
+    alpha: true,
     preserveDrawingBuffer: true,
     powerPreference: 'high-performance'
   });
@@ -1645,34 +1731,142 @@ async function init() {
     return newVaultObj;
   }
 
+  /**
+   * Renderiza un objeto de la Bóveda 100% AISLADO (Turntable Packshot Studio) sin paredes ni muebles detrás:
+   * - bgMode = 'transparent' -> PNG RGBA con canal Alfa transparente (0% fondo)
+   * - bgMode = 'white'       -> PNG con fondo Blanco Puro (#FFFFFF) estilo e-commerce / Higgsfield Reference Sheet
+   * Devuelve { beauty, whiteBg, depth } en 1080x1080 (o la resolución solicitada).
+   */
+  async function renderIsolatedVaultObjectPackshot(obj, size = 1080) {
+    if (!obj || !arch?.buildIsolatedObjectTurntableGroup || !camCtrl) return null;
+    const turntableGroup = await arch.buildIsolatedObjectTurntableGroup(obj);
+    turntableGroup.position.set(0, 500, 0);
+    scene.add(turntableGroup);
+    turntableGroup.updateMatrixWorld(true);
+
+    // Luces dedicadas de estudio de 3 puntos (Key cálida Kelvin + Fill neutro + Rim de contorno para latón/texturas)
+    const studioLights = new THREE.Group();
+    studioLights.position.set(0, 500, 0);
+    const keyL = new THREE.DirectionalLight(0xfff1dc, 3.2);
+    keyL.position.set(2.4, 3.6, 3.2);
+    const fillL = new THREE.DirectionalLight(0xe2e8f0, 1.65);
+    fillL.position.set(-2.8, 2.2, 2.5);
+    const rimL = new THREE.DirectionalLight(0xffd28e, 2.2);
+    rimL.position.set(0.5, 3.4, -3.0);
+    const ambL = new THREE.AmbientLight(0xffffff, 1.15);
+    studioLights.add(keyL, fillL, rimL, ambL);
+    scene.add(studioLights);
+
+    // Calcular BoundingBox exacto del objeto aislado para encuadrarlo al 84% del lienzo 1:1
+    const bbox = new THREE.Box3().setFromObject(turntableGroup);
+    const center = new THREE.Vector3();
+    const bSize = new THREE.Vector3();
+    bbox.getCenter(center);
+    bbox.getSize(bSize);
+
+    const maxDim = Math.max(0.25, bSize.x, bSize.y, bSize.z);
+    const fovRad = THREE.MathUtils.degToRad(34);
+    const dist = (maxDim / (2 * Math.tan(fovRad / 2))) * 1.16;
+
+    // Guardar estado previo de la escena y cámara
+    const prevCamPos = camCtrl.camera.position.clone();
+    const prevTarget = camCtrl.controls.target.clone();
+    const prevFov = camCtrl.camera.fov;
+    const prevBg = scene.background;
+    const prevFog = scene.fog;
+    const prevFloorVis = arch.floorGroups.map((fg) => fg.visible);
+    const prevAlinaVis = alina?.root ? alina.root.visible : false;
+
+    arch.floorGroups.forEach((fg) => { fg.visible = false; });
+    if (alina?.root) alina.root.visible = false;
+    camCtrl.isTransitioning = false;
+
+    // Ángulo de estudio 3/4 ligeramente elevado para mostrar volumen 3D y textura PBR
+    const camOffset = new THREE.Vector3(dist * 0.24, dist * 0.14, dist * 0.96);
+    camCtrl.camera.fov = 34;
+    camCtrl.camera.position.copy(center).add(camOffset);
+    camCtrl.controls.target.copy(center);
+    camCtrl.camera.updateProjectionMatrix();
+    camCtrl.controls.update();
+
+    const prevSize = renderer.getSize(new THREE.Vector2());
+    const prevPR = renderer.getPixelRatio();
+    renderer.setPixelRatio(1);
+    renderer.setSize(size, size, false);
+
+    const camStudio = camCtrl.camera.clone();
+    camStudio.aspect = 1;
+    camStudio.updateProjectionMatrix();
+
+    // 1. Pase Beauty RGBA Transparente (Cutout PNG puro sin fondo)
+    scene.overrideMaterial = null;
+    scene.background = null;
+    scene.fog = null;
+    lighting.setDepthFogDisabled(true);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear();
+    renderer.render(scene, camStudio);
+    const beautyRgba = renderer.domElement.toDataURL('image/png');
+
+    // 2. Pase Beauty sobre Fondo Blanco Puro (#FFFFFF) para Higgsfield Reference Sheet
+    scene.background = new THREE.Color(0xffffff);
+    renderer.setClearColor(0xffffff, 1);
+    renderer.clear();
+    renderer.render(scene, camStudio);
+    const beautyWhite = renderer.domElement.toDataURL('image/png');
+
+    // 3. Pase Depth 16-bit aislado (solo silueta volumétrica del objeto sobre negro puro #000000)
+    const camToCenter = camStudio.position.distanceTo(center);
+    const halfSpan = Math.max(0.2, Math.max(bSize.x, bSize.y, bSize.z) * 0.65);
+    camCtrl.updateDepthRangeForFocus(center, {
+      uNear: Math.max(0.15, camToCenter - halfSpan),
+      uFar: camToCenter + halfSpan
+    });
+    scene.overrideMaterial = camCtrl.depthMaterial;
+    scene.background = null;
+    renderer.setClearColor(0x000000, 1);
+    renderer.clear();
+    renderer.render(scene, camStudio);
+    const depthIsolated = renderer.domElement.toDataURL('image/png');
+
+    // Limpiar turntable temporal y restaurar escena original
+    scene.remove(turntableGroup);
+    scene.remove(studioLights);
+    scene.overrideMaterial = null;
+    scene.background = prevBg;
+    scene.fog = prevFog;
+    lighting.setDepthFogDisabled(false);
+    arch.floorGroups.forEach((fg, idx) => { fg.visible = prevFloorVis[idx]; });
+    if (alina?.root) alina.root.visible = prevAlinaVis;
+    renderer.setPixelRatio(prevPR);
+    renderer.setSize(prevSize.x, prevSize.y, false);
+    camCtrl.camera.fov = prevFov;
+    camCtrl.camera.position.copy(prevCamPos);
+    camCtrl.controls.target.copy(prevTarget);
+    camCtrl.camera.updateProjectionMatrix();
+    camCtrl.controls.update();
+    camCtrl.render();
+
+    return {
+      id: obj.id,
+      handle: obj.handle,
+      beauty: beautyRgba,
+      whiteBg: beautyWhite,
+      depth: depthIsolated
+    };
+  }
+
   // Auto-curación (Self-Healing) en vivo desde el Motor 3D WebGL2 si alguna imagen de la Bóveda está caída
   async function repairSingleVaultObjectFrom3D(objId) {
     const obj = state.objects.find((o) => o.id === objId);
-    if (!obj || !obj.camPos || !obj.camTarget || !camCtrl) return null;
-    const prevFloor = state.activeFloor;
-    const prevSpot = state.activeSpot;
-    if (obj.floor != null && state.activeFloor !== obj.floor) selectFloor(obj.floor);
-    if (obj.spotId) {
-      const sp = findSpotById(obj.spotId);
-      if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
-    }
-    const prevAlinaVis = alina?.root ? alina.root.visible : true;
-    if (alina?.root) alina.root.visible = false;
-    camCtrl.isTransitioning = false;
-    camCtrl.camera.position.set(obj.camPos.x, obj.camPos.y, obj.camPos.z);
-    camCtrl.controls.target.set(obj.camTarget.x, obj.camTarget.y, obj.camTarget.z);
-    camCtrl.controls.update();
-    camCtrl.render();
-    const beauty = camCtrl.renderVertical916DataURL(720, 720, 'beauty');
-    const depth = camCtrl.renderVertical916DataURL(720, 720, 'depth');
-    if (alina?.root) alina.root.visible = prevAlinaVis;
-    if (prevFloor !== state.activeFloor) selectFloor(prevFloor);
-    if (prevSpot && prevSpot.id !== state.activeSpot?.id) selectSpot(prevSpot);
-    camCtrl.render();
+    if (!obj || !camCtrl) return null;
+    const pack = await renderIsolatedVaultObjectPackshot(obj, 720);
+    if (!pack) return null;
 
-    obj.previzRender = beauty;
-    obj.previzDepthRender = depth;
-    if (!obj.masterApprovedStill) obj.image = beauty;
+    obj.previzRender = pack.beauty;
+    obj.previzWhiteRender = pack.whiteBg;
+    obj.previzDepthRender = pack.depth;
+    if (!obj.masterApprovedStill) obj.image = pack.beauty;
     obj.isPlaceholderImage = false;
     await saveObjectToDB(obj);
     objectsUI?.render();
@@ -1779,6 +1973,9 @@ async function init() {
         if (chapId) blueprintUI?.openForChapter(chapId);
         else blueprintUI?.render();
       },
+      onOpenAtlas: () => {
+        atlasUI?.render();
+      },
       loadChapterSetIntoStudio: (ch) => {
         state.defaultChapterIdForNextShot = ch.id;
         state.pendingObjectIdsForNextShot = Array.isArray(ch.linkedObjectIds) ? [...ch.linkedObjectIds] : [];
@@ -1812,6 +2009,108 @@ async function init() {
     camCtrl,
     alina,
     setStatus: setStatusText
+  });
+
+  // Montar Atlas Visual de 30 Encuadres & 15 Movimientos (con capturador de pantallazos y GIFs 3D reales)
+  atlasUI = mountFramingAtlasUI(document.getElementById('col-atlas'), {
+    getActiveSpot: () => state.activeSpot,
+    selectSpotById: (spotId) => {
+      const sp = findSpotById(spotId);
+      if (!sp) return;
+      if (state.activeFloor !== sp.floor) {
+        state.activeFloor = sp.floor;
+        document.getElementById('currentFloorTag').textContent = SANCTUARY_FLOORS[sp.floor].floorName;
+        updateFloorCardStyles();
+        applyThreeJSSlicing();
+      }
+      selectSpot(sp);
+    },
+    captureShotThumbnail3D: (shotTypeId, moveId = 'static_breathing') => {
+      if (!cinema || !camCtrl) return null;
+      const st = cinemaCatalog.shotTypes.find((x) => x.id === shotTypeId);
+      if (!st) return null;
+      const spot = state.activeSpot;
+      const isMirror = shotTypeId === 'ots_mirror' && spot.id === 'vanity';
+      const shotObj = {
+        shotId: `atlas_thumb_${shotTypeId}`,
+        spotId: spot.id,
+        shotRole: st.shotRoleDefault || 'A-Roll',
+        brollIndex: 0,
+        directorStyleId: 'fincher_cronenweth',
+        shotTypeId: st.id,
+        cameraMoveId: moveId,
+        lightingSchemeId: 'rembrandt_chiaroscuro',
+        focalLengthMm: st.defaultFocalMm,
+        apertureFStop: st.defaultAperture,
+        durationSec: 3.0,
+        animation: spot.defaultAnim || 'Idle',
+        focusMode: isMirror ? 'mirror_reflection_plane' : st.shotRoleDefault === 'B-Roll' ? 'macro_prop_lock' : 'iris_lock',
+        mirrorShot: isMirror,
+        motionStrength: 2.2,
+        foregroundFraming: Boolean(st.autoForeground)
+      };
+      cinema.apply(shotObj, '9:16');
+      cinema.seekNormalized(0.5, { cleanKeyframe: true });
+      const dataUrl = camCtrl.renderVertical916DataURL(360, 640, 'beauty');
+      return dataUrl;
+    },
+    captureMoveLoopFrames3D: (moveId) => {
+      if (!cinema || !camCtrl) return [];
+      const mv = cinemaCatalog.cameraMoves.find((x) => x.id === moveId);
+      if (!mv) return [];
+      const spot = state.activeSpot;
+      const isRackIn = moveId === 'rack_focus_macro_to_eyes';
+      const isRackOut = moveId === 'rack_focus_eyes_to_prop';
+      const shotObj = {
+        shotId: `atlas_loop_${moveId}`,
+        spotId: spot.id,
+        shotRole: 'A-Roll',
+        brollIndex: 0,
+        directorStyleId: 'wong_kar_wai_doyle',
+        shotTypeId: 'mcu_interview',
+        cameraMoveId: mv.id,
+        lightingSchemeId: 'rembrandt_chiaroscuro',
+        focalLengthMm: 50,
+        apertureFStop: 1.4,
+        durationSec: mv.recommendedDurationSec,
+        animation: spot.defaultAnim || 'Idle',
+        focusMode: isRackIn ? 'rack_prop_to_iris' : isRackOut ? 'rack_iris_to_prop' : 'iris_lock',
+        mirrorShot: false,
+        motionStrength: mv.recommendedMotionStrength,
+        foregroundFraming: Boolean(isRackIn || isRackOut)
+      };
+      const p = cinema.apply(shotObj, '9:16');
+      const frames = [];
+      for (const tNorm of [0, 0.2, 0.4, 0.6, 0.8, 1.0]) {
+        cinema.seekNormalized(tNorm, { cleanKeyframe: false });
+        const focusM = p.dof.startFocusDistM + (p.dof.endFocusDistM - p.dof.startFocusDistM) * tNorm;
+        frames.push(
+          camCtrl.renderVertical916DataURL(270, 480, 'beauty', {
+            dof: {
+              enabled: true,
+              focalLengthMm: 50,
+              apertureFStop: 1.4,
+              focusDistM: focusM,
+              sensorHeightMm: 36.0
+            }
+          })
+        );
+      }
+      return frames;
+    },
+    jumpTo3DWithShotAndMove: ({ shotTypeId, moveId, play = true }) => {
+      state.cinemaSubView = 'director';
+      document.body.dataset.cinemaSub = 'director';
+      chaptersUI?.setSubTab('director');
+      switchMainView('cinema');
+      setTimeout(() => {
+        const res = cinemaUI?.selectQuickShotAndMove({ shotTypeId, moveId, play });
+        const vpShot = document.getElementById('vp-shot-select');
+        const vpMove = document.getElementById('vp-move-select');
+        if (vpShot && res?.shotTypeId) vpShot.value = res.shotTypeId;
+        if (vpMove && res?.cameraMoveId) vpMove.value = res.cameraMoveId;
+      }, 90);
+    }
   });
 
   // Montar Consejo de Asesores de Producción Cinematográfica (8 Jefes de Departamento)
@@ -2032,29 +2331,10 @@ async function init() {
         spotId: state.activeSpot?.id,
         objects: state.objects
       }),
-    renderVaultObject1080: (objId) => {
+    renderVaultObject1080: async (objId) => {
       const obj = state.objects.find((o) => o.id === objId);
-      if (!obj || !obj.camPos || !obj.camTarget) return null;
-      if (obj.floor != null && state.activeFloor !== obj.floor) {
-        selectFloor(obj.floor);
-      }
-      if (obj.spotId) {
-        const sp = findSpotById(obj.spotId);
-        if (sp && state.activeSpot?.id !== sp.id) selectSpot(sp);
-      }
-      // Esconder temporalmente a Alina durante el render de B-Roll Zero-Face para la Bóveda
-      const prevAlinaVis = alina?.root ? alina.root.visible : true;
-      if (alina?.root) alina.root.visible = false;
-      camCtrl.isTransitioning = false;
-      camCtrl.camera.position.set(obj.camPos.x, obj.camPos.y, obj.camPos.z);
-      camCtrl.controls.target.set(obj.camTarget.x, obj.camTarget.y, obj.camTarget.z);
-      camCtrl.controls.update();
-      camCtrl.render();
-      const beauty = camCtrl.renderVertical916DataURL(1080, 1080, 'beauty');
-      const depth = camCtrl.renderVertical916DataURL(1080, 1080, 'depth');
-      if (alina?.root) alina.root.visible = prevAlinaVis;
-      camCtrl.render();
-      return { id: obj.id, handle: obj.handle, beauty, depth };
+      if (!obj) return null;
+      return await renderIsolatedVaultObjectPackshot(obj, 1080);
     }
   };
 

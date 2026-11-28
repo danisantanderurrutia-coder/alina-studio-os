@@ -23,8 +23,12 @@ export class CinemaDirector {
     this.payload = null;
     this.shot = null;
     this.playing = false;
+    this.looping = false;
+    this.manualFreeLook = false;
+    this.lastT = 0;
     this.t0 = 0;
     this.onFrameHud = null;
+    this.onScrubUpdate = null;
     this.onMoveEnd = null;
     this._saved = null;
 
@@ -50,8 +54,11 @@ export class CinemaDirector {
     this.scene.add(this.foregroundGroup);
     this._initForegroundMeshes();
 
-    // El usuario toma el control → cancelar movimiento.
-    camCtrl.controls.addEventListener('start', () => { if (this.playing) this.stop(false); });
+    // El usuario toma el control manual con el ratón → detener bucle y liberar giro libre.
+    camCtrl.controls.addEventListener('start', () => {
+      this.manualFreeLook = true;
+      if (this.playing) this.stop(false);
+    });
   }
 
   _initForegroundMeshes() {
@@ -227,6 +234,7 @@ export class CinemaDirector {
   /** Coloca la escena (spot, Alina, rig de luz, grade) y salta al primer fotograma del plano. */
   apply(shot, aspectRatio = '9:16') {
     this.stop(false);
+    this.manualFreeLook = false;
     this.prepareSpot?.(shot.spotId);
     const p = this.resolve(shot, aspectRatio);
     this._saveBase();
@@ -237,7 +245,7 @@ export class CinemaDirector {
     // Alina: animación + orientación (espejo)
     if (this.alina?.root) {
       this.alina.root.rotation.y = p.alinaRotY;
-      if (p.animation) this.alina.playAnimation(p.animation, 0.25);
+      if (p.animation) this.alina.playAnimation(p.animation, 0);
     }
 
     // Rig de luz
@@ -309,6 +317,9 @@ export class CinemaDirector {
       pos.x += Math.sin(elapsed * w) * c.handheldAmpM * 0.6 + Math.sin(elapsed * w * 0.37 + 1.3) * c.handheldAmpM * 0.4;
       pos.y += Math.sin(elapsed * w * 2.0 + 0.5) * c.handheldAmpM * 0.7;
       pos.z += Math.sin(elapsed * w * 0.53 + 2.1) * c.handheldAmpM * 0.3;
+    } else if (this.shot?.cameraMoveId === 'static_breathing' && !suppressHandheld && this.playing) {
+      pos.y += Math.sin(elapsed * 1.8) * 0.009;
+      pos.x += Math.cos(elapsed * 1.1) * 0.005;
     }
 
     const cam = this.camCtrl.camera;
@@ -321,36 +332,85 @@ export class CinemaDirector {
     this.camCtrl.controls.update();
     if (c.rollDeg) cam.rotateZ(THREE.MathUtils.degToRad(c.rollDeg));
 
-    // foco (para pase Depth, Bokeh CoC y HUD)
+    // foco en tiempo real (conectado al pase Bokeh CoC en vivo, Depth y HUD)
     const f = p.dof.startFocusDistM + (p.dof.endFocusDistM - p.dof.startFocusDistM) * k;
     this.focusDistM = f;
+    this.lastT = t;
+    if (this.camCtrl.liveBokehSpec) {
+      this.camCtrl.liveBokehSpec.focalLengthMm = p.dof.focalLengthMm || c.focalMm || 85;
+      this.camCtrl.liveBokehSpec.apertureFStop = p.dof.apertureFStop || 1.4;
+      this.camCtrl.liveBokehSpec.focusDistM = f;
+      this.camCtrl.liveBokehSpec.sensorHeightMm = 36.0;
+    }
+    this.onScrubUpdate?.(t, this.playing);
   }
 
-  play(onEnd) {
+  play(onEnd, { loop = false } = {}) {
     if (!this.payload) return;
     this.stop(false);
+    this.manualFreeLook = false;
     this.playing = true;
+    this.looping = Boolean(loop);
     this.t0 = performance.now();
     this.onMoveEnd = onEnd || null;
+    this.onScrubUpdate?.(this.lastT, true);
   }
 
   stop(finished) {
-    if (!this.playing) return;
+    const wasPlaying = this.playing;
     this.playing = false;
-    const cb = this.onMoveEnd; this.onMoveEnd = null;
+    this.looping = false;
+    if (!wasPlaying) return;
+    const cb = this.onMoveEnd;
+    this.onMoveEnd = null;
+    this.onScrubUpdate?.(this.lastT, false);
     if (finished && cb) cb();
   }
 
-  /** Llamar cada frame desde el loop principal (antes de camCtrl.update/render). */
+  /** Llamar cada frame desde el loop principal (si devuelve true, camCtrl.update() NO pisa la cámara). */
   update() {
-    if (!this.active) return false;
-    if (this.playing && this.payload) {
+    if (!this.active || !this.payload) return false;
+    if (this.playing) {
       const el = (performance.now() - this.t0) / 1000;
-      const dur = this.payload.camera.durationSec;
+      const dur = Math.max(0.5, this.payload.camera.durationSec);
+
+      if (this.looping) {
+        // Ciclo ping-pong cinematográfico con micro-pausa de 0.35s en Start y 0.45s en End
+        const holdS = 0.35;
+        const holdE = 0.45;
+        const cycle = holdS + dur + holdE + dur;
+        const phase = el % cycle;
+        let t = 0;
+        if (phase < holdS) {
+          t = 0;
+        } else if (phase < holdS + dur) {
+          t = (phase - holdS) / dur;
+        } else if (phase < holdS + dur + holdE) {
+          t = 1;
+        } else {
+          t = 1 - (phase - (holdS + dur + holdE)) / dur;
+        }
+        this._setCamera(t, el);
+        this.onFrameHud?.({ t, el: t * dur, dur, focusM: this.focusDistM, loop: true });
+        return true;
+      }
+
       const t = Math.min(1, el / dur);
       this._setCamera(t, el);
-      this.onFrameHud?.({ t, el, dur, focusM: this.focusDistM });
-      if (t >= 1) { this.playing = false; const cb = this.onMoveEnd; this.onMoveEnd = null; cb?.(); }
+      this.onFrameHud?.({ t, el, dur, focusM: this.focusDistM, loop: false });
+      if (t >= 1) {
+        this.playing = false;
+        const cb = this.onMoveEnd;
+        this.onMoveEnd = null;
+        this.onScrubUpdate?.(1, false);
+        cb?.();
+      }
+      return true;
+    }
+
+    // Preservar inclinación Dutch Roll mientras el usuario no haya tomado control manual con el ratón
+    if (!this.manualFreeLook && Math.abs(this.payload.camera.rollDeg || 0) > 0.01) {
+      this._setCamera(this.lastT, 0, true);
       return true;
     }
     return false;

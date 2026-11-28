@@ -1054,9 +1054,9 @@
     {
       "id": "static_breathing",
       "category": "1. Eje Óptico & Respiración",
-      "shortLabel": "Trípode Fijo Vivo",
-      "label": "Estático + Micro-Respiración (Lock Tripod)",
-      "useCaseEs": "Cámara anclada en trípode pesado; toda la fuerza recae en la mirada y la luz.",
+      "shortLabel": "🔒 Trípode Fijo + Respiración",
+      "label": "Cámara Fija en Trípode + Micro-Respiración Orgánica",
+      "useCaseEs": "Único preset de cámara fija: el trípode sostiene el plano mientras respira Alina y la luz.",
       "startOffsetLocal": {
         "right": 0,
         "up": 0,
@@ -1064,8 +1064,8 @@
       },
       "endOffsetLocal": {
         "right": 0,
-        "up": 0.008,
-        "forward": -0.02
+        "up": 0.015,
+        "forward": -0.04
       },
       "arcDegrees": 0,
       "easing": "easeInOutSine",
@@ -1080,18 +1080,18 @@
     {
       "id": "slow_dolly_push_in",
       "category": "1. Eje Óptico & Respiración",
-      "shortLabel": "Dolly Push-In (28cm)",
-      "label": "Dolly Push-In Quirúrgico (28cm hacia el Iris)",
-      "useCaseEs": "Avance lineal hipnótico que incrementa la intimidad psicológica.",
+      "shortLabel": "Dolly Push-In (56cm)",
+      "label": "Dolly Push-In Cinematográfico (Avance 56cm hacia el Iris)",
+      "useCaseEs": "Avance sobre riel claro y visible que cierra el encuadre hacia la mirada.",
       "startOffsetLocal": {
         "right": 0,
-        "up": 0,
-        "forward": 0.14
+        "up": 0.02,
+        "forward": 0.32
       },
       "endOffsetLocal": {
         "right": 0,
-        "up": 0,
-        "forward": -0.14
+        "up": -0.01,
+        "forward": -0.24
       },
       "arcDegrees": 0,
       "easing": "easeInOutSine",
@@ -1100,263 +1100,263 @@
       "handheldHz": 0,
       "handheldAmpM": 0,
       "focusTransition": "locked",
-      "recommendedMotionStrength": 2.2,
-      "motionPromptTokens": "very subtle slow dolly push-in 25cm toward emerald eyes, steady subject posture, smooth mechanical rail --motion 2"
+      "recommendedMotionStrength": 2.3,
+      "motionPromptTokens": "smooth cinematic dolly push-in 55cm toward emerald eyes, steady subject posture, precision camera rail --motion 2.3"
     },
     {
       "id": "slow_dolly_pull_out",
       "category": "1. Eje Óptico & Respiración",
-      "shortLabel": "Dolly Pull-Out (40cm)",
-      "label": "Dolly Pull-Out Revelador (Descubre el Set 4.90m)",
-      "useCaseEs": "Retrocede suavemente sobre riel descubriendo el mobiliario real de la estancia.",
+      "shortLabel": "Dolly Pull-Out (82cm)",
+      "label": "Dolly Pull-Out Revelador (Retroceso 82cm por la Sala)",
+      "useCaseEs": "Retrocede casi un metro sobre riel descubriendo toda la riqueza arquitectónica del set.",
       "startOffsetLocal": {
         "right": 0,
-        "up": 0,
-        "forward": -0.15
+        "up": -0.02,
+        "forward": -0.22
       },
       "endOffsetLocal": {
         "right": 0,
-        "up": 0.06,
-        "forward": 0.25
+        "up": 0.1,
+        "forward": 0.6
       },
       "arcDegrees": 0,
       "easing": "easeOutCubic",
-      "recommendedDurationSec": 3.5,
+      "recommendedDurationSec": 3.6,
       "maxDurationSec": 4,
       "handheldHz": 0,
       "handheldAmpM": 0,
       "focusTransition": "locked",
-      "recommendedMotionStrength": 2.4,
-      "motionPromptTokens": "slow graceful dolly pull-out revealing surrounding architectural room, serene poised subject --motion 2"
+      "recommendedMotionStrength": 2.5,
+      "motionPromptTokens": "slow graceful dolly pull-out 80cm revealing surrounding architectural room, serene poised subject --motion 2.5"
     },
     {
       "id": "vertigo_dolly_zoom_subtle",
       "category": "1. Eje Óptico & Respiración",
-      "shortLabel": "Contra-Zoom Vértigo Sutil",
-      "label": "Contra-Zoom Hitchcock Sutil (Pull-Back + Cierre Óptico)",
-      "useCaseEs": "La cámara retrocede mientras cierra el FOV: Alina mantiene escala y el fondo se comprime.",
+      "shortLabel": "Contra-Zoom Vértigo (90cm)",
+      "label": "Contra-Zoom Hitchcock (Retroceso 90cm + Cierre Focal 1.48×)",
+      "useCaseEs": "La cámara se aleja mientras cierra el zoom: Alina mantiene tamaño y el fondo se acerca.",
       "startOffsetLocal": {
         "right": 0,
         "up": 0,
-        "forward": -0.16
+        "forward": -0.24
       },
       "endOffsetLocal": {
         "right": 0,
-        "up": 0.02,
-        "forward": 0.38
+        "up": 0.03,
+        "forward": 0.66
       },
-      "endFocalScale": 1.28,
+      "endFocalScale": 1.48,
       "arcDegrees": 0,
       "easing": "easeInOutCubic",
-      "recommendedDurationSec": 3.2,
-      "maxDurationSec": 3.8,
+      "recommendedDurationSec": 3.4,
+      "maxDurationSec": 4,
       "handheldHz": 0,
       "handheldAmpM": 0,
       "focusTransition": "locked",
-      "recommendedMotionStrength": 2.4,
-      "motionPromptTokens": "subtle optical dolly-zoom compression keeping subject scale steady while background architecture gently compresses closer --motion 2.4"
+      "recommendedMotionStrength": 2.5,
+      "motionPromptTokens": "optical Hitchcock dolly-zoom compression keeping subject scale steady while background architecture visibly compresses closer --motion 2.5"
     },
     {
       "id": "subtle_parallax_arc",
       "category": "2. Paralaje Orbital & Slider",
-      "shortLabel": "Arco Parallax Derecha (+14°)",
-      "label": "Arco Orbital Derecha (+14° Zero-Waste Safe)",
-      "useCaseEs": "Desplazamiento curvo a la derecha generando paralaje 3D entre las 3 capas.",
+      "shortLabel": "Arco Orbital Derecha (+18°)",
+      "label": "Arco Orbital Derecha (+18° · 84cm Parallax)",
+      "useCaseEs": "Desplazamiento curvo amplio a la derecha generando fuerte paralaje 3D entre las 3 capas.",
       "startOffsetLocal": {
-        "right": -0.26,
+        "right": -0.42,
         "up": 0,
-        "forward": 0.05
+        "forward": 0.08
       },
       "endOffsetLocal": {
-        "right": 0.26,
-        "up": 0.02,
-        "forward": 0
+        "right": 0.42,
+        "up": 0.03,
+        "forward": -0.02
       },
-      "arcDegrees": 14,
+      "arcDegrees": 18,
       "easing": "easeInOutSine",
-      "recommendedDurationSec": 3.5,
-      "maxDurationSec": 4,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.6,
-      "motionPromptTokens": "gentle 14-degree rightward parallax camera arc keeping subject face within front quadrant, smooth background depth shift --motion 2.5"
-    },
-    {
-      "id": "subtle_parallax_arc_left",
-      "category": "2. Paralaje Orbital & Slider",
-      "shortLabel": "Arco Parallax Izquierda (-14°)",
-      "label": "Arco Orbital Izquierda (-14° Contra-Plano)",
-      "useCaseEs": "Órbita inversa hacia la izquierda ideal para alternar planos en montaje.",
-      "startOffsetLocal": {
-        "right": 0.26,
-        "up": 0.02,
-        "forward": 0.05
-      },
-      "endOffsetLocal": {
-        "right": -0.26,
-        "up": 0,
-        "forward": 0
-      },
-      "arcDegrees": 14,
-      "easing": "easeInOutSine",
-      "recommendedDurationSec": 3.5,
-      "maxDurationSec": 4,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.6,
-      "motionPromptTokens": "gentle 14-degree leftward parallax camera arc wrapping smoothly around subject with deep background separation --motion 2.5"
-    },
-    {
-      "id": "lateral_slider_truck",
-      "category": "2. Paralaje Orbital & Slider",
-      "shortLabel": "Slider Lateral B-Roll",
-      "label": "Slider Horizontal Limpio (Truck Lateral 64cm)",
-      "useCaseEs": "Barrido paralelo de precisión para bodegones macro, islas de mármol y barras.",
-      "startOffsetLocal": {
-        "right": -0.32,
-        "up": 0,
-        "forward": 0
-      },
-      "endOffsetLocal": {
-        "right": 0.32,
-        "up": 0,
-        "forward": 0
-      },
-      "arcDegrees": 4,
-      "easing": "easeInOutSine",
-      "recommendedDurationSec": 2.8,
-      "maxDurationSec": 3.5,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.6,
-      "motionPromptTokens": "silky lateral tabletop slider pan across prop textures, specular reflections gliding across surface --motion 2.6"
-    },
-    {
-      "id": "reveal_from_behind_wall",
-      "category": "2. Paralaje Orbital & Slider",
-      "shortLabel": "Slider Reveal Tras Marco",
-      "label": "Slider de Descubrimiento Lateral (Sale tras Cortina/Umbral)",
-      "useCaseEs": "Desplazamiento lateral amplio con acercamiento que revela la escena desde un borde.",
-      "startOffsetLocal": {
-        "right": -0.44,
-        "up": -0.02,
-        "forward": 0.14
-      },
-      "endOffsetLocal": {
-        "right": 0.08,
-        "up": 0,
-        "forward": -0.06
-      },
-      "arcDegrees": 10,
-      "easing": "easeOutCubic",
-      "recommendedDurationSec": 3.4,
-      "maxDurationSec": 4,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.5,
-      "motionPromptTokens": "cinematic lateral reveal glide emerging past foreground shadow edge to unveil Alina poised in warm light --motion 2.5"
-    },
-    {
-      "id": "pedestal_reveal_up",
-      "category": "3. Verticalidad, Pluma & Grúa",
-      "shortLabel": "Pedestal Ascendente ↑",
-      "label": "Columna Pedestal Ascendente (9:16 Reveal Up)",
-      "useCaseEs": "Elevación vertical pura que estiliza el porte de Alina y la altura del techo.",
-      "startOffsetLocal": {
-        "right": 0,
-        "up": -0.26,
-        "forward": 0.05
-      },
-      "endOffsetLocal": {
-        "right": 0,
-        "up": 0.16,
-        "forward": -0.05
-      },
-      "arcDegrees": 0,
-      "easing": "easeInOutCubic",
-      "recommendedDurationSec": 3.5,
-      "maxDurationSec": 4,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.5,
-      "motionPromptTokens": "smooth vertical pedestal rise revealing posture and architecture upward, poised stillness --motion 2.5"
-    },
-    {
-      "id": "pedestal_sink_down",
-      "category": "3. Verticalidad, Pluma & Grúa",
-      "shortLabel": "Pedestal Descendente ↓",
-      "label": "Columna Pedestal Descendente (Asentamiento Íntimo)",
-      "useCaseEs": "Desciende suavemente asentando la atmósfera al cerrar un bloque narrativo.",
-      "startOffsetLocal": {
-        "right": 0,
-        "up": 0.24,
-        "forward": 0.04
-      },
-      "endOffsetLocal": {
-        "right": 0,
-        "up": -0.14,
-        "forward": -0.04
-      },
-      "arcDegrees": 0,
-      "easing": "easeInOutCubic",
-      "recommendedDurationSec": 3.4,
-      "maxDurationSec": 4,
-      "handheldHz": 0,
-      "handheldAmpM": 0,
-      "focusTransition": "locked",
-      "recommendedMotionStrength": 2.4,
-      "motionPromptTokens": "controlled vertical pedestal descent settling calmly into eye-level intimacy, zero camera shake --motion 2.4"
-    },
-    {
-      "id": "crane_jib_high_to_eye",
-      "category": "3. Verticalidad, Pluma & Grúa",
-      "shortLabel": "Pluma / Jib Diagonal ↘",
-      "label": "Pluma / Mini-Jib de Picado a Mirada (Descenso Diagonal)",
-      "useCaseEs": "Arranca alta y abierta (+45cm) y aterriza suavemente frente al iris de Alina.",
-      "startOffsetLocal": {
-        "right": 0.22,
-        "up": 0.44,
-        "forward": 0.28
-      },
-      "endOffsetLocal": {
-        "right": 0,
-        "up": 0,
-        "forward": -0.08
-      },
-      "arcDegrees": 11,
-      "easing": "easeInOutCubic",
       "recommendedDurationSec": 3.6,
       "maxDurationSec": 4,
       "handheldHz": 0,
       "handheldAmpM": 0,
       "focusTransition": "locked",
       "recommendedMotionStrength": 2.6,
-      "motionPromptTokens": "graceful sweeping mini-jib crane descent from elevated three-quarter view down into intimate eye-level portrait --motion 2.6"
+      "motionPromptTokens": "smooth 18-degree rightward parallax camera arc keeping subject face within front quadrant, rich background depth shift --motion 2.6"
     },
     {
-      "id": "rack_focus_macro_to_eyes",
-      "category": "4. Óptica de Foco & Cámara Viva",
-      "shortLabel": "Rack Focus: Prop → Ojos",
-      "label": "Trasfoco Óptico (Primer Término Nítido → Iris de Alina)",
-      "useCaseEs": "Desvanece el prop cercano en bokeh f/1.4 mientras clava el foco en la mirada.",
+      "id": "subtle_parallax_arc_left",
+      "category": "2. Paralaje Orbital & Slider",
+      "shortLabel": "Arco Orbital Izquierda (-18°)",
+      "label": "Arco Orbital Izquierda (-18° · 84cm Contra-Plano)",
+      "useCaseEs": "Órbita amplia hacia la izquierda ideal para alternar planos con paralaje real.",
+      "startOffsetLocal": {
+        "right": 0.42,
+        "up": 0.03,
+        "forward": 0.08
+      },
+      "endOffsetLocal": {
+        "right": -0.42,
+        "up": 0,
+        "forward": -0.02
+      },
+      "arcDegrees": 18,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 3.6,
+      "maxDurationSec": 4,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.6,
+      "motionPromptTokens": "smooth 18-degree leftward parallax camera arc wrapping gracefully around subject with deep background separation --motion 2.6"
+    },
+    {
+      "id": "lateral_slider_truck",
+      "category": "2. Paralaje Orbital & Slider",
+      "shortLabel": "Slider Lateral (88cm)",
+      "label": "Slider Horizontal Amplio (Trucking 88cm)",
+      "useCaseEs": "Barrido paralelo de 88cm para bodegones macro, islas de mármol y barras.",
+      "startOffsetLocal": {
+        "right": -0.44,
+        "up": 0,
+        "forward": 0.02
+      },
+      "endOffsetLocal": {
+        "right": 0.44,
+        "up": 0,
+        "forward": 0.02
+      },
+      "arcDegrees": 6,
+      "easing": "easeInOutSine",
+      "recommendedDurationSec": 3.2,
+      "maxDurationSec": 3.8,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.7,
+      "motionPromptTokens": "silky 88cm lateral slider tracking across textures, specular reflections gliding smoothly across surface --motion 2.7"
+    },
+    {
+      "id": "reveal_from_behind_wall",
+      "category": "2. Paralaje Orbital & Slider",
+      "shortLabel": "Slider Reveal Diagonal (92cm)",
+      "label": "Slider de Descubrimiento Diagonal (92cm desde Lateral)",
+      "useCaseEs": "Viaje lateral y frontal que entra descubriendo la escena desde un extremo.",
+      "startOffsetLocal": {
+        "right": -0.64,
+        "up": -0.04,
+        "forward": 0.24
+      },
+      "endOffsetLocal": {
+        "right": 0.16,
+        "up": 0.02,
+        "forward": -0.1
+      },
+      "arcDegrees": 14,
+      "easing": "easeOutCubic",
+      "recommendedDurationSec": 3.6,
+      "maxDurationSec": 4,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.6,
+      "motionPromptTokens": "cinematic diagonal lateral reveal glide emerging from foreground edge to unveil Alina poised in warm light --motion 2.6"
+    },
+    {
+      "id": "pedestal_reveal_up",
+      "category": "3. Verticalidad, Pluma & Grúa",
+      "shortLabel": "Pedestal Ascendente ↑ (68cm)",
+      "label": "Columna Pedestal Ascendente (Elevación 68cm)",
+      "useCaseEs": "Subida vertical pronunciada que recorre el porte de Alina y la arquitectura de 4.90m.",
       "startOffsetLocal": {
         "right": 0,
-        "up": 0,
+        "up": -0.4,
         "forward": 0.08
       },
       "endOffsetLocal": {
         "right": 0,
-        "up": 0,
+        "up": 0.28,
         "forward": -0.06
       },
       "arcDegrees": 0,
       "easing": "easeInOutCubic",
-      "recommendedDurationSec": 2.8,
+      "recommendedDurationSec": 3.6,
+      "maxDurationSec": 4,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.5,
+      "motionPromptTokens": "smooth 68cm vertical pedestal rise revealing posture and architecture upward, poised stillness --motion 2.5"
+    },
+    {
+      "id": "pedestal_sink_down",
+      "category": "3. Verticalidad, Pluma & Grúa",
+      "shortLabel": "Pedestal Descendente ↓ (68cm)",
+      "label": "Columna Pedestal Descendente (Bajada 68cm)",
+      "useCaseEs": "Desciende casi 70cm desde plano alto hasta asentar la cámara en la mirada o detalle.",
+      "startOffsetLocal": {
+        "right": 0,
+        "up": 0.38,
+        "forward": 0.06
+      },
+      "endOffsetLocal": {
+        "right": 0,
+        "up": -0.3,
+        "forward": -0.06
+      },
+      "arcDegrees": 0,
+      "easing": "easeInOutCubic",
+      "recommendedDurationSec": 3.5,
+      "maxDurationSec": 4,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.4,
+      "motionPromptTokens": "controlled 68cm vertical pedestal descent settling calmly into eye-level intimacy, zero camera shake --motion 2.4"
+    },
+    {
+      "id": "crane_jib_high_to_eye",
+      "category": "3. Verticalidad, Pluma & Grúa",
+      "shortLabel": "Pluma / Mini-Jib ↘ (95cm)",
+      "label": "Pluma / Mini-Jib de Picado a Mirada (Vuelo 95cm)",
+      "useCaseEs": "Espectacular descenso diagonal de grúa desde arriba a la derecha hasta sus ojos.",
+      "startOffsetLocal": {
+        "right": 0.38,
+        "up": 0.62,
+        "forward": 0.44
+      },
+      "endOffsetLocal": {
+        "right": 0,
+        "up": 0,
+        "forward": -0.1
+      },
+      "arcDegrees": 15,
+      "easing": "easeInOutCubic",
+      "recommendedDurationSec": 3.8,
+      "maxDurationSec": 4,
+      "handheldHz": 0,
+      "handheldAmpM": 0,
+      "focusTransition": "locked",
+      "recommendedMotionStrength": 2.7,
+      "motionPromptTokens": "graceful sweeping mini-jib crane descent from elevated three-quarter view down into intimate eye-level portrait --motion 2.7"
+    },
+    {
+      "id": "rack_focus_macro_to_eyes",
+      "category": "4. Óptica de Foco & Cámara Viva",
+      "shortLabel": "Rack Focus Bokeh: Prop → Ojos",
+      "label": "Trasfoco Óptico en Vivo (Prop Nítido → Iris de Alina)",
+      "useCaseEs": "Activa Bokeh CoC en vivo: desenfoca el objeto cercano mientras enfoca a Alina.",
+      "startOffsetLocal": {
+        "right": -0.06,
+        "up": 0,
+        "forward": 0.16
+      },
+      "endOffsetLocal": {
+        "right": 0.04,
+        "up": 0,
+        "forward": -0.1
+      },
+      "arcDegrees": 4,
+      "easing": "easeInOutCubic",
+      "recommendedDurationSec": 3,
       "maxDurationSec": 3.5,
       "handheldHz": 0,
       "handheldAmpM": 0,
@@ -1367,22 +1367,22 @@
     {
       "id": "rack_focus_eyes_to_prop",
       "category": "4. Óptica de Foco & Cámara Viva",
-      "shortLabel": "Rack Focus: Ojos → Prop",
+      "shortLabel": "Rack Focus Bokeh: Ojos → Prop",
       "label": "Trasfoco Óptico Inverso (Iris de Alina → Prop en 1.er Plano)",
-      "useCaseEs": "Cierre magistral de frase: Alina se funde en bokeh cálido y cobra foco el objeto simbólico.",
+      "useCaseEs": "Activa Bokeh CoC en vivo: Alina se funde en desenfoque y entra en foco el prop.",
       "startOffsetLocal": {
-        "right": 0,
+        "right": 0.04,
         "up": 0,
-        "forward": -0.04
+        "forward": -0.08
       },
       "endOffsetLocal": {
-        "right": 0,
+        "right": -0.06,
         "up": 0,
-        "forward": 0.08
+        "forward": 0.16
       },
-      "arcDegrees": 0,
+      "arcDegrees": 4,
       "easing": "easeInOutCubic",
-      "recommendedDurationSec": 2.8,
+      "recommendedDurationSec": 3,
       "maxDurationSec": 3.5,
       "handheldHz": 0,
       "handheldAmpM": 0,
@@ -1393,25 +1393,25 @@
     {
       "id": "handheld_walking_lubezki",
       "category": "4. Óptica de Foco & Cámara Viva",
-      "shortLabel": "Steadicam Walk 1.7Hz",
-      "label": "Steadicam / Handheld Caminando (1.7 Hz · Máx 3.0s)",
-      "useCaseEs": "Retrocede acompañando el paso con pulso orgánico desacoplado en overscan.",
+      "shortLabel": "Steadicam Walk 1.7Hz (72cm)",
+      "label": "Steadicam / Cámara en Mano Caminando (1.7 Hz · 72cm)",
+      "useCaseEs": "Retrocede 72cm con oscilación orgánica real de operador siguiendo el paso.",
       "startOffsetLocal": {
-        "right": 0.08,
-        "up": 0.02,
-        "forward": 0.12
+        "right": 0.12,
+        "up": 0.03,
+        "forward": 0.24
       },
       "endOffsetLocal": {
-        "right": -0.04,
-        "up": 0,
-        "forward": -0.28
+        "right": -0.08,
+        "up": -0.01,
+        "forward": -0.46
       },
-      "arcDegrees": 6,
+      "arcDegrees": 8,
       "easing": "linear",
       "recommendedDurationSec": 3,
       "maxDurationSec": 3,
       "handheldHz": 1.7,
-      "handheldAmpM": 0.022,
+      "handheldAmpM": 0.034,
       "focusTransition": "locked",
       "recommendedMotionStrength": 3,
       "motionPromptTokens": "natural front-camera handheld walking presence, subtle 1.7Hz breathing bob, copper hair catching breeze, strict 3 seconds max --motion 3"
@@ -1419,28 +1419,28 @@
     {
       "id": "fpv_slow_glide_through",
       "category": "4. Óptica de Foco & Cámara Viva",
-      "shortLabel": "Glide Flotante Interior (55cm)",
-      "label": "Vuelo Interior Flotante (Architectural Gimbal Glide 55cm)",
-      "useCaseEs": "Avance profundo y sedoso sobre gimbal atravesando el espacio para intros atmosféricas.",
+      "shortLabel": "Gimbal Glide Profundo (1.05m)",
+      "label": "Vuelo Interior en Gimbal (Recorrido Profundo 1.05m)",
+      "useCaseEs": "El desplazamiento más largo: cruza más de un metro de profundidad por la estancia.",
       "startOffsetLocal": {
-        "right": -0.1,
-        "up": 0.08,
-        "forward": 0.34
+        "right": -0.18,
+        "up": 0.14,
+        "forward": 0.62
       },
       "endOffsetLocal": {
-        "right": 0.04,
-        "up": -0.02,
-        "forward": -0.22
+        "right": 0.08,
+        "up": -0.03,
+        "forward": -0.42
       },
-      "arcDegrees": 5,
+      "arcDegrees": 7,
       "easing": "easeInOutSine",
-      "recommendedDurationSec": 3.6,
+      "recommendedDurationSec": 3.8,
       "maxDurationSec": 4,
       "handheldHz": 0,
       "handheldAmpM": 0,
       "focusTransition": "locked",
-      "recommendedMotionStrength": 2.7,
-      "motionPromptTokens": "weightless stabilized gimbal forward glide floating smoothly through candlelit architectural depth --motion 2.7"
+      "recommendedMotionStrength": 2.8,
+      "motionPromptTokens": "weightless stabilized gimbal forward glide floating smoothly over 1 meter through candlelit architectural depth --motion 2.8"
     }
   ],
   "lightingSchemes": [

@@ -29,6 +29,23 @@
       width: 100% !important;
       height: 100% !important;
     }
+    #viewport-wrapper[data-aspect="16:9"] #three-canvas-container {
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      max-width: 100%;
+    }
+    #viewport-wrapper[data-aspect="9:16"] #three-canvas-container {
+      aspect-ratio: 9 / 16;
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      max-height: 100%;
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35), 0 20px 50px rgba(0, 0, 0, 0.85);
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
     .viewport-theater {
       position: fixed !important;
       inset: 12px !important;
@@ -252,14 +269,19 @@
               <button data-anim="HipHop" class="anim-btn py-1 px-2 rounded-lg border border-white/10 bg-black/40 text-slate-300 hover:bg-white/10">HipHop</button>
             </div>
 
-            <button id="btn-guide-916" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors">
-              📱 9:16
-            </button>
-            <div class="flex items-center bg-black/60 p-1 rounded-xl border border-white/10 text-[11px] gap-0.5" id="passButtons" role="group" aria-label="Pase de Render 3D">
+            <div class="flex items-center bg-black/65 p-1 rounded-xl border border-white/10 text-[11px] gap-0.5" id="aspectButtons" role="group" aria-label="Formato de Toma (YouTube vs Celular)">
+              <button data-aspect="16:9" id="btn-aspect-169" class="aspect-btn px-2.5 py-1 rounded-lg bg-sky-600 text-white font-semibold shadow transition-all" title="Formato Horizontal 16:9 (YouTube / Cine 1920×1080)">🖥️ 16:9 YouTube</button>
+              <button data-aspect="9:16" id="btn-aspect-916" class="aspect-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Formato Vertical 9:16 (Celular / Reels 1080×1920)">📱 9:16 Celular</button>
+            </div>
+
+            <div class="flex items-center bg-black/65 p-1 rounded-xl border border-white/10 text-[11px] gap-0.5 flex-wrap" id="passButtons" role="group" aria-label="Escalas de Colores y Efectos 3D">
+              <button type="button" id="btn-cycle-pass" class="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 border border-amber-400/30 font-mono font-bold transition-colors" title="Ir cambiando entre todas las escalas de color y pases ópticos">⟳ Escala</button>
               <button data-pass="beauty" id="btn-beauty-pass" class="pass-btn px-2 py-1 rounded-lg bg-[#c86446] text-white font-semibold shadow">PBR</button>
-              <button data-pass="depth" id="btn-depth-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors">Depth</button>
-              <button data-pass="normals" id="btn-normals-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors">Normals</button>
-              <button data-pass="mask" id="btn-mask-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors">Mask</button>
+              <button data-pass="bokeh" id="btn-bokeh-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Desenfoque Óptico Real (Bokeh CoC)">Bokeh</button>
+              <button data-pass="depth" id="btn-depth-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Mapa Z-Depth 16-bit">Depth</button>
+              <button data-pass="heatmap" id="btn-heatmap-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Escala Térmica Turbo de Profundidad">Térmico</button>
+              <button data-pass="normals" id="btn-normals-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Normales de Cámara RGB">Normals</button>
+              <button data-pass="mask" id="btn-mask-pass" class="pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors" title="Máscara Semántica por Color">Mask ID</button>
             </div>
           </div>
         </div>
@@ -270,17 +292,9 @@
           <div id="spotPillsContainer" class="flex flex-wrap gap-1.5"></div>
         </div>
 
-        <!-- VIEWPORT 3D -->
-        <div id="viewport-wrapper" class="relative w-full h-[460px] rounded-xl bg-black border border-white/15 overflow-hidden flex flex-col flex-1 shadow-2xl">
+        <!-- VIEWPORT 3D (Horizontal 16:9 YouTube por defecto, alternable a Vertical 9:16 Celular) -->
+        <div id="viewport-wrapper" data-aspect="16:9" class="relative w-full h-[460px] rounded-xl bg-[#05070c] border border-white/15 overflow-hidden flex items-center justify-center flex-1 shadow-2xl">
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative"></div>
-
-          <div id="guide-916-overlay" class="hidden absolute inset-0 pointer-events-none z-10 flex items-stretch justify-center">
-            <div class="flex-1 bg-black/65"></div>
-            <div class="h-full aspect-[9/16] border-x border-amber-400/75 flex items-start justify-center pt-12">
-              <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-400/40">ENCUADRE 9:16</span>
-            </div>
-            <div class="flex-1 bg-black/65"></div>
-          </div>
 
           <!-- HUD Superior del Visor -->
           <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none z-20">
@@ -307,16 +321,24 @@
             <div class="flex flex-wrap items-center gap-1.5 bg-black/85 backdrop-blur-md p-1.5 rounded-xl border border-white/15 text-[11px] shadow-xl max-w-full">
               <label class="flex items-center gap-1 pl-1">
                 <span class="text-[#f29979] font-mono text-[10px] font-bold">📷</span>
-                <select id="vp-shot-select" aria-label="Selector categorizado de 30 encuadres" class="bg-[#12141a] text-white font-semibold rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-[#c86446] max-w-[195px] sm:max-w-[235px] text-[11px]"></select>
+                <select id="vp-shot-select" aria-label="Selector categorizado de 30 encuadres" class="bg-[#12141a] text-white font-semibold rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-[#c86446] max-w-[175px] sm:max-w-[215px] text-[11px]"></select>
               </label>
               <label class="flex items-center gap-1">
                 <span class="text-emerald-300 font-mono text-[10px] font-bold">🎞️</span>
-                <select id="vp-move-select" aria-label="Selector categorizado de 15 movimientos" class="bg-[#12141a] text-slate-200 font-medium rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-emerald-500 max-w-[160px] sm:max-w-[195px] text-[11px]"></select>
+                <select id="vp-move-select" aria-label="Selector categorizado de 15 movimientos" class="bg-[#12141a] text-slate-200 font-medium rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-emerald-500 max-w-[155px] sm:max-w-[190px] text-[11px]"></select>
               </label>
-              <button id="btn-vp-play-move" type="button" class="bg-emerald-600/85 hover:bg-emerald-500 px-2.5 py-1 rounded-lg text-white font-mono text-[10px] font-bold transition-colors" title="Previsualizar movimiento de cámara en el visor 3D">
-                ▶ Play
+              <button id="btn-vp-play-move" type="button" class="bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded-lg text-white font-mono text-[10px] font-bold transition-colors" title="Iniciar o pausar el movimiento de cámara">
+                ▶ Mover
               </button>
-              <button id="btn-vp-reset-cam" type="button" class="bg-white/10 hover:bg-[#c86446] px-2 py-1 rounded-lg text-slate-200 hover:text-white font-mono text-[10px] transition-colors" title="Restaurar cámara base del Spot">
+              <button id="btn-vp-loop" type="button" aria-pressed="true" class="bg-[#c86446]/30 border border-[#c86446] text-[#f29979] px-2 py-1 rounded-lg font-mono text-[10px] font-bold transition-colors" title="Mantener el movimiento en bucle continuo (Start ↔ End)">
+                🔁 Loop: ON
+              </button>
+              <div class="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10" title="Arrastra para inspeccionar el fotograma inicial (0%) y final (100%) del movimiento">
+                <span class="text-[9px] font-mono text-slate-400">Start</span>
+                <input id="vp-move-scrubber" type="range" min="0" max="100" value="0" class="w-16 accent-emerald-400 cursor-pointer">
+                <span id="vp-scrubber-pct" class="text-[9px] font-mono text-emerald-300 w-7 text-right">0%</span>
+              </div>
+              <button id="btn-vp-reset-cam" type="button" class="bg-white/10 hover:bg-[#c86446] px-2 py-1 rounded-lg text-slate-200 hover:text-white font-mono text-[10px] transition-colors" title="Restaurar cámara libre del Spot">
                 ↺ Base
               </button>
             </div>
@@ -378,8 +400,8 @@
         <div id="shotDetail" class="hidden flex-col gap-3">
           <div class="flex items-start gap-3 p-2.5 rounded-xl bg-black/45 border border-white/10">
             <div class="flex gap-1.5 shrink-0">
-              <img id="shotPreview" alt="Captura Beauty 9:16" class="w-16 rounded-lg border border-white/15 bg-black object-cover" style="aspect-ratio: 9/16;">
-              <img id="shotDepthPreview" alt="Captura Depth 9:16" class="hidden w-16 rounded-lg border border-emerald-500/30 bg-black object-cover" style="aspect-ratio: 9/16;">
+              <img id="shotPreview" alt="Captura Beauty" class="w-24 rounded-lg border border-white/15 bg-black object-cover" style="aspect-ratio: 16/9;">
+              <img id="shotDepthPreview" alt="Captura Depth" class="hidden w-24 rounded-lg border border-emerald-500/30 bg-black object-cover" style="aspect-ratio: 16/9;">
             </div>
             <div class="min-w-0 flex-1 text-[11px] space-y-1">
               <div class="flex items-center justify-between gap-1">

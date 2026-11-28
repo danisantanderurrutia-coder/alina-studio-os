@@ -70,15 +70,18 @@ export class AlinaAvatarController {
     if (!next) return;
 
     const prev = this.currentActionName ? this.actions[this.currentActionName] : null;
-    if (prev && prev !== next) {
+    if (prev && prev !== next && fadeSec > 0.01) {
       next.reset();
       next.play();
       prev.crossFadeTo(next, fadeSec, true);
     } else {
+      if (prev && prev !== next) prev.stop();
       next.reset();
       next.play();
     }
     this.currentActionName = next.getClip().name;
+    this.mixer?.update(0.03);
+    this.root?.updateMatrixWorld(true);
   }
 
   placeAtSpot(spot) {

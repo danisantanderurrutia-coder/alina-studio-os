@@ -3,7 +3,7 @@
 // 2) 'objects': Bóveda de Objetos Renderizados (renders subidos o capturados del 3D) para Higgsfield.
 // 3) 'chapters': Capítulos cinematográficos de la serie (sinopsis, guion, escaleta de tomas y objetos).
 
-import { SEED_CHAPTERS, SEED_OBJECTS } from '../data/alinaLoreData.js';
+import { ensureChapterHierarchy, SEED_CHAPTERS, SEED_OBJECTS } from '../data/alinaLoreData.js';
 
 const DB_NAME = 'AlinaStudioOS_CapturesDB';
 const DB_VERSION = 3;
@@ -273,24 +273,30 @@ export async function deleteObjectFromDB(id) {
 // ============================================================================
 export async function loadChaptersFromDB() {
   const db = await openStudioDB();
-  if (!db) return SEED_CHAPTERS.map((c) => ({ ...c }));
+  if (!db) return SEED_CHAPTERS.map((c) => ensureChapterHierarchy(structuredClone(c)));
 
   const existing = await getAllRecords(db, STORE_CHAPTERS);
   if (existing.length === 0) {
-    for (const ch of SEED_CHAPTERS) {
-      await putRecord(db, STORE_CHAPTERS, { ...ch });
+    const seeded = SEED_CHAPTERS.map((c) => ensureChapterHierarchy(structuredClone(c)));
+    for (const ch of seeded) {
+      await putRecord(db, STORE_CHAPTERS, ch);
     }
-    return SEED_CHAPTERS.map((c) => ({ ...c }));
+    return seeded;
   }
 
   existing.sort((a, b) => (a.number || 0) - (b.number || 0));
-  return existing;
+  const normalized = existing.map((c) => ensureChapterHierarchy(c));
+  for (const ch of normalized) {
+    await putRecord(db, STORE_CHAPTERS, ch);
+  }
+  return normalized;
 }
 
 export async function saveChapterToDB(chapter) {
   const db = await openStudioDB();
   if (!db || !chapter?.id) return;
-  await putRecord(db, STORE_CHAPTERS, { ...chapter });
+  ensureChapterHierarchy(chapter);
+  await putRecord(db, STORE_CHAPTERS, structuredClone(chapter));
 }
 
 export async function deleteChapterFromDB(id) {

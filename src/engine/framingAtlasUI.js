@@ -244,13 +244,14 @@ function buildMoveAnimatedPreviewHtml(mv) {
 }
 
 export function mountFramingAtlasUI(root, ctx) {
-  let mode = 'shots'; // 'shots' | 'moves' | 'all'
+  let mode = 'all'; // 'shots' | 'moves' | 'all' — muestra de entrada tanto Encuadres como Movimientos animados
   let selectedCat = 'Todas';
   // Caché en memoria de pantallazos reales 3D y loops animados por spotId + id
   const realThumbCache = new Map(); // key: `${spotId}:shot:${id}` -> dataUrl
   const realLoopCache = new Map();  // key: `${spotId}:move:${id}` -> string[] (frames)
   const loopTimers = new Set();
   let batchBusy = false;
+  let autoLoopToken = 0;
 
   // Inyectar CSS de animaciones continuas 60fps una sola vez
   if (!document.getElementById('framing-atlas-keyframes')) {
@@ -567,13 +568,33 @@ export function mountFramingAtlasUI(root, ctx) {
       </div>
     `;
 
-    // Restaurar loops 3D ya cacheados para este spot
+    // Restaurar loops 3D ya cacheados y auto-generar en segundo plano los restantes sin bloquear la UI
     movesFiltered.forEach((mv) => {
       const cachedFrames = realLoopCache.get(`${activeSpot.id}:move:${mv.id}`);
       if (cachedFrames) {
         mountLoopPlayerOnCard(root.querySelector(`[data-move-preview="${mv.id}"]`), cachedFrames);
       }
     });
+
+    const missingMoves = movesFiltered.filter((mv) => !realLoopCache.has(`${activeSpot.id}:move:${mv.id}`));
+    if (missingMoves.length > 0) {
+      const myToken = ++autoLoopToken;
+      (async () => {
+        for (const mv of missingMoves) {
+          await new Promise((r) => setTimeout(r, 35));
+          if (myToken !== autoLoopToken || !document.body.contains(root)) return;
+          const cardPreview = root.querySelector(`[data-move-preview="${mv.id}"]`);
+          if (!cardPreview) continue;
+          const frames = ctx.captureMoveLoopFrames3D(mv.id);
+          if (frames?.length) {
+            realLoopCache.set(`${activeSpot.id}:move:${mv.id}`, frames);
+            mountLoopPlayerOnCard(cardPreview, frames);
+            const btn = root.querySelector(`[data-gif-move="${mv.id}"]`);
+            if (btn) btn.textContent = '✓ Loop 3D Vivo';
+          }
+        }
+      })();
+    }
 
     // Eventos UI
     root.querySelector('#atlas-spot-select')?.addEventListener('change', (e) => {

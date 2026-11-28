@@ -53,6 +53,7 @@ const state = {
   activeCamPreset: '85mm',
   lightingMode: 'night',
   sliced: true,
+  aspectRatio: '16:9', // '16:9' (Horizontal YouTube por defecto) | '9:16' (Vertical Celular)
   activePass: 'beauty',
   depthPass: false,
   guide916: false,
@@ -561,11 +562,47 @@ function prepareSpotForCinema(spotId) {
   alina?.placeAtSpot(spot);
 }
 
+const PASS_ORDER = ['beauty', 'bokeh', 'depth', 'heatmap', 'normals', 'mask'];
+
+function getExportDims(aspect = state.aspectRatio) {
+  return aspect === '9:16'
+    ? { w: 1080, h: 1920, tag: '1080x1920', slug: '9x16', label: '9:16 (1080×1920)' }
+    : { w: 1920, h: 1080, tag: '1920x1080', slug: '16x9', label: '16:9 (1920×1080)' };
+}
+
 function updateViewportHud() {
   const floorLabel = SANCTUARY_FLOORS[state.activeFloor].floorName.split('•')[0].trim();
-  const passLabels = { beauty: state.activeSpot.name, depth: 'DEPTH PASS', normals: 'CAMERA NORMALS', mask: 'SEMANTIC MASK 7-ID' };
+  const passLabels = {
+    beauty: state.activeSpot.name,
+    bokeh: 'OPTICAL BOKEH CoC',
+    depth: 'Z-DEPTH 16-BIT',
+    heatmap: 'ESCALA TÉRMICA TURBO',
+    normals: 'CAMERA NORMALS',
+    mask: 'SEMANTIC MASK ID'
+  };
   const passTag = passLabels[state.activePass] || state.activeSpot.name;
-  document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [Three.js 1:1]`;
+  const fmtTag = state.aspectRatio === '9:16' ? '📱 9:16' : '🖥️ 16:9';
+  document.getElementById('viewport-status-hud').textContent = `${floorLabel} • ${passTag} [${fmtTag}]`;
+}
+
+function setViewportAspect(aspect = '16:9', { fromSubModule = false } = {}) {
+  const next = aspect === '9:16' ? '9:16' : '16:9';
+  state.aspectRatio = next;
+  document.body.dataset.aspect = next;
+  const wrap = document.getElementById('viewport-wrapper');
+  if (wrap) wrap.dataset.aspect = next;
+
+  document.querySelectorAll('.aspect-btn').forEach((btn) => {
+    const isAct = btn.dataset.aspect === next;
+    btn.className = isAct
+      ? `aspect-btn px-2.5 py-1 rounded-lg ${next === '16:9' ? 'bg-sky-600' : 'bg-amber-600'} text-white font-semibold shadow transition-all`
+      : 'aspect-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
+  });
+
+  refreshViewportLayout();
+  cinemaUI?.onAspectChanged?.(next);
+  if (!fromSubModule) blueprintUI?.setAspectRatio?.(next, true);
+  updateViewportHud();
 }
 
 function setLightingMode(mode) {
@@ -585,19 +622,41 @@ function setLightingMode(mode) {
 }
 
 function setViewportPass(pass = 'beauty') {
-  state.activePass = pass;
-  state.depthPass = pass === 'depth';
+  const validPass = PASS_ORDER.includes(pass) ? pass : 'beauty';
+  state.activePass = validPass;
+  state.depthPass = validPass === 'depth' || validPass === 'heatmap';
   const focus = new THREE.Vector3(state.activeSpot.alinaPos.x, state.activeSpot.alinaPos.y + 1.0, state.activeSpot.alinaPos.z);
-  camCtrl?.setRenderPass(pass, focus);
+  if (camCtrl) {
+    camCtrl.liveBokehSpec = {
+      focalLengthMm: cinema?.shot?.focalLengthMm || 85,
+      apertureFStop: cinema?.shot?.apertureFStop || 1.4,
+      focusDistM: cinema?.focusDistM || null
+    };
+    camCtrl.setRenderPass(validPass, focus, cinema?.payload?.depthBoundsM || null);
+  }
 
+  const colorMap = {
+    beauty: 'bg-[#c86446]',
+    bokeh: 'bg-amber-600',
+    depth: 'bg-emerald-600',
+    heatmap: 'bg-rose-600',
+    normals: 'bg-indigo-600',
+    mask: 'bg-fuchsia-600'
+  };
   document.querySelectorAll('.pass-btn').forEach((btn) => {
-    const isAct = btn.dataset.pass === pass;
-    const activeColor = pass === 'beauty' ? 'bg-[#c86446]' : pass === 'depth' ? 'bg-emerald-600' : pass === 'normals' ? 'bg-indigo-600' : 'bg-fuchsia-600';
+    const isAct = btn.dataset.pass === validPass;
+    const activeColor = colorMap[validPass] || 'bg-[#c86446]';
     btn.className = isAct
       ? `pass-btn px-2 py-1 rounded-lg ${activeColor} text-white font-semibold shadow transition-all`
       : 'pass-btn px-2 py-1 rounded-lg text-slate-400 hover:text-white font-semibold transition-colors';
   });
   updateViewportHud();
+}
+
+function cycleViewportPass() {
+  const idx = PASS_ORDER.indexOf(state.activePass);
+  const next = PASS_ORDER[(idx + 1) % PASS_ORDER.length];
+  setViewportPass(next);
 }
 
 function setDepthPass(enabled) {
@@ -664,7 +723,7 @@ function buildHiggsfieldPayload() {
     higgsfield_zero_waste: {
       mode: 'Image-to-Video',
       motion_strength: parseFloat(document.getElementById('motionSlider').value),
-      aspect_ratio: '9:16 (1080x1920)',
+      aspect_ratio: getExportDims().label,
       duration_seconds: 3.5,
       lipsync_engine: state.motionEngine,
       brolls: state.activeSpot.brolls
@@ -785,6 +844,7 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
     camPreset: state.activeCamPreset,
     lightingMode: state.lightingMode,
     sliced: state.sliced,
+    aspectRatio: state.aspectRatio,
     depthPass: state.depthPass,
     camera,
     framing,
@@ -818,26 +878,29 @@ async function createShotFromCapture(beautyDataUrl, depthDataUrl = null) {
 
 function captureCurrentViewportToPrompt({ withDepth = false } = {}) {
   if (state.activeView !== 'prompts') switchMainView('prompts');
-  const beautyUrl = camCtrl.renderVertical916DataURL(1080, 1920, state.depthPass ? true : false);
-  const depthUrl = withDepth ? camCtrl.renderVertical916DataURL(1080, 1920, true) : null;
+  const { w, h } = getExportDims(state.aspectRatio);
+  const beautyUrl = camCtrl.renderFrameDataURL(w, h, state.depthPass ? 'depth' : state.activePass === 'bokeh' ? 'bokeh' : 'beauty');
+  const depthUrl = withDepth ? camCtrl.renderFrameDataURL(w, h, 'depth') : null;
   createShotFromCapture(beautyUrl, depthUrl);
 }
 
 function captureViewportAsObjectRender(aspect = '1:1') {
-  const h = aspect === '1:1' ? 1080 : 1920;
-  const beautyUrl = camCtrl.renderVertical916DataURL(1080, h, 'beauty');
-  const depthUrl = camCtrl.renderVertical916DataURL(1080, h, 'depth');
+  const w = aspect === '16:9' ? 1920 : 1080;
+  const h = aspect === '1:1' ? 1080 : aspect === '16:9' ? 1080 : 1920;
+  const beautyUrl = camCtrl.renderFrameDataURL(w, h, 'beauty');
+  const depthUrl = camCtrl.renderFrameDataURL(w, h, 'depth');
   return Promise.resolve({ beautyUrl, depthUrl });
 }
 
 function attachDepthToSelectedShot() {
   const shot = getSelectedShot();
   if (!shot) return;
-  shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, true);
+  const { w, h, label } = getExportDims(shot.aspectRatio || state.aspectRatio);
+  shot.depthImage = camCtrl.renderFrameDataURL(w, h, 'depth');
   regenerateShotPrompts(shot, { onlyFluxIfClean: true });
   saveShotToDB(shot);
   renderShotsPanel();
-  setStatusText('✅ <span class="text-emerald-400 font-bold">Depth Map 9:16 adjuntado a la captura.</span>');
+  setStatusText(`✅ <span class="text-emerald-400 font-bold">Depth Map ${label} adjuntado a la captura.</span>`);
 }
 
 function regenerateShotPrompts(shot, { onlyFluxIfClean = false } = {}) {
@@ -898,10 +961,12 @@ function renderShotsPanel() {
       isSel ? 'border-[#c86446] scale-[1.02] copper-glow' : 'border-white/10 opacity-75 hover:opacity-100'
     }`;
     btn.title = `Toma #${num} • ${s.spot.name}`;
+    const shotAspect = s.aspectRatio === '9:16' ? '9/16' : '16/9';
+    const thumbW = s.aspectRatio === '9:16' ? 'w-12' : 'w-20';
     btn.innerHTML = `
-      <img src="${s.image}" alt="Toma ${num}" class="block w-12 object-cover bg-black" style="aspect-ratio: 9/16;">
+      <img src="${s.image}" alt="Toma ${num}" class="block ${thumbW} object-cover bg-black" style="aspect-ratio: ${shotAspect};">
       <span class="absolute top-0.5 left-0.5 px-1 rounded bg-black/80 text-[8px] font-mono text-white">#${num}</span>
-      <span class="absolute bottom-0.5 right-0.5 px-1 rounded text-[7px] font-mono font-bold bg-emerald-600/85 text-white">3D</span>
+      <span class="absolute bottom-0.5 right-0.5 px-1 rounded text-[7px] font-mono font-bold bg-emerald-600/85 text-white">${s.aspectRatio || '16:9'}</span>
     `;
     btn.addEventListener('click', () => {
       state.selectedShotId = s.id;
@@ -915,11 +980,17 @@ function renderShotsPanel() {
   detail.classList.toggle('flex', Boolean(shot));
   if (!shot) return;
 
-  document.getElementById('shotPreview').src = shot.image;
+  const selAspectCss = shot.aspectRatio === '9:16' ? '9/16' : '16/9';
+  const selWidthCls = shot.aspectRatio === '9:16' ? 'w-16' : 'w-24';
+  const prevEl = document.getElementById('shotPreview');
+  prevEl.src = shot.image;
+  prevEl.style.aspectRatio = selAspectCss;
+  prevEl.className = `${selWidthCls} rounded-lg border border-white/15 bg-black object-cover`;
   const depthImg = document.getElementById('shotDepthPreview');
   if (shot.depthImage) {
     depthImg.src = shot.depthImage;
-    depthImg.classList.remove('hidden');
+    depthImg.style.aspectRatio = selAspectCss;
+    depthImg.className = `${selWidthCls} rounded-lg border border-emerald-500/30 bg-black object-cover`;
   } else {
     depthImg.classList.add('hidden');
   }
@@ -1073,17 +1144,19 @@ async function exportSelectedShotPackage() {
   const baseName = `alina_piso${shot.floor}_${shot.spot.id}_${shot.id.slice(-5)}`;
   const attachedObjects = getObjectsForShot(shot);
 
+  const { w, h, tag } = getExportDims(shot.aspectRatio || state.aspectRatio);
+
   if (!shot.depthImage && camCtrl) {
-    shot.depthImage = camCtrl.renderVertical916DataURL(1080, 1920, 'depth');
+    shot.depthImage = camCtrl.renderFrameDataURL(w, h, 'depth');
     saveShotToDB(shot);
     renderShotsPanel();
   }
 
   const entries = [
-    { path: `frames_3d_raw/start_beauty_1080x1920.png`, data: shot.image },
-    { path: `frames_3d_raw/start_depth_1080x1920.png`, data: shot.depthImage },
-    { path: `frames_3d_raw/start_normals_1080x1920.png`, data: camCtrl.renderVertical916DataURL(1080, 1920, 'normals') },
-    { path: `frames_3d_raw/start_mask_1080x1920.png`, data: camCtrl.renderVertical916DataURL(1080, 1920, 'mask') },
+    { path: `frames_3d_raw/start_beauty_${tag}.png`, data: shot.image },
+    { path: `frames_3d_raw/start_depth_${tag}.png`, data: shot.depthImage },
+    { path: `frames_3d_raw/start_normals_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'normals') },
+    { path: `frames_3d_raw/start_mask_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'mask') },
     { path: `higgsfield_capture_manifest.json`, data: buildShotExportPayload(shot) }
   ];
 
@@ -1289,13 +1362,11 @@ function bindUIEvents() {
     }
   });
 
-  document.getElementById('btn-guide-916').addEventListener('click', () => {
-    state.guide916 = !state.guide916;
-    document.getElementById('guide-916-overlay').classList.toggle('hidden', !state.guide916);
-    document.getElementById('btn-guide-916').className = state.guide916
-      ? 'px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[11px] font-mono transition-colors'
-      : 'px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-[11px] font-mono transition-colors';
+  document.querySelectorAll('.aspect-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setViewportAspect(btn.dataset.aspect));
   });
+
+  document.getElementById('btn-cycle-pass')?.addEventListener('click', () => cycleViewportPass());
 
   document.querySelectorAll('.pass-btn').forEach((btn) => {
     btn.addEventListener('click', () => setViewportPass(btn.dataset.pass));
@@ -1332,49 +1403,95 @@ function bindUIEvents() {
     vpMoveSelect.innerHTML = buildGroupedHtml(cinemaCatalog.cameraMoves, (m) => m.shortLabel || m.label);
     vpMoveSelect.value = 'slow_dolly_push_in';
 
+    let vpLoopEnabled = true;
+    const btnVpPlay = document.getElementById('btn-vp-play-move');
+    const btnVpLoop = document.getElementById('btn-vp-loop');
+    const vpScrubber = document.getElementById('vp-move-scrubber');
+    const vpScrubPct = document.getElementById('vp-scrubber-pct');
+
+    const syncRackBokehPassIfNeeded = (moveId) => {
+      const isRack = moveId === 'rack_focus_macro_to_eyes' || moveId === 'rack_focus_eyes_to_prop';
+      if (isRack && state.activePass === 'beauty') {
+        setViewportPass('bokeh');
+        setStatusText(
+          '◎ <span class="text-amber-300 font-bold">Rack Focus activo:</span> Pase óptico <strong>Bokeh CoC</strong> activado en vivo para visualizar el cambio de foco.'
+        );
+      }
+    };
+
+    const triggerViewportMove = (shouldPlay) => {
+      const shotVal = vpShotSelect.value === '__spot_default__' ? 'mcu_interview' : vpShotSelect.value;
+      if (vpShotSelect.value === '__spot_default__') vpShotSelect.value = 'mcu_interview';
+      const mvVal = vpMoveSelect.value || 'slow_dolly_push_in';
+      syncRackBokehPassIfNeeded(mvVal);
+      cinemaUI?.selectQuickShotAndMove({
+        shotTypeId: shotVal,
+        moveId: mvVal,
+        play: shouldPlay,
+        loop: vpLoopEnabled
+      });
+    };
+
     vpShotSelect.addEventListener('change', () => {
       const val = vpShotSelect.value;
       if (val === '__spot_default__') {
+        cinemaUI?.stopQuickPlayback?.();
         cinema?.exit?.();
         setCameraPreset('85mm');
         return;
       }
       const st = cinemaCatalog.shotTypes.find((x) => x.id === val);
+      const shouldKeepMoving = Boolean(cinema?.playing);
       cinemaUI?.selectQuickShotAndMove({
         shotTypeId: val,
-        moveId: vpMoveSelect.value || 'static_breathing',
-        play: false
+        moveId: vpMoveSelect.value || 'slow_dolly_push_in',
+        play: shouldKeepMoving,
+        loop: vpLoopEnabled
       });
       if (st) {
         setStatusText(
-          `📷 <span class="text-[#f29979] font-bold">${st.shortLabel || st.label}</span> (${st.defaultFocalMm}mm f/${st.defaultAperture}) aplicado en vivo.`
+          `📷 <span class="text-[#f29979] font-bold">${st.shortLabel || st.label}</span> (${st.defaultFocalMm}mm f/${st.defaultAperture}) ${shouldKeepMoving ? 'viajando en bucle' : 'encuadrado (pulsa ▶ Mover para animar)'}.`
         );
       }
     });
 
     vpMoveSelect.addEventListener('change', () => {
-      const shotVal = vpShotSelect.value === '__spot_default__' ? 'mcu_interview' : vpShotSelect.value;
-      if (vpShotSelect.value === '__spot_default__') vpShotSelect.value = 'mcu_interview';
-      cinemaUI?.selectQuickShotAndMove({
-        shotTypeId: shotVal,
-        moveId: vpMoveSelect.value,
-        play: true
-      });
+      triggerViewportMove(true);
     });
 
-    document.getElementById('btn-vp-play-move')?.addEventListener('click', () => {
-      const shotVal = vpShotSelect.value === '__spot_default__' ? 'mcu_interview' : vpShotSelect.value;
+    btnVpPlay?.addEventListener('click', () => {
+      if (cinema?.playing) {
+        cinemaUI?.stopQuickPlayback?.();
+      } else {
+        triggerViewportMove(true);
+      }
+    });
+
+    btnVpLoop?.addEventListener('click', () => {
+      vpLoopEnabled = !vpLoopEnabled;
+      btnVpLoop.setAttribute('aria-pressed', String(vpLoopEnabled));
+      btnVpLoop.textContent = vpLoopEnabled ? '🔁 Loop: ON' : '🔁 Loop: OFF';
+      btnVpLoop.className = vpLoopEnabled
+        ? 'bg-[#c86446]/30 border border-[#c86446] text-[#f29979] px-2 py-1 rounded-lg font-mono text-[10px] font-bold transition-colors'
+        : 'bg-white/5 border border-white/10 text-slate-400 px-2 py-1 rounded-lg font-mono text-[10px] transition-colors';
+      if (cinema?.playing) {
+        triggerViewportMove(true);
+      }
+    });
+
+    vpScrubber?.addEventListener('input', (e) => {
+      const pct = Number(e.target.value);
+      if (vpScrubPct) vpScrubPct.textContent = `${pct}%`;
       if (vpShotSelect.value === '__spot_default__') vpShotSelect.value = 'mcu_interview';
-      cinemaUI?.selectQuickShotAndMove({
-        shotTypeId: shotVal,
-        moveId: vpMoveSelect.value || 'slow_dolly_push_in',
-        play: true
-      });
+      syncRackBokehPassIfNeeded(vpMoveSelect.value);
+      cinemaUI?.scrubNormalized?.(pct / 100);
     });
 
     document.getElementById('btn-vp-reset-cam')?.addEventListener('click', () => {
       vpShotSelect.value = '__spot_default__';
+      cinemaUI?.stopQuickPlayback?.();
       cinema?.exit?.();
+      if (state.activePass === 'bokeh') setViewportPass('beauty');
       setCameraPreset('reset');
     });
   }
@@ -1442,9 +1559,10 @@ function bindUIEvents() {
 
   document.getElementById('btn-export-png').addEventListener('click', () => {
     const pass = state.activePass || 'beauty';
-    const url = camCtrl.renderVertical916DataURL(1080, 1920, pass);
-    downloadDataUrl(url, `alina_9x16_piso${state.activeFloor}_${state.activeSpot.id}_${pass}.png`);
-    setStatusText(`✅ <span class="text-emerald-400 font-bold">Frame 1080×1920 (${pass}) exportado.</span>`);
+    const { w, h, slug, tag } = getExportDims(state.aspectRatio);
+    const url = camCtrl.renderFrameDataURL(w, h, pass);
+    downloadDataUrl(url, `alina_${slug}_piso${state.activeFloor}_${state.activeSpot.id}_${pass}_${tag}.png`);
+    setStatusText(`✅ <span class="text-emerald-400 font-bold">Frame ${tag} (${pass}) exportado.</span>`);
   });
 
   document.getElementById('btn-export-json').addEventListener('click', () => {
@@ -1454,13 +1572,14 @@ function bindUIEvents() {
 
   document.getElementById('btn-export-package').addEventListener('click', async () => {
     const baseName = `alina_piso${state.activeFloor}_${state.activeSpot.id}`;
-    const op = camCtrl.renderOpenPose916(1080, 1920, alina?.root || null);
+    const { w, h, tag, label } = getExportDims(state.aspectRatio);
+    const op = camCtrl.renderOpenPose916(w, h, alina?.root || null);
     const entries = [
-      { path: 'frames_3d_raw/start_beauty_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'beauty') },
-      { path: 'frames_3d_raw/start_depth_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'depth') },
-      { path: 'frames_3d_raw/start_normals_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'normals') },
-      { path: 'frames_3d_raw/start_mask_1080x1920.png', data: camCtrl.renderVertical916DataURL(1080, 1920, 'mask') },
-      { path: 'frames_3d_raw/start_openpose_1080x1920.png', data: op.dataUrl },
+      { path: `frames_3d_raw/start_beauty_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'beauty') },
+      { path: `frames_3d_raw/start_depth_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'depth') },
+      { path: `frames_3d_raw/start_normals_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'normals') },
+      { path: `frames_3d_raw/start_mask_${tag}.png`, data: camCtrl.renderFrameDataURL(w, h, 'mask') },
+      { path: `frames_3d_raw/start_openpose_${tag}.png`, data: op.dataUrl },
       { path: 'frames_3d_raw/start_openpose.json', data: op.keypoints },
       { path: 'higgsfield_spot_manifest.json', data: buildHiggsfieldPayload() }
     ];
@@ -1468,7 +1587,7 @@ function bindUIEvents() {
     const url = URL.createObjectURL(blob);
     downloadDataUrl(url, `shotpack_${baseName}.zip`);
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatusText('✅ <span class="text-emerald-400 font-bold">Shot Pack 9:16 (.zip con Beauty, Depth, Normals, Mask, OpenPose y JSON) exportado.</span>');
+    setStatusText(`✅ <span class="text-emerald-400 font-bold">Shot Pack ${label} (.zip con Beauty, Depth, Normals, Mask, OpenPose y JSON) exportado.</span>`);
   });
 }
 
@@ -1503,12 +1622,27 @@ async function init() {
     prepareSpot: prepareSpotForCinema,
     getBaseMode: () => state.lightingMode
   });
+  cinema.onScrubUpdate = (t, isPlaying) => {
+    const pct = Math.round(Math.max(0, Math.min(1, t)) * 100);
+    const scrubEl = document.getElementById('vp-move-scrubber');
+    const pctEl = document.getElementById('vp-scrubber-pct');
+    const playBtn = document.getElementById('btn-vp-play-move');
+    if (scrubEl && document.activeElement !== scrubEl) scrubEl.value = String(pct);
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    if (playBtn) {
+      playBtn.textContent = isPlaying ? '⏸ Pausar' : '▶ Mover';
+      playBtn.className = isPlaying
+        ? 'bg-amber-500 hover:bg-amber-400 text-black px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-colors shadow'
+        : 'bg-emerald-600/80 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold transition-colors shadow';
+    }
+  };
   cinemaUI = mountCinemaPanel(document.getElementById('cinema-panel'), {
     director: cinema,
     getSpot: findSpotById,
     getActiveSpot: () => state.activeSpot,
     setActiveSpot: prepareSpotForCinema,
     getAnim: () => state.activeAnim,
+    getAspectRatio: () => state.aspectRatio,
     renderer, camCtrl,
     download: { dataUrl: downloadDataUrl, json: downloadJson },
     setStatus: setStatusText
@@ -2001,6 +2135,8 @@ async function init() {
     getActiveSpot: () => state.activeSpot,
     getLightingMode: () => state.lightingMode,
     setLightingMode,
+    getAspectRatio: () => state.aspectRatio,
+    setAspectRatio: (ar) => setViewportAspect(ar, { fromSubModule: true }),
     findSpotById,
     selectFloor,
     selectSpot,
@@ -2104,7 +2240,11 @@ async function init() {
       chaptersUI?.setSubTab('director');
       switchMainView('cinema');
       setTimeout(() => {
-        const res = cinemaUI?.selectQuickShotAndMove({ shotTypeId, moveId, play });
+        const isRack = moveId === 'rack_focus_macro_to_eyes' || moveId === 'rack_focus_eyes_to_prop';
+        if (isRack && state.activePass === 'beauty') setViewportPass('bokeh');
+        const loopBtn = document.getElementById('btn-vp-loop');
+        const loopOn = loopBtn ? loopBtn.getAttribute('aria-pressed') !== 'false' : true;
+        const res = cinemaUI?.selectQuickShotAndMove({ shotTypeId, moveId, play, loop: loopOn });
         const vpShot = document.getElementById('vp-shot-select');
         const vpMove = document.getElementById('vp-move-select');
         if (vpShot && res?.shotTypeId) vpShot.value = res.shotTypeId;
@@ -2304,10 +2444,14 @@ async function init() {
   try {
     await alina.load('./models/alina.glb');
     alina.placeAtSpot(state.activeSpot);
+    alina.update(0.05);
     syncAnimButtons(state.activeSpot.defaultAnim || 'Idle');
     state.threeLoadMs = Math.round(performance.now() - startTime);
     updatePerfBadge();
     updateViewportHud();
+    if (state.activeView === 'cinema' && state.cinemaSubView === 'blueprint') {
+      blueprintUI?.invalidateAndRender?.();
+    }
     console.log('[AlinaStudioOS] 3D Engine & Double-Registry Vault Ready');
   } catch (err) {
     console.error('[AlinaLoader] Error:', err);
@@ -2349,8 +2493,10 @@ async function init() {
       for (const wm of arch.waterMeshes) {
         wm.position.y = (wm.userData.baseY ?? (wm.userData.baseY = wm.position.y)) + Math.sin(elapsed * 2.2) * 0.012;
       }
-      cinema?.update();
-      camCtrl.update();
+      const cinemaHandledCam = cinema?.update();
+      if (!cinemaHandledCam) {
+        camCtrl.update();
+      }
       camCtrl.render();
 
       fpsFrames++;

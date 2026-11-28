@@ -170,7 +170,7 @@ export function mountCinemaPanel(root, ctx) {
     </div>
   </div>`;
 
-  const $ = (id) => root.querySelector('#' + id);
+  const $ = (id) => root.querySelector('#' + id) || hud.querySelector('#' + id);
   const hud = document.createElement('div');
   hud.id = 'cinema-hud';
   hud.className = 'hidden absolute top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none text-center';
@@ -290,13 +290,15 @@ export function mountCinemaPanel(root, ctx) {
     $('cin-motion').textContent = manifest.structuredPrompt.compiled;
   }
 
+  const activeAspect = () => ctx.getAspectRatio?.() || '16:9';
+
   function apply(shot, silent) {
-    const p = dir.apply(shot, '9:16');
+    const p = dir.apply(shot, activeAspect());
     $('cin-exit').classList.remove('hidden');
     readout(p, shot);
     if (!silent) {
       ctx.setStatus(
-        `🎬 <span class="text-emerald-400 font-bold">${esc(ix.directors.get(shot.directorStyleId).name.split('—')[0].trim())}</span> · ${esc(ix.shotTypes.get(shot.shotTypeId).label.split('(')[0].trim())} · ${shot.focalLengthMm}mm`
+        `🎬 <span class="text-emerald-400 font-bold">${esc(ix.directors.get(shot.directorStyleId).name.split('—')[0].trim())}</span> · ${esc(ix.shotTypes.get(shot.shotTypeId).label.split('(')[0].trim())} · ${shot.focalLengthMm}mm [${activeAspect()}]`
       );
     }
     return p;
@@ -310,12 +312,15 @@ export function mountCinemaPanel(root, ctx) {
 
   // ---------- captura determinista de pases 3D para un plano ----------
   function captureShotPackEntries(shot, prefix = '') {
+    const ar = activeAspect();
+    const isLand = ar === '16:9';
     const spot = ctx.getSpot(shot.spotId) || ctx.getActiveSpot();
-    const p = dir.apply(shot, '9:16');
-    const manifest = HF.buildHiggsfieldManifest({ shot, spot, payload: p, catalog, sceneId: ui.sceneKey });
+    const p = dir.apply(shot, ar);
+    const manifest = HF.buildHiggsfieldManifest({ shot, spot, payload: p, catalog, sceneId: ui.sceneKey, aspectRatio: ar });
     const overscan = manifest.keyframeStrategy.overscanHandheldPost;
-    const w = overscan?.enabled ? overscan.renderResolution.width : 1080;
-    const h = overscan?.enabled ? overscan.renderResolution.height : 1920;
+    const w = overscan?.enabled ? overscan.renderResolution.width : (isLand ? 1920 : 1080);
+    const h = overscan?.enabled ? overscan.renderResolution.height : (isLand ? 1080 : 1920);
+    const resTag = isLand ? '1920x1080' : '1080x1920';
 
     const entries = [];
     const alinaRoot = dir.alina?.root || null;
@@ -328,29 +333,29 @@ export function mountCinemaPanel(root, ctx) {
         focalLengthMm: shot.focalLengthMm,
         apertureFStop: shot.apertureFStop,
         focusDistM,
-        sensorHeightMm: 36.0
+        sensorHeightMm: isLand ? 20.25 : 36.0
       };
 
       entries.push({
-        path: `${prefix}frames_3d_raw/${tag}_beauty_1080x1920.png`,
+        path: `${prefix}frames_3d_raw/${tag}_beauty_${resTag}.png`,
         data: ctx.camCtrl.renderVertical916DataURL(w, h, 'beauty', { dof: dofSpec })
       });
       entries.push({
-        path: `${prefix}frames_3d_raw/${tag}_depth_1080x1920.png`,
+        path: `${prefix}frames_3d_raw/${tag}_depth_${resTag}.png`,
         data: ctx.camCtrl.renderVertical916DataURL(w, h, 'depth', { depthBoundsM: p.depthBoundsM })
       });
       entries.push({
-        path: `${prefix}frames_3d_raw/${tag}_normals_1080x1920.png`,
+        path: `${prefix}frames_3d_raw/${tag}_normals_${resTag}.png`,
         data: ctx.camCtrl.renderVertical916DataURL(w, h, 'normals')
       });
       entries.push({
-        path: `${prefix}frames_3d_raw/${tag}_mask_1080x1920.png`,
+        path: `${prefix}frames_3d_raw/${tag}_mask_${resTag}.png`,
         data: ctx.camCtrl.renderVertical916DataURL(w, h, 'mask')
       });
 
       if (shot.shotRole === 'A-Roll') {
         const op = ctx.camCtrl.renderOpenPose916(w, h, alinaRoot);
-        entries.push({ path: `${prefix}frames_3d_raw/${tag}_openpose_1080x1920.png`, data: op.dataUrl });
+        entries.push({ path: `${prefix}frames_3d_raw/${tag}_openpose_${resTag}.png`, data: op.dataUrl });
         entries.push({ path: `${prefix}frames_3d_raw/${tag}_openpose.json`, data: op.keypoints });
       }
     };
@@ -636,19 +641,18 @@ export function mountCinemaPanel(root, ctx) {
     }
   };
 
-  // ---------- grabación animatic (recorte central 9:16 del canvas) ----------
+  // ---------- grabación animatic (16:9 YouTube o 9:16 Celular según formato activo) ----------
   function startRecording() {
+    const ar = activeAspect();
+    const isLand = ar === '16:9';
     const src = ctx.renderer.domElement;
     const out = document.createElement('canvas');
-    out.width = 720;
-    out.height = 1280;
+    out.width = isLand ? 1280 : 720;
+    out.height = isLand ? 720 : 1280;
     const c2 = out.getContext('2d');
     let raf = 0;
     const draw = () => {
-      const sh = src.height;
-      const sw = (sh * 9) / 16;
-      const sx = (src.width - sw) / 2;
-      c2.drawImage(src, sx, 0, sw, sh, 0, 0, out.width, out.height);
+      c2.drawImage(src, 0, 0, src.width, src.height, 0, 0, out.width, out.height);
       raf = requestAnimationFrame(draw);
     };
     draw();
@@ -658,7 +662,7 @@ export function mountCinemaPanel(root, ctx) {
     mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     mr.start(250);
     $('cin-scene-rec').textContent = '● Grabando…';
-    return { mr, chunks, stopDraw: () => cancelAnimationFrame(raf) };
+    return { mr, chunks, isLand, stopDraw: () => cancelAnimationFrame(raf) };
   }
   function stopRecording(rec, name) {
     return new Promise((res) => {
@@ -666,10 +670,11 @@ export function mountCinemaPanel(root, ctx) {
         rec.stopDraw();
         const blob = new Blob(rec.chunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
-        ctx.download.dataUrl(url, `animatic_${name}_720x1280.webm`);
+        const dimTag = rec.isLand ? '1280x720' : '720x1280';
+        ctx.download.dataUrl(url, `animatic_${name}_${dimTag}.webm`);
         setTimeout(() => URL.revokeObjectURL(url), 2000);
         $('cin-scene-rec').textContent = '⏺ Animatic';
-        ctx.setStatus(`✅ <span class="text-emerald-400 font-bold">Animatic ${esc(name)} (.webm 9:16)</span> descargado.`);
+        ctx.setStatus(`✅ <span class="text-emerald-400 font-bold">Animatic ${esc(name)} (.webm ${rec.isLand ? '16:9' : '9:16'})</span> descargado.`);
         res();
       };
       rec.mr.stop();
@@ -679,6 +684,9 @@ export function mountCinemaPanel(root, ctx) {
   loadRecipe();
   renderScenePicker();
   return {
+    onAspectChanged() {
+      if (dir.active && dir.shot) apply(dir.shot, true);
+    },
     onSpotChanged() {
       if (!ui.playingScene) {
         loadRecipe();
@@ -709,7 +717,7 @@ export function mountCinemaPanel(root, ctx) {
       syncSelectors();
       apply(currentShot(), false);
     },
-    selectQuickShotAndMove({ shotTypeId, moveId, play = false }) {
+    selectQuickShotAndMove({ shotTypeId, moveId, play = false, loop = false }) {
       if (shotTypeId && ix.shotTypes.has(shotTypeId)) {
         const st = ix.shotTypes.get(shotTypeId);
         ui.shotTypeId = st.id;
@@ -730,10 +738,23 @@ export function mountCinemaPanel(root, ctx) {
       if (play) {
         hudShow(true);
         $('cin-hud-title').textContent = `${ix.shotTypes.get(ui.shotTypeId)?.shortLabel || ui.shotTypeId}`;
-        $('cin-hud-sub').textContent = `${ix.moves.get(ui.moveId)?.shortLabel || ui.moveId} · ${ui.lens}mm`;
-        dir.play(() => hudShow(false));
+        $('cin-hud-sub').textContent = `${ix.moves.get(ui.moveId)?.shortLabel || ui.moveId} · ${ui.lens}mm${loop ? ' · 🔁 LOOP' : ''}`;
+        dir.play(() => hudShow(false), { loop });
+      } else {
+        hudShow(false);
       }
       return shotObj;
+    },
+    stopQuickPlayback() {
+      dir.stop(false);
+      hudShow(false);
+    },
+    scrubNormalized(tNorm) {
+      if (!dir.active) apply(currentShot(), false);
+      dir.stop(false);
+      hudShow(false);
+      dir.manualFreeLook = false;
+      dir.seekNormalized(tNorm, { cleanKeyframe: false });
     },
     getState: () => ({ shotTypeId: ui.shotTypeId, moveId: ui.moveId, lens: ui.lens, directorId: ui.directorId }),
     isPlayingScene: () => ui.playingScene

@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alina Studio OS v3.3 — Plató 3D, Prompts, Objetos, Cine & Asesores | LMNJDRS</title>
+  <title>Alina Studio OS v3.4 — Plató 3D, Guion & Historia, Objetos, Cine & Escenas | LMNJDRS</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="apple-touch-icon" href="./favicon.svg">
-  <meta name="description" content="Suite de Producción Virtual 3D Métrica 1:1 (Three.js Previz-to-Video), Bóveda de Objetos y Pipeline Determinista Higgsfield Cinema Studio para Alina Van Dijk.">
+  <meta name="description" content="Suite de Producción Virtual 3D Métrica 1:1, Sala de Guion (Acto ▸ Capítulo ▸ Episodio ▸ Escena), Bóveda de Objetos y Secuenciador Visual Inicio ➔ Corte (16:9 YouTube y 9:16 Celular) para Alina Van Dijk.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -56,49 +56,41 @@
     }
 
     /* =========================================================================
-       SISTEMA DE VISTAS LIMPIO POR MENÚ SUPERIOR (0 SATURACIÓN VISUAL)
-       Vistas: 'plato' | 'prompts' | 'objects' | 'cinema' | 'advisors'
+       SISTEMA DE 5 ESPACIOS DE TRABAJO SIN DUPLICACIÓN
+       Vistas: 'plato' | 'story' | 'objects' | 'cinema' | 'advisors'
        ========================================================================= */
     #col-levels,
     #col-viewer,
-    #col-prompts,
+    #col-story,
     #col-objects,
     #col-advisors,
     #cinema-subnav-wrap,
-    #col-chapters,
     #col-blueprint,
     #col-director,
-    #col-atlas,
-    #col-bible,
     #compactFloorBar {
       display: none;
     }
 
-    /* 1) VISTA PLATÓ 3D: Niveles (3 cols) + Visor amplio (9 cols) */
+    /* 1) PLATÓ 3D: Niveles (3 cols) + Visor amplio (9 cols) */
     body[data-view="plato"] #col-levels { display: flex; }
     body[data-view="plato"] #col-viewer { display: flex; }
 
-    /* 2) VISTA ESTUDIO PROMPTS: Niveles oculto + Visor a la izq (7 cols) + Prompts a la der (5 cols) */
-    body[data-view="prompts"] #col-viewer { display: flex; }
-    body[data-view="prompts"] #col-prompts { display: flex; }
-    body[data-view="prompts"] #compactFloorBar { display: flex; }
+    /* 2) GUION & HISTORIA: Sala de Guion completa (Acto ▸ Cap ▸ Ep ▸ Escena) + Biblia */
+    body[data-view="story"] #col-story { display: block; }
 
-    /* 3) VISTA OBJETOS: Bóveda completa (12 cols), o Visor 3D (5 cols) + Bóveda (7 cols) */
+    /* 3) OBJETOS: Bóveda completa (12 cols), o Visor 3D (5 cols) + Bóveda (7 cols) */
     body[data-view="objects"] #col-objects { display: flex; }
     body[data-view="objects"].objects-with-3d #col-viewer { display: flex; }
     body[data-view="objects"].objects-with-3d #compactFloorBar { display: flex; }
 
-    /* 4) VISTA CINE & CAPÍTULOS: Sub-menú + (Capítulos | Grafo Blueprint | Director+Visor | Atlas Encuadres | Biblia) */
+    /* 4) CINE & ESCENAS: Sub-menú + (Secuenciador Grafo IN➔OUT | Cámara Libre & Director 3D) */
     body[data-view="cinema"] #cinema-subnav-wrap { display: block; }
-    body[data-view="cinema"][data-cinema-sub="chapters"] #col-chapters { display: block; }
     body[data-view="cinema"][data-cinema-sub="blueprint"] #col-blueprint { display: block; }
     body[data-view="cinema"][data-cinema-sub="director"] #col-viewer { display: flex; }
     body[data-view="cinema"][data-cinema-sub="director"] #col-director { display: flex; }
     body[data-view="cinema"][data-cinema-sub="director"] #compactFloorBar { display: flex; }
-    body[data-view="cinema"][data-cinema-sub="atlas"] #col-atlas { display: block; }
-    body[data-view="cinema"][data-cinema-sub="bible"] #col-bible { display: block; }
 
-    /* 5) VISTA CONSEJO DE ASESORES: Completa (12 cols), o Visor 3D (5 cols) + Consejo (7 cols) */
+    /* 5) ASESORES: Completa (12 cols), o Visor 3D (5 cols) + Consejo (7 cols) */
     body[data-view="advisors"] #col-advisors { display: flex; }
     body[data-view="advisors"].advisors-with-3d #col-viewer { display: flex; }
     body[data-view="advisors"].advisors-with-3d #compactFloorBar { display: flex; }
@@ -107,8 +99,7 @@
       body[data-view="plato"] #col-levels { grid-column: span 3 / span 3; }
       body[data-view="plato"] #col-viewer { grid-column: span 9 / span 9; }
 
-      body[data-view="prompts"] #col-viewer { grid-column: span 7 / span 7; }
-      body[data-view="prompts"] #col-prompts { grid-column: span 5 / span 5; }
+      body[data-view="story"] #col-story { grid-column: span 12 / span 12; }
 
       body[data-view="objects"] #col-objects { grid-column: span 12 / span 12; }
       body[data-view="objects"].objects-with-3d #col-viewer { grid-column: span 5 / span 5; }
@@ -153,11 +144,10 @@
     }
   </style>
 </head>
-<body data-view="plato" data-cinema-sub="chapters" class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
+<body data-view="plato" data-cinema-sub="blueprint" class="min-h-screen bg-[#0a0b0e] text-slate-200 antialiased overflow-x-hidden custom-scrollbar">
 
-  <!-- TOP NAVIGATION BAR (LIMPIA Y ORDENADA POR ESPACIOS DE TRABAJO) -->
+  <!-- TOP NAVIGATION BAR (ORDEN DE PIPELINE: PLATÓ ➔ GUION ➔ OBJETOS ➔ CINE & ESCENAS ➔ ASESORES) -->
   <header class="border-b border-white/10 bg-[#12141a]/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 py-2 flex flex-wrap items-center justify-between gap-3">
-    <!-- Marca + Estado técnico discreto -->
     <div class="flex items-center gap-2.5 min-w-0">
       <button id="brand-home-btn" type="button" class="shrink-0 flex items-center gap-2.5 text-left">
         <img src="./favicon.svg" alt="Alina Studio OS" class="w-8 h-8 rounded-xl drop-shadow-[0_0_10px_rgba(200,100,70,0.45)]">
@@ -166,27 +156,27 @@
             <span class="text-xs font-extrabold tracking-wider text-white">ALINA STUDIO OS</span>
             <span id="perf-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">FPS: --</span>
           </div>
-          <p class="text-[10px] text-slate-400">3D Previz → Higgsfield Pipeline • LMNJDRS</p>
+          <p class="text-[10px] text-slate-400">Guion ➔ Previz 3D ➔ Higgsfield • LMNJDRS</p>
         </div>
       </button>
     </div>
 
-    <!-- MENÚ SUPERIOR PRINCIPAL (4 SECCIONES CLARAS) -->
+    <!-- MENÚ SUPERIOR PRINCIPAL (5 ETAPAS CLARAS SIN DUPLICIDAD) -->
     <nav aria-label="Navegación principal de Alina Studio OS" class="flex items-center gap-1 bg-black/65 p-1 rounded-2xl border border-white/10 text-xs overflow-x-auto max-w-full">
       <button id="nav-plato" data-nav="plato" class="top-nav-btn px-3 py-1.5 rounded-xl bg-[#c86446] text-white font-bold shadow transition-all whitespace-nowrap">
         🏛️ Plató 3D
       </button>
-      <button id="btn-prompts-toggle" data-nav="prompts" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
-        <span>✨ Estudio Prompts</span>
-        <span id="shotsCountBadge" class="hidden text-[10px] font-mono px-1.5 rounded-full bg-white/15 text-white">0</span>
+      <button id="nav-story" data-nav="story" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
+        <span>📝 Guion & Historia</span>
+        <span id="chaptersCountBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-white/10 text-slate-300">4</span>
       </button>
       <button id="nav-objects" data-nav="objects" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
         <span>🏺 Objetos</span>
         <span id="objectsCountBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-white/10 text-slate-300">32</span>
       </button>
       <button id="nav-cinema" data-nav="cinema" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
-        <span>🎞️ Cine & Capítulos</span>
-        <span id="chaptersCountBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-white/10 text-slate-300">4</span>
+        <span>🎬 Cine & Escenas</span>
+        <span id="scenesCountBadge" class="text-[10px] font-mono px-1.5 rounded-full bg-emerald-500/20 text-emerald-300">IN➔OUT</span>
       </button>
       <button id="nav-advisors" data-nav="advisors" class="top-nav-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap">
         <span>🎭 Asesores</span>
@@ -194,7 +184,7 @@
       </button>
     </nav>
 
-    <!-- Controles Globales Compactos (Motor + Luz + Compartir) -->
+    <!-- Controles Globales Compactos -->
     <div class="flex items-center gap-1.5 text-xs">
       <div class="hidden sm:flex items-center bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/25 text-[11px] font-mono text-emerald-300 font-semibold" title="Motor Métrico 1:1 Single-Source Three.js">
         ⚡ Three.js 1:1
@@ -209,7 +199,7 @@
         </button>
       </div>
 
-      <button id="btn-docs-modal" class="bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all" title="Guía Técnica de Alina Studio OS (Three.js 1:1)">📖 Guía</button>
+      <button id="btn-docs-modal" class="bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all" title="Guía Completa del Estudio y Pipeline">📖 Guía</button>
       <button id="btn-share" class="hidden xl:flex bg-white/5 hover:bg-[#c86446] text-slate-200 hover:text-white border border-white/10 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all items-center gap-1">
         <span>🔗 Compartir</span>
       </button>
@@ -219,11 +209,11 @@
   <!-- MAIN WORKSPACE -->
   <main class="grid grid-cols-12 gap-4 p-4 md:p-5 max-w-[1920px] mx-auto">
 
-    <!-- SUB-BARRA SUPERIOR PARA CINE & CAPÍTULOS -->
+    <!-- SUB-BARRA SUPERIOR PARA CINE & ESCENAS -->
     <div id="cinema-subnav-wrap" class="col-span-12"></div>
 
     <!-- ===================================================================
-         COL IZQUIERDA (Solo en Plató 3D): NIVELES ARQUITECTÓNICOS LIMPIOS
+         1. PLATÓ 3D — COL IZQUIERDA: NIVELES ARQUITECTÓNICOS
          =================================================================== -->
     <aside id="col-levels" class="col-span-12 lg:col-span-3 flex-col gap-3">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col justify-between">
@@ -236,7 +226,6 @@
               🔪 Sliced: ON
             </button>
           </div>
-
           <div class="flex flex-col gap-2" id="floorContainer"></div>
         </div>
 
@@ -248,12 +237,11 @@
     </aside>
 
     <!-- ===================================================================
-         VISOR 3D COMPARTIDO (Plató 9c | Prompts 7c izq | Objetos 5c izq | Director 7c izq)
+         VISOR 3D COMPARTIDO (Plató 9c | Objetos 5c | Director 7c | Asesores 5c)
          =================================================================== -->
     <section id="col-viewer" class="col-span-12 lg:col-span-9 flex-col gap-3 min-w-0">
       <div class="bg-[#12141a] border border-white/10 rounded-2xl p-3.5 md:p-4 shadow-2xl flex-1 flex flex-col">
 
-        <!-- Cabecera limpia del Visor: Spot + Pose + Pase -->
         <div class="flex flex-wrap items-center justify-between pb-2.5 border-b border-white/5 mb-2.5 gap-2">
           <div class="min-w-0">
             <span id="currentFloorTag" class="text-[10px] font-mono text-[#f29979] uppercase font-bold tracking-wider">PISO 2 • RESIDENCIA PRIVADA</span>
@@ -286,17 +274,15 @@
           </div>
         </div>
 
-        <!-- Selector rápido de Piso (cuando Niveles está oculto) + Spot Pills -->
         <div class="flex flex-wrap items-center gap-2 mb-2.5">
           <div id="compactFloorBar" class="items-center gap-1 pr-2 border-r border-white/10"></div>
           <div id="spotPillsContainer" class="flex flex-wrap gap-1.5"></div>
         </div>
 
-        <!-- VIEWPORT 3D (Horizontal 16:9 YouTube por defecto, alternable a Vertical 9:16 Celular) -->
+        <!-- VIEWPORT 3D -->
         <div id="viewport-wrapper" data-aspect="16:9" class="relative w-full h-[460px] rounded-xl bg-[#05070c] border border-white/15 overflow-hidden flex items-center justify-center flex-1 shadow-2xl">
           <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing relative"></div>
 
-          <!-- HUD Superior del Visor -->
           <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none z-20">
             <div class="min-w-0 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-[11px] text-slate-200 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -316,42 +302,23 @@
             </div>
           </div>
 
-          <!-- Controles Inferiores de Cámara y Captura -->
           <div class="absolute bottom-2.5 left-2.5 right-2.5 flex flex-wrap items-center justify-between gap-2 z-20">
-            <div class="flex flex-wrap items-center gap-1.5 bg-black/85 backdrop-blur-md p-1.5 rounded-xl border border-white/15 text-[11px] shadow-xl max-w-full">
-              <label class="flex items-center gap-1 pl-1">
-                <span class="text-[#f29979] font-mono text-[10px] font-bold">📷</span>
-                <select id="vp-shot-select" aria-label="Selector categorizado de 30 encuadres" class="bg-[#12141a] text-white font-semibold rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-[#c86446] max-w-[175px] sm:max-w-[215px] text-[11px]"></select>
-              </label>
-              <label class="flex items-center gap-1">
-                <span class="text-emerald-300 font-mono text-[10px] font-bold">🎞️</span>
-                <select id="vp-move-select" aria-label="Selector categorizado de 15 movimientos" class="bg-[#12141a] text-slate-200 font-medium rounded-lg px-2 py-1 border border-white/10 focus:outline-none focus:border-emerald-500 max-w-[155px] sm:max-w-[190px] text-[11px]"></select>
-              </label>
-              <button id="btn-vp-play-move" type="button" class="bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1 rounded-lg text-white font-mono text-[10px] font-bold transition-colors" title="Iniciar o pausar el movimiento de cámara">
-                ▶ Mover
-              </button>
-              <button id="btn-vp-loop" type="button" aria-pressed="true" class="bg-[#c86446]/30 border border-[#c86446] text-[#f29979] px-2 py-1 rounded-lg font-mono text-[10px] font-bold transition-colors" title="Mantener el movimiento en bucle continuo (Start ↔ End)">
-                🔁 Loop: ON
-              </button>
-              <div class="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/5 border border-white/10" title="Arrastra para inspeccionar el fotograma inicial (0%) y final (100%) del movimiento">
-                <span class="text-[9px] font-mono text-slate-400">Start</span>
-                <input id="vp-move-scrubber" type="range" min="0" max="100" value="0" class="w-16 accent-emerald-400 cursor-pointer">
-                <span id="vp-scrubber-pct" class="text-[9px] font-mono text-emerald-300 w-7 text-right">0%</span>
-              </div>
-              <button id="btn-vp-reset-cam" type="button" class="bg-white/10 hover:bg-[#c86446] px-2 py-1 rounded-lg text-slate-200 hover:text-white font-mono text-[10px] transition-colors" title="Restaurar cámara libre del Spot">
-                ↺ Base
-              </button>
+            <div class="flex items-center gap-1 bg-black/85 backdrop-blur-md p-1 rounded-lg border border-white/10 text-[10px] font-mono">
+              <button data-cam="85mm" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">85mm</button>
+              <button data-cam="macro" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Macro</button>
+              <button data-cam="top" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Cenital</button>
+              <button data-cam="reset" class="cam-preset-btn hover:bg-[#c86446] px-2 py-1 rounded text-white transition-colors">Centrar</button>
             </div>
 
             <div class="flex items-center gap-1.5">
-              <button id="btn-export-png" class="bg-black/85 hover:bg-emerald-600 text-slate-200 hover:text-white border border-white/15 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shadow-lg transition-all" title="Descargar PNG 1080×1920">
+              <button id="btn-export-png" class="bg-black/85 hover:bg-emerald-600 text-slate-200 hover:text-white border border-white/15 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shadow-lg transition-all" title="Descargar PNG del encuadre actual">
                 📸 PNG
               </button>
-              <button id="btn-quick-save-object" class="bg-black/85 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shadow-lg transition-all" title="Capturar el objeto en pantalla hacia la Bóveda de Objetos">
+              <button id="btn-quick-save-object" class="bg-black/85 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shadow-lg transition-all" title="Guardar el objeto encuadrado en la Bóveda">
                 🏺 Guardar Objeto
               </button>
-              <button id="btn-capture-to-prompt" class="bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all copper-glow">
-                ✨ Capturar → Prompt
+              <button id="btn-open-spot-cinema" class="bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold shadow-lg transition-all copper-glow">
+                🎬 Maquetar en Cine & Escenas ↗
               </button>
             </div>
           </div>
@@ -360,159 +327,22 @@
     </section>
 
     <!-- ===================================================================
-         SECCIÓN 2 (Derecha en 'prompts'): ESTUDIO DE PROMPTS HIGGSFIELD
+         2. SECCIÓN GUION & HISTORIA ('story'): ACTO ▸ CAPÍTULO ▸ EPISODIO ▸ ESCENA
          =================================================================== -->
-    <aside id="col-prompts" class="col-span-12 lg:col-span-5 flex-col gap-3 min-w-0" aria-label="Estudio de Prompts Higgsfield">
-      <div class="sticky-side-panel bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl flex-1 flex flex-col gap-3 overflow-y-auto custom-scrollbar">
-
-        <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5">
-          <div class="flex items-center gap-2 min-w-0">
-            <h2 class="text-xs font-bold tracking-wider uppercase text-white truncate">✨ Estudio de Prompts</h2>
-            <span id="motor-badge" class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold shrink-0">THREE.JS</span>
-          </div>
-          <button id="btn-prompts-close" class="text-[11px] text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 font-mono px-2.5 py-1 rounded-lg border border-white/10 shrink-0 transition-colors">
-            ← Volver a Plató
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button id="btn-capture-shot" class="sm:col-span-2 py-2.5 px-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 active:scale-[0.99] transition-all text-xs copper-glow">
-            📸 Capturar Visor Actual → Crear Prompt
-          </button>
-          <button id="btn-capture-shot-depth" class="py-2.5 px-2.5 rounded-xl font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all text-[11px]">
-            + Beauty & Depth
-          </button>
-        </div>
-
-        <!-- Tira de capturas guardadas -->
-        <div id="shotsStrip" class="hidden gap-2 overflow-x-auto custom-scrollbar pb-1" aria-label="Galería de capturas"></div>
-
-        <!-- Estado inicial limpio -->
-        <div id="shotEmptyState" class="rounded-xl border border-dashed border-white/15 bg-black/35 p-6 text-center space-y-2 my-auto">
-          <div class="text-2xl">🎯</div>
-          <h3 class="text-xs font-bold text-white">Encuadra a la izquierda y captura tu toma</h3>
-          <p class="text-[11px] text-slate-400 leading-relaxed">
-            Cada captura guarda la imagen 9:16 de Three.js WebGL2 en tu navegador, extrae lente, ángulo y luz real, y te permite añadir <strong class="text-[#f29979]">Objetos renderizados</strong> al prompt.
-          </p>
-        </div>
-
-        <!-- Inspector de la captura seleccionada -->
-        <div id="shotDetail" class="hidden flex-col gap-3">
-          <div class="flex items-start gap-3 p-2.5 rounded-xl bg-black/45 border border-white/10">
-            <div class="flex gap-1.5 shrink-0">
-              <img id="shotPreview" alt="Captura Beauty" class="w-24 rounded-lg border border-white/15 bg-black object-cover" style="aspect-ratio: 16/9;">
-              <img id="shotDepthPreview" alt="Captura Depth" class="hidden w-24 rounded-lg border border-emerald-500/30 bg-black object-cover" style="aspect-ratio: 16/9;">
-            </div>
-            <div class="min-w-0 flex-1 text-[11px] space-y-1">
-              <div class="flex items-center justify-between gap-1">
-                <span id="shotMetaTitle" class="text-white font-bold truncate"></span>
-                <span id="shotEngineTag" class="text-[9px] font-mono px-1.5 py-0.5 rounded border shrink-0"></span>
-              </div>
-              <div id="shotMetaFraming" class="font-mono text-[#f29979] text-[10px]"></div>
-              <div id="shotMetaState" class="font-mono text-slate-400 text-[10px]"></div>
-              <div id="shotMetaLight" class="font-mono text-emerald-400/90 text-[10px]"></div>
-
-              <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                <button id="btn-shot-restore" class="px-2 py-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/15 text-[10px] font-mono text-slate-200">
-                  ↩ Restaurar cámara
-                </button>
-                <button id="btn-shot-attach-depth" class="px-2 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-[10px] font-mono text-emerald-300">
-                  🌑 + Depth
-                </button>
-                <select id="shotChapterSelect" class="bg-black/70 border border-white/15 rounded-lg px-2 py-1 text-[10px] text-slate-200" title="Asignar plano a un Capítulo de Cine">
-                  <option value="">📖 Sin capítulo</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Selector rápido de Objetos de la Bóveda para inyectar en el prompt -->
-          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5">
-            <div class="flex items-center justify-between text-[10px]">
-              <span class="font-bold uppercase tracking-wider text-slate-300">🏺 Objetos en este Prompt (Higgsfield Elements)</span>
-              <button id="btn-goto-objects-vault" class="text-[#f29979] hover:text-white font-mono">Abrir Bóveda ↗</button>
-            </div>
-            <div id="shotObjectChips" class="flex flex-wrap gap-1.5"></div>
-          </div>
-
-          <!-- Prompt 1: Imagen / Keyframe -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between gap-2">
-              <label for="shotFluxPrompt" class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
-                1. Keyframe Prompt (Flux.1 / Higgsfield)
-              </label>
-              <div class="flex items-center gap-2">
-                <button id="btn-shot-regen" class="text-[10px] text-slate-400 hover:text-white font-mono">↻ Regenerar</button>
-                <button data-copy="shotFluxPrompt" class="copy-prompt-btn text-[11px] text-[#f29979] hover:text-white font-mono font-semibold">Copiar</button>
-              </div>
-            </div>
-            <textarea id="shotFluxPrompt" rows="5" class="prompt-textarea"></textarea>
-          </div>
-
-          <!-- Motor de Video + Prompt 2: Movimiento -->
-          <div class="grid grid-cols-3 gap-1.5 text-xs">
-            <button data-motion="higgsfield" class="motion-btn p-2 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-left">
-              <div class="font-bold text-emerald-400 text-[11px]">Higgsfield I2V</div>
-              <div class="text-[9px] text-amber-300 mt-0.5">Dolly • 9:16</div>
-            </button>
-            <button data-motion="liveportrait" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
-              <div class="font-bold text-white text-[11px]">LivePortrait</div>
-              <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Lipsync</div>
-            </button>
-            <button data-motion="mimicmotion" class="motion-btn p-2 rounded-xl border border-white/5 bg-black/40 text-left hover:bg-white/5">
-              <div class="font-bold text-white text-[11px]">MimicMotion</div>
-              <div class="text-[9px] text-slate-400 mt-0.5">0 Créd • Dance</div>
-            </button>
-          </div>
-
-          <div class="space-y-1">
-            <div class="flex items-center justify-between gap-2">
-              <label for="shotMotionPrompt" class="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
-                2. Motion Prompt (Higgsfield I2V / Kling)
-              </label>
-              <button data-copy="shotMotionPrompt" class="copy-prompt-btn text-[11px] text-[#f29979] hover:text-white font-mono font-semibold">Copiar</button>
-            </div>
-            <textarea id="shotMotionPrompt" rows="3" class="prompt-textarea"></textarea>
-            <div class="flex items-center justify-between gap-2 pt-0.5 text-[11px]">
-              <span class="text-slate-400">Motion Strength (2.0–3.5):</span>
-              <span id="motionVal" class="font-mono text-amber-400 font-bold">2.5</span>
-            </div>
-            <input type="range" min="2.0" max="3.5" step="0.1" value="2.5" id="motionSlider" class="w-full accent-[#c86446]">
-          </div>
-
-          <!-- Exportación por toma (incluye los renders de Objetos adjuntos) -->
-          <div class="grid grid-cols-6 gap-1.5 text-[11px] font-bold pt-1">
-            <button id="btn-shot-png" class="col-span-2 py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
-              📸 PNG
-            </button>
-            <button id="btn-shot-package" class="col-span-3 py-2 px-2 rounded-xl bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95 text-white transition-all">
-              📦 Paquete + Objetos
-            </button>
-            <button id="btn-shot-delete" class="col-span-1 py-2 px-2 rounded-xl bg-white/5 hover:bg-rose-600/70 text-slate-300 hover:text-white border border-white/10 transition-colors" title="Eliminar captura">
-              🗑
-            </button>
-          </div>
-        </div>
-      </div>
-    </aside>
+    <section id="col-story" class="col-span-12 min-w-0"></section>
 
     <!-- ===================================================================
-         SECCIÓN 3 ('objects'): BÓVEDA DE OBJETOS RENDERIZADOS PARA HIGGSFIELD
+         3. SECCIÓN OBJETOS ('objects'): BÓVEDA DE 32 OBJETOS & VESTUARIO
          =================================================================== -->
     <section id="col-objects" class="col-span-12 flex-col gap-4 min-w-0"></section>
 
     <!-- ===================================================================
-         SECCIÓN 4A ('cinema' -> 'chapters'): CAPÍTULOS & HISTORIA DE CINE
-         =================================================================== -->
-    <section id="col-chapters" class="col-span-12 min-w-0"></section>
-
-    <!-- ===================================================================
-         SECCIÓN 4A-BIS ('cinema' -> 'blueprint'): GRAFO NODAL 2D BLUEPRINT
+         4A. CINE & ESCENAS ('cinema' -> 'blueprint'): SECUENCIADOR IN➔OUT
          =================================================================== -->
     <section id="col-blueprint" class="col-span-12 min-w-0"></section>
 
     <!-- ===================================================================
-         SECCIÓN 4B ('cinema' -> 'director'): DIRECTOR DE FOTOGRAFÍA & SPOT
+         4B. CINE & ESCENAS ('cinema' -> 'director'): CÁMARA LIBRE & DIRECTOR 3D
          =================================================================== -->
     <aside id="col-director" class="col-span-12 lg:col-span-5 flex-col gap-3 min-w-0">
       <div class="sticky-side-panel overflow-y-auto custom-scrollbar space-y-3 pr-0.5">
@@ -521,7 +351,7 @@
         <div class="bg-[#12141a] border border-white/10 rounded-2xl p-4 shadow-2xl space-y-3">
           <div class="space-y-1">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-300 font-semibold">🎙️ Guion del Spot ("Alina-Hypno-v1"):</span>
+              <span class="text-slate-300 font-semibold">🎙️ Guion de Referencia del Spot ("Alina-Hypno-v1"):</span>
               <span class="text-[10px] text-slate-400 font-mono">Pitch 0.98 | Rate 0.95</span>
             </div>
             <textarea id="scriptInput" rows="2" class="w-full bg-black/50 border border-white/10 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-[#c86446] leading-relaxed"></textarea>
@@ -529,15 +359,15 @@
 
           <div class="p-2.5 bg-black/50 border border-white/5 rounded-xl space-y-1">
             <div class="flex items-center justify-between text-[11px]">
-              <span class="font-semibold text-slate-300">B-Roll Sugerido del Spot (1:2):</span>
-              <span class="text-[10px] text-emerald-400 font-mono">Zero-Face</span>
+              <span class="font-semibold text-slate-300">Detalles B-Roll sugeridos en este Spot:</span>
+              <span class="text-[10px] text-emerald-400 font-mono">Sin rostro</span>
             </div>
             <div id="brollPackage" class="text-[11px] text-slate-400 space-y-0.5"></div>
           </div>
 
           <details class="text-xs bg-black/35 border border-white/5 rounded-xl p-2.5">
             <summary class="cursor-pointer font-semibold text-slate-300 flex items-center justify-between">
-              <span>Ver Prompt Base del Spot</span>
+              <span>Ver Prompt Ambiental del Spot</span>
               <button id="copyBtn" type="button" class="text-[11px] text-[#f29979] hover:text-white font-mono">Copiar</button>
             </summary>
             <div id="fluxPromptBox" class="mt-2 p-2 bg-black/60 rounded-lg text-slate-400 text-[10px] font-mono leading-relaxed select-all"></div>
@@ -548,7 +378,7 @@
               📦 JSON Spot
             </button>
             <button id="btn-export-package" class="py-2 px-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#c86446] to-[#9a3412] hover:opacity-95">
-              📦 Paquete Spot 9:16
+              📦 Paquete Spot (.zip)
             </button>
           </div>
         </div>
@@ -556,489 +386,253 @@
     </aside>
 
     <!-- ===================================================================
-         SECCIÓN 4C ('cinema' -> 'atlas'): CATÁLOGO VISUAL DE ENCUADRES & MOVIMIENTOS
-         =================================================================== -->
-    <section id="col-atlas" class="col-span-12 min-w-0"></section>
-
-    <!-- ===================================================================
-         SECCIÓN 4D ('cinema' -> 'bible'): BIBLIA DE ALINA & DOCTRINA ZERO-WASTE
-         =================================================================== -->
-    <section id="col-bible" class="col-span-12 min-w-0"></section>
-
-    <!-- ===================================================================
-         SECCIÓN 5 ('advisors'): CONSEJO DE ASESORES DE PRODUCCIÓN DE CINE
+         5. SECCIÓN ASESORES ('advisors'): 8 JEFES DE DEPARTAMENTO & ARMARIO
          =================================================================== -->
     <section id="col-advisors" class="col-span-12 flex-col min-w-0"></section>
 
   </main>
 
-  <!-- BARRA DE ESTADO FLOTANTE / DISCRETA AL PIE -->
   <footer class="max-w-[1920px] mx-auto px-5 pb-4">
     <div id="renderStatus" class="bg-[#12141a]/90 border border-white/10 rounded-xl px-4 py-2 text-center text-[11px] font-mono text-slate-400" role="status" aria-live="polite">
-      Listo: Navega arriba entre Plató 3D, Estudio Prompts, Objetos, Cine & Capítulos y Consejo de Asesores.
+      Listo: Recorre el flujo en orden — 1. Plató 3D ➔ 2. Guion & Historia ➔ 3. Objetos ➔ 4. Cine & Escenas (Inicio ➔ Corte) ➔ 5. Asesores.
     </div>
   </footer>
 
+  <!-- =======================================================================
+       MODAL DE GUÍA OFICIAL ACTUALIZADA (v3.4 — PIPELINE DE GUION A HIGGSFIELD)
+       ======================================================================= -->
   <div id="docs-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 transition-opacity" role="dialog" aria-modal="true" aria-labelledby="docs-modal-title">
-    <div class="bg-[#12141a] border border-white/15 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-      
-      <!-- Modal Header -->
+    <div class="bg-[#12141a] border border-white/15 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+
       <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3 bg-black/40">
         <div class="flex items-center gap-2.5">
-          <span class="text-xl">📐</span>
+          <span class="text-xl">📖</span>
           <div>
-            <h2 id="docs-modal-title" class="text-sm font-bold text-white tracking-wide">THE ALINA SANCTUARY 3D · ARQUITECTURA & MOTOR v3.3</h2>
-            <p class="text-[11px] text-slate-400">Pipeline Single-Source Three.js 1:1 → Render-to-Real (Flux) → Higgsfield Cinema Studio 4.0</p>
+            <h2 id="docs-modal-title" class="text-sm font-bold text-white tracking-wide">GUÍA MAESTRA · ALINA STUDIO OS v3.4</h2>
+            <p class="text-[11px] text-slate-400">De la Historia Escrita (Acto ▸ Capítulo ▸ Episodio ▸ Escena) al Montaje Visual (Inicio ➔ Corte) en Higgsfield</p>
           </div>
         </div>
-        <button id="btn-docs-close" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 text-lg transition-colors" aria-label="Cerrar modal">✕</button>
+        <button id="btn-docs-close" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 text-lg transition-colors" aria-label="Cerrar guía">✕</button>
       </div>
 
-      <!-- Segmented Tabs Navigation -->
+      <!-- Pestañas de la Guía -->
       <div class="flex items-center gap-1 p-2 bg-black/60 border-b border-white/5 overflow-x-auto custom-scrollbar text-xs">
-        <button data-tab="docs-1" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0">🏛️ Espacio 1:1 & Set Dressing</button>
-        <button data-tab="docs-2" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎬 Director & Óptica 35mm</button>
-        <button data-tab="docs-3" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎮 Controles & Cámaras</button>
-        <button data-tab="docs-4" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎛️ Pases AI & Higgsfield 4.0</button>
-        <button data-tab="docs-5" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎭 Consejo & Regla 1:2</button>
-        <button data-tab="docs-6" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🏺 Bóveda 32 Objetos & Frustum</button>
-        <button data-tab="docs-7" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-rose-300 hover:text-white bg-rose-500/10 border border-rose-500/30 transition-all shrink-0">🚫 Lo Que NO Hay Que Hacer</button>
-        <button data-tab="docs-8" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-sky-300 hover:text-white bg-sky-500/10 border border-sky-500/30 transition-all shrink-0">⬡ Sequencer × Fusion (Visual)</button>
+        <button data-tab="docs-1" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-white bg-[#c86446] transition-all shrink-0">🗺️ 1. Flujo de las 5 Pestañas</button>
+        <button data-tab="docs-2" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">📝 2. Guion (Acto ➔ Escena)</button>
+        <button data-tab="docs-3" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎬 3. Tomas IN➔OUT & Escalas</button>
+        <button data-tab="docs-4" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🎥 4. Los 2 Pasos hacia Higgsfield</button>
+        <button data-tab="docs-5" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🏺 5. Objetos & Voz Podcast</button>
+        <button data-tab="docs-6" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all shrink-0">🏛️ 6. Edificio 3D & Cámaras</button>
+        <button data-tab="docs-7" class="docs-tab-btn px-3 py-1.5 rounded-lg font-medium text-rose-300 hover:text-white bg-rose-500/10 border border-rose-500/30 transition-all shrink-0">🚫 7. Qué NO Hacer</button>
       </div>
 
-      <!-- Modal Body (Scrollable) -->
+      <!-- Cuerpo de la Guía -->
       <div class="p-5 overflow-y-auto custom-scrollbar space-y-4 text-xs leading-relaxed text-slate-300 flex-1">
-        
-        <!-- PESTAÑA 1: ESPACIO & THREE.JS 1:1 -->
+
+        <!-- PESTAÑA 1: FLUJO GENERAL DE LAS 5 PESTAÑAS -->
         <div id="pane-docs-1" class="docs-pane space-y-4">
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Espacio Arquitectónico Métrico 1:1 (Single-Source Three.js)</h3>
+          <div class="p-3.5 bg-black/45 border border-[#c86446]/40 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Cómo está organizado Alina Studio OS (Cero funciones duplicadas)</h3>
             <p>
-              El santuario está construido como un edificio métrico continuo de <strong>26 m de ancho × 16 m de profundidad</strong> con <strong>5 plantas de 4.90 m de altura libre</strong> (desde Planta Baja en <code class="text-emerald-400 font-mono">Y = 0</code> hasta el Penthouse en <code class="text-emerald-400 font-mono">Y = 19.6 m</code>).
-            </p>
-            <p>
-              Cada una de las <strong>12 estancias canónicas</strong> está vestida siguiendo la <strong>Ley de las 3 Capas Métricas</strong> con <strong>37 modelos GLTF 1K escaneados CC0</strong>, alfombras persas y tejidas PBR, mosaico hidráulico del Eixample, cortinajes plisados de 4.8 m y apliques cálidos de pared para que ControlNet y Higgsfield jamás encuentren fondos vacíos.
+              Cada pestaña del menú superior cumple una única etapa clara dentro de tu línea de producción para YouTube (<code class="text-sky-300 font-mono">16:9 Horizontal</code>) y Redes/Celular (<code class="text-amber-300 font-mono">9:16 Vertical</code>):
             </p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3.5 bg-black/40 border border-emerald-500/20 rounded-xl space-y-1.5">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                <h4 class="font-bold text-white">⚡ Motor Unificado Three.js WebGL</h4>
-              </div>
-              <p class="text-slate-400 text-[11px]">
-                Carga instantánea (~240 kB gzip de código), 60 FPS estables, espejo planar real en el Tocador Vanity, shader de Bokeh Óptico (<code class="text-emerald-300 font-mono">CoC</code> de 28 muestras en espiral áurea) y captura multipass sincronizada en <code class="text-white font-mono">t=0</code> y <code class="text-white font-mono">t=1</code>.
-              </p>
+            <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-1">
+              <div class="font-bold text-white">🏛️ 1. Plató 3D (El Mundo Físico)</div>
+              <p class="text-slate-400 text-[11px]">Explora libremente las 5 plantas y 12 estancias del edificio métrico 1:1 de Alina, prueba iluminación de Día/Noche, cambia entre formato <code class="font-mono text-sky-300">16:9 YouTube</code> y <code class="font-mono text-amber-300">9:16 Celular</code> y revisa las 6 escalas ópticas en vivo.</p>
             </div>
 
-            <div class="p-3.5 bg-black/40 border border-[#c86446]/30 rounded-xl space-y-1.5">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#c86446]"></span>
-                <h4 class="font-bold text-white">🎭 Consejo de 8 Jefes de Departamento</h4>
-              </div>
-              <p class="text-slate-400 text-[11px]">
-                La pestaña <strong>Asesores</strong> audita en vivo cada plano desde Diseño de Producción, Vestuario Textil, Fotografía Kelvin, Atrezzo B-Roll 100mm, Dirección SSC, Sonido Binaural 3D, AI VFX y Montaje.
-              </p>
+            <div class="p-3.5 bg-black/40 border border-purple-500/30 rounded-xl space-y-1">
+              <div class="font-bold text-purple-200">📝 2. Guion & Historia (Sala de Escritura)</div>
+              <p class="text-slate-400 text-[11px]">Aquí nace el contenido en texto antes de tocar cámaras: organizas la serie por <strong>Acto ▸ Capítulo ▸ Episodio ▸ Escena</strong>, redactas el monólogo/podcast de Alina, eliges en qué habitación ocurre y qué objetos la acompañan.</p>
+            </div>
+
+            <div class="p-3.5 bg-black/40 border border-amber-500/30 rounded-xl space-y-1">
+              <div class="font-bold text-amber-200">🏺 3. Objetos (Bóveda de 32 Activos & Ropa)</div>
+              <p class="text-slate-400 text-[11px]">Catálogo de todos los objetos reales del edificio (micrófono Shure SM7B, libros clínicos, espresso, vestidos en perchero) con sus fotos listas y herramienta para importar objetos/ropa desde Internet al 3D.</p>
+            </div>
+
+            <div class="p-3.5 bg-black/40 border border-emerald-500/35 rounded-xl space-y-1">
+              <div class="font-bold text-emerald-300">🎬 4. Cine & Escenas (Maquetación Visual IN ➔ OUT)</div>
+              <p class="text-slate-400 text-[11px]">Aquí el guion escrito se convierte en cine: divides cada Escena en <strong>Tomas</strong> viendo el fotograma de <strong>Inicio</strong> y el de <strong>Corte</strong>, con sus prompts listos para Higgsfield, la voz de ese tramo y sus objetos.</p>
             </div>
           </div>
 
-          <div class="p-3 bg-black/50 border border-white/5 rounded-xl text-[11px] text-slate-400">
-            💡 <strong>Corte Casa de Muñecas (Sliced):</strong> El botón <code class="text-white font-mono">🔪 Sliced: ON</code> oculta las plantas superiores al nivel activo para encuadrar con total libertad sin colisiones de techo.
+          <div class="p-3 bg-black/50 border border-white/10 rounded-xl text-[11px] text-slate-300">
+            🎭 <strong>5. Asesores:</strong> Reúne a los 8 Jefes de Departamento (Fotografía, Vestuario, Arte, Sonido, Dirección) y el Armario Cápsula para auditar la coherencia estética cuando quieras afinar un set.
           </div>
         </div>
 
-        <!-- PESTAÑA 2: DIRECTOR & ÓPTICA 35MM -->
+        <!-- PESTAÑA 2: JERARQUÍA DE GUION (ACTO -> CAPÍTULO -> EPISODIO -> ESCENA -> TOMA) -->
         <div id="pane-docs-2" class="docs-pane hidden space-y-4">
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Óptica Real Full Frame 35mm Rotada a 9:16</h3>
-            <p>
-              El campo de visión vertical (<code class="text-emerald-400 font-mono">vFOV</code>) no se ajusta de forma arbitraria; se calcula trigonométricamente sobre un sensor vertical de <strong>20.25 × 36.0 mm</strong>:
+          <div class="p-3.5 bg-purple-950/25 border border-purple-500/35 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-purple-200 uppercase tracking-wider">Orden Jerárquico de 5 Niveles (De lo General al Corte Exacto)</h3>
+            <p class="text-[11px]">
+              Tanto en <strong>📝 Guion & Historia</strong> como en la barra superior de <strong>🎬 Cine & Escenas</strong> trabajas siempre siguiendo el mismo orden editorial:
             </p>
-            <div class="p-2.5 bg-black/60 rounded-lg font-mono text-[11px] text-center text-amber-300">
-              vFOV = 2 · arctan(36.0 / (2 · focal_mm))
+          </div>
+
+          <div class="space-y-2 font-mono text-[11px]">
+            <div class="p-2.5 rounded-xl bg-black/45 border border-purple-500/30 flex items-center justify-between">
+              <span><strong class="text-purple-300">1. ACTO</strong> — Arco temático largo (ej. <em>Mes 1: El Arte de Ceder el Control</em>)</span>
+              <span class="text-slate-400">Nivel Macro</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/45 border border-[#c86446]/35 flex items-center justify-between">
+              <span><strong class="text-[#f29979]">2. CAPÍTULO</strong> — Bloque semanal (ej. <em>Semana 1: La Sobrecarga de Decidir</em>)</span>
+              <span class="text-slate-400">Semana</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/45 border border-sky-500/35 flex items-center justify-between">
+              <span><strong class="text-sky-300">3. EPISODIO</strong> — Pieza publicada un día concreto (ej. <em>Lunes · Podcast Principal</em> o <em>Miércoles · Cápsula</em>)</span>
+              <span class="text-slate-400">Día / Video</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/45 border border-emerald-500/35 flex items-center justify-between">
+              <span><strong class="text-emerald-300">4. ESCENA</strong> — Unidad de lugar y tiempo (suele ser 1 escena por episodio, o varias si cambia de habitación)</span>
+              <span class="text-slate-400">Set 3D + Guion</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/45 border border-amber-500/35 flex items-center justify-between">
+              <span><strong class="text-amber-300">5. TOMA</strong> — Cada corte individual de cámara (<code class="text-emerald-300">● Inicio</code> ➔ <code class="text-rose-300">■ Corte</code>, de 2 a 4 seg.)</span>
+              <span class="text-slate-400">Corte Visual</span>
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-[11px]">
-              <thead>
-                <tr class="border-b border-white/10 text-slate-400 font-mono">
-                  <th class="py-1.5 px-2">Focal</th>
-                  <th class="py-1.5 px-2">vFOV</th>
-                  <th class="py-1.5 px-2">Apertura</th>
-                  <th class="py-1.5 px-2">Distancia</th>
-                  <th class="py-1.5 px-2">Uso Característico</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-white/5 font-mono">
-                <tr><td class="py-1 px-2 text-[#f29979] font-bold">24 mm</td><td class="py-1 px-2">73.7°</td><td class="py-1 px-2">f/2.8</td><td class="py-1 px-2">3.0–9.5 m</td><td class="py-1 px-2 font-sans text-slate-300">Inmersión angular Lubezki & Arquitectura</td></tr>
-                <tr><td class="py-1 px-2 text-[#f29979] font-bold">35 mm</td><td class="py-1 px-2">54.4°</td><td class="py-1 px-2">f/2.0</td><td class="py-1 px-2">3.5–5.5 m</td><td class="py-1 px-2 font-sans text-slate-300">Plano medio fluido Wong Kar-wai</td></tr>
-                <tr><td class="py-1 px-2 text-[#f29979] font-bold">50 mm</td><td class="py-1 px-2">39.6°</td><td class="py-1 px-2">f/1.4</td><td class="py-1 px-2">2.6–3.8 m</td><td class="py-1 px-2 font-sans text-slate-300">Retrato editorial & Plano sobre hombro (OTS)</td></tr>
-                <tr><td class="py-1 px-2 text-[#f29979] font-bold">85 mm</td><td class="py-1 px-2">23.9°</td><td class="py-1 px-2">f/1.4</td><td class="py-1 px-2">1.8–2.8 m</td><td class="py-1 px-2 font-sans text-slate-300">Primer plano de autoridad Fincher / Terapia</td></tr>
-                <tr><td class="py-1 px-2 text-[#f29979] font-bold">100 mm</td><td class="py-1 px-2">20.4°</td><td class="py-1 px-2">f/2.8</td><td class="py-1 px-2">0.6–1.2 m</td><td class="py-1 px-2 font-sans text-slate-300">B-Roll Macro Zero-Face (accesorios, copas)</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h4 class="font-bold text-white text-xs">8 Escuelas de Dirección & Iluminación Kelvin Aditiva</h4>
-            <p class="text-slate-400 text-[11px]">
-              El catálogo incluye las firmas de <strong>David Fincher</strong> (precisión milimétrica y luz cenital de quirófano), <strong>Wong Kar-wai</strong> (neon noir y desenfoque sensual), <strong>Denis Villeneuve</strong> (monumentalidad y luz motivada única), <strong>Greta Gerwig</strong> (calidez dorada), <strong>Luca Guadagnino</strong> (luz mediterránea e intimidad física), <strong>Christopher Nolan</strong> (escala épica y sombras duras), <strong>Nicolas Winding Refn</strong> (contraste cian/magenta) y <strong>Emmanuel Lubezki</strong> (movimiento fluido en mano a 24mm).
-            </p>
-            <p class="text-slate-400 text-[11px]">
-              Cada esquema lumínico posiciona dos fuentes dedicadas en tiempo real (<strong>Key Light</strong> y <strong>Rim Light</strong>) con temperaturas Kelvin físicas (desde 2700K cálido tungsteno hasta 6500K luz diurna) que se suman al entorno sin hornear ni destruir los lightmaps existentes.
-            </p>
+          <div class="p-3 bg-black/50 border border-white/10 rounded-xl text-[11px] text-slate-300">
+            💡 <strong>Paso directo:</strong> Cuando termines de escribir el guion de una escena en <em>Guion & Historia</em>, pulsa <strong>«🎬 Pasar a Cine & Escenas ↗»</strong> y el sistema abrirá directamente esa escena con el guion repartido entre sus tomas.
           </div>
         </div>
 
-        <!-- PESTAÑA 3: CONTROLES & CÁMARAS -->
+        <!-- PESTAÑA 3: SECUENCIADOR INICIO -> CORTE, FORMATO 16:9 / 9:16 Y ESCALAS DE COLOR -->
         <div id="pane-docs-3" class="docs-pane hidden space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-              <h4 class="font-bold text-white text-xs">Navegación con Ratón / Trackpad</h4>
-              <ul class="space-y-1.5 text-slate-400 text-[11px]">
-                <li>🖱️ <strong class="text-slate-200">Click izquierdo + arrastrar:</strong> Órbita 360° fluida alrededor del sujeto o prop activo.</li>
-                <li>🖱️ <strong class="text-slate-200">Click derecho (o rueda pulsada):</strong> Paneo vertical y horizontal amortiguado.</li>
-                <li>📜 <strong class="text-slate-200">Rueda del ratón / pellizco:</strong> Zoom óptico elástico con límites de seguridad (no atraviesa paredes ni traspasa al avatar).</li>
-                <li>🎯 <strong class="text-emerald-400">Inercia cinemática:</strong> El controlador aplica un damping factor de 0.06 para evitar frenazos secos.</li>
-              </ul>
-            </div>
-
-            <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-              <h4 class="font-bold text-white text-xs">Presets Rápidos Flotantes (En el Visor)</h4>
-              <ul class="space-y-1.5 text-slate-400 text-[11px]">
-                <li><code class="text-[#f29979] font-mono">Cam 85mm</code>: Encuadre retrato clásico a la altura de los ojos (1.56 m).</li>
-                <li><code class="text-[#f29979] font-mono">Macro</code>: Vuelo inmediato al accesorio más cercano del spot (copa, perfume, micrófono).</li>
-                <li><code class="text-[#f29979] font-mono">Cenital</code>: Cámara aérea cenital a +72° mirando directamente hacia abajo.</li>
-                <li><code class="text-[#f29979] font-mono">Centrar</code>: Re-alinea el objetivo si te has desplazado explorando la sala.</li>
-              </ul>
-            </div>
+          <div class="p-3.5 bg-sky-950/25 border border-sky-500/35 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">Cómo leer el Secuenciador Visual (Inicio ➔ Corte) y las 6 Escalas</h3>
+            <p class="text-[11px]">
+              Cada tarjeta de <strong>Toma</strong> muestra lado a lado el fotograma exacto donde empieza (<code class="text-emerald-300 font-mono">● INICIO</code>) y dónde corta (<code class="text-rose-300 font-mono">■ CORTE</code>). Al seleccionarla, a la derecha tienes un <strong>Visor 3D grande</strong> con conmutador <code class="text-sky-300 font-mono">🖥️ 16:9 YouTube</code> ⇄ <code class="text-amber-300 font-mono">📱 9:16 Celular</code> y el botón contiguo <code class="text-amber-200 font-mono">⟳ Cambiar Escala</code>:
+            </p>
           </div>
 
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h4 class="font-bold text-white text-xs">Desenganche Suave al Control Manual (*No Snap-Back*)</h4>
-            <p class="text-slate-400 text-[11px]">
-              Si la cámara en Three.js está reproduciendo un movimiento cinematográfico o un vuelo y tocas el ratón, <strong>la cámara se detiene al instante y te cede el control libre</strong>, manteniendo la posición exacta donde la dejaste.
-            </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px]">
+            <div class="p-3 rounded-xl bg-black/45 border border-[#c86446]/40">
+              <div class="font-bold text-[#f29979]">1. PBR Real</div>
+              <p class="text-slate-400 mt-0.5">Iluminación física real del set 3D con texturas, sombras y temperatura de color.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-black/45 border border-amber-500/40">
+              <div class="font-bold text-amber-300">2. Bokeh CoC</div>
+              <p class="text-slate-400 mt-0.5">Simula el desenfoque óptico real del lente (f/1.4 – f/2.8) manteniendo nítido a Alina o al objeto.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-black/45 border border-emerald-500/40">
+              <div class="font-bold text-emerald-300">3. Depth 16b</div>
+              <p class="text-slate-400 mt-0.5">Mapa de profundidad en grises para que la IA respete las distancias exactas del cuarto.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-black/45 border border-rose-500/40">
+              <div class="font-bold text-rose-300">4. Térmico Z</div>
+              <p class="text-slate-400 mt-0.5">Escala cromática <em>Turbo</em> (naranja cálido cerca ➔ azul frío lejos) para comprobar separación de planos.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-black/45 border border-indigo-500/40">
+              <div class="font-bold text-indigo-300">5. Normals</div>
+              <p class="text-slate-400 mt-0.5">Orientación RGB de cada superficie para conservar molduras, pliegues de ropa y muebles.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-black/45 border border-fuchsia-500/40">
+              <div class="font-bold text-fuchsia-300">6. Mask ID</div>
+              <p class="text-slate-400 mt-0.5">Colorea por separado Piel, Pelo, Ropa, Objetos (<code class="font-mono">#FF9500</code>), Muebles (<code class="font-mono">#14B8A6</code>) y Paredes.</p>
+            </div>
           </div>
         </div>
 
-        <!-- PESTAÑA 4: PASES AI & CONTROLNET -->
+        <!-- PESTAÑA 4: LOS 2 PASOS DE CADA TOMA HACIA HIGGSFIELD -->
         <div id="pane-docs-4" class="docs-pane hidden space-y-4">
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Pases de Utilidad de Control para ComfyUI</h3>
-            <p>
-              El motor genera paquetes completos con proporciones 9:16 nativas (1080×1920) para alimentar los modelos generativos sin alucinaciones de composición:
+          <div class="p-3.5 bg-black/45 border border-emerald-500/35 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider">Por qué cada Toma te entrega 2 Prompts (Imagen Realista + Movimiento)</h3>
+            <p class="text-[11px]">
+              El visor 3D es tu maqueta exacta de cámara, luz y arquitectura, pero su imagen cruda sigue viéndose como un modelo 3D. Para obtener un video indistinguible de una cámara de cine real, cada toma sigue <strong>dos pasos simples</strong>:
             </p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
-              <h5 class="font-bold text-white text-xs">1. Beauty Pass (Color PBR)</h5>
+            <div class="p-3.5 bg-black/45 border border-sky-500/35 rounded-xl space-y-1.5">
+              <div class="font-bold text-sky-300 text-xs">Paso A · Prompt de Imagen Realista (3D ➔ Foto Real)</div>
               <p class="text-slate-400 text-[11px]">
-                Imagen a color con iluminación, reflejos, sombras suaves y texturas completas. Sirve como referencia estética y fijación de estilo para IP-Adapter o denoising ligero.
+                Toma la captura 3D (<code class="font-mono">Inicio</code> / <code class="font-mono">Corte</code>) junto con su mapa <code class="font-mono">Depth</code> y usa este prompt en tu generador de imagen (Flux / Higgsfield Soul / Nano Banana). Convierte a Alina, los objetos que la acompañan y el estudio en una <strong>fotografía hiperrealista</strong> conservando exactamente tu encuadre 16:9 o 9:16.
               </p>
             </div>
 
-            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
-              <h5 class="font-bold text-white text-xs">2. Linear Depth Pass (16-bit Z-Buffer)</h5>
+            <div class="p-3.5 bg-black/45 border border-amber-500/35 rounded-xl space-y-1.5">
+              <div class="font-bold text-amber-300 text-xs">Paso B · Prompt de Movimiento (Foto Real ➔ Video Higgsfield)</div>
               <p class="text-slate-400 text-[11px]">
-                Mapa en escala de grises calibrado dinámicamente con la distancia focal de la toma (<code class="text-emerald-400 font-mono">Near = dist × 0.28</code>, <code class="text-emerald-400 font-mono">Far = dist × 2.8</code>). Esencial para <strong>ControlNet Depth</strong>.
+                Sube esa fotografía realista a <strong>Higgsfield Cinema Studio</strong> y pega este segundo prompt: indica la cámara de cine (ARRI / RED), el lente y únicamente qué se mueve entre el <code class="font-mono">Inicio</code> y el <code class="font-mono">Corte</code> (sin repetir descripciones innecesarias).
               </p>
             </div>
-
-            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
-              <h5 class="font-bold text-white text-xs">3. Camera Normals Pass (Normales)</h5>
-              <p class="text-slate-400 text-[11px]">
-                Vectores de superficie orientados al espacio de cámara codificados en RGB (<code class="text-emerald-400 font-mono">N_view · 0.5 + 0.5</code>). Preserva pliegues, volúmenes corporales y detalles arquitectónicos en <strong>ControlNet Normal</strong>.
-              </p>
-            </div>
-
-            <div class="p-3 bg-black/40 border border-white/10 rounded-xl space-y-1">
-              <h5 class="font-bold text-white text-xs">4. Material Segmentation Mask</h5>
-              <p class="text-slate-400 text-[11px]">
-                Máscara cromática determinista por material (Piel, Ojos, Cabello, Ropa) sobre fondo negro, lista para <strong>FaceDetailer</strong> e *Inpainting Regional* en ComfyUI.
-              </p>
-            </div>
-          </div>
-
-          <div class="p-3 bg-black/50 border border-white/5 rounded-xl text-[11px] text-slate-400">
-            🤖 <strong>Sincronización Automática de Prompts:</strong> El botón <code class="text-white font-mono">Copiar</code> ensambla en vivo el prompt para <strong>Flux.1 Dev</strong> (con token-lock del personaje, lente, apertura, dirección de luz y descriptores analizados de luminosidad) y el prompt de movimiento para <strong>Higgsfield / Kling</strong> calibrado con el <code class="text-amber-400 font-mono">Motion Strength (2.0–3.5)</code>.
           </div>
         </div>
 
-        <!-- PESTAÑA 5: BOKEH & REGLA 1:2 -->
+        <!-- PESTAÑA 5: OBJETOS QUE ACOMPAÑAN Y VOZ NARRADORA (FORMATO PODCAST) -->
         <div id="pane-docs-5" class="docs-pane hidden space-y-4">
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">Salto 3: Foreground Framing (Bokeh f/1.4)</h3>
-            <p>
-              El modo de primer término coloca deliberadamente un objeto 3D real a <strong>0.46–0.55 m de la lente</strong> (hojas de monstera, frascos de tocador en latón, copas de cristal o micrófonos de estudio) mientras la cámara enfoca al sujeto o al espejo a 2.5–7.8 m con apertura <strong>f/1.4</strong>.
-            </p>
-            <p class="text-slate-400 text-[11px]">
-              Esto produce un desenfoque óptico orgánico en el render y una capa blanca pura en el mapa de profundidad que obliga a ControlNet a generar una separación de planos cinematográfica (Foreground, Midground, Background) sin gastar cómputo en postproducción.
+          <div class="p-3.5 bg-black/45 border border-amber-500/35 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-amber-200 uppercase tracking-wider">Cómo se combinan la Voz de Alina y los Objetos en cada Toma</h3>
+            <p class="text-[11px]">
+              En el inspector derecho de cada Toma verás los bloques <strong>2. Voz de la Narradora</strong> y <strong>3. Objetos</strong> trabajando juntos según quién esté en pantalla:
             </p>
           </div>
 
-          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
-            <h4 class="font-bold text-white text-xs">Fórmula Zero-Waste 1:2 (0% Fallo Facial)</h4>
-            <p class="text-slate-400 text-[11px]">
-              Para garantizar que los vídeos generados mantengan una consistencia de identidad perfecta sin deformaciones en el rostro:
-            </p>
-            <ul class="space-y-1.5 text-slate-400 text-[11px] list-disc list-inside">
-              <li>Por cada <strong>1 plano A-Roll</strong> (rostro humano de Alina hablando o mirando a cámara), se incluyen al menos <strong>2 planos B-Roll</strong> (macro de manos, cóctel, texturas arquitectónicas o detalles ambientales).</li>
-              <li><strong>Duración máxima por toma:</strong> ≤ 4.0 segundos (y ≤ 3.0 segundos en movimientos rápidos).</li>
-              <li><strong>Ángulo de giro seguro:</strong> Rotación de cámara y de cabeza ≤ 25° para no perder el ángulo ciego del LoRA.</li>
-              <li><strong>Tope de Motion Strength:</strong> Entre 2.0 y 3.5 en tomas faciales para evitar morphing en Higgsfield / Kling.</li>
-            </ul>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 bg-black/45 border border-pink-500/35 rounded-xl space-y-1.5">
+              <h4 class="font-bold text-pink-200 text-xs">🧑 Cuando eliges «Alina en Cámara»</h4>
+              <ul class="space-y-1 text-slate-400 text-[11px] list-disc list-inside">
+                <li><strong>Voz:</strong> Puedes marcar <code class="text-pink-300 font-mono">🎙️ Hablando a Cámara</code> (para sincronizar labios con ElevenLabs) o <code class="text-purple-300 font-mono">🎧 Voz en Off</code> si solo escucha/mira a cámara.</li>
+                <li><strong>Objetos que la acompañan:</strong> Puedes marcar uno o varios objetos (<code class="font-mono">@mic_sm7b</code>, <code class="font-mono">@espresso_diario</code>) para que aparezcan integrados junto a ella en el estudio dentro del Prompt de Imagen.</li>
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-black/45 border border-amber-500/35 rounded-xl space-y-1.5">
+              <h4 class="font-bold text-amber-200 text-xs">🏺 Cuando eliges «Detalle Objeto»</h4>
+              <ul class="space-y-1 text-slate-400 text-[11px] list-disc list-inside">
+                <li><strong>Voz:</strong> Cambia automáticamente a <code class="text-purple-300 font-mono">🎧 Voz en Off</code>: la voz del podcast de Alina sigue sonando sin cortes mientras muestras un plano recurso.</li>
+                <li><strong>Objeto Protagonista:</strong> El motor oculta a Alina, apunta la cámara 3D al objeto elegido sobre su mesa/mueble y genera un prompt limpio sin rostros para ahorrar créditos.</li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        <!-- PESTAÑA 6: BÓVEDA DE 32 OBJETOS, DOBLE REGISTRO, FRUSTUM AUTO-TAGGING & IMPORTADOR WEB -->
+        <!-- PESTAÑA 6: ARQUITECTURA 3D & CONTROLES -->
         <div id="pane-docs-6" class="docs-pane hidden space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3.5 bg-emerald-950/35 border border-emerald-500/40 rounded-xl space-y-1.5">
-              <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider">🏛️ Versión 1 (Ruta A · 3 Pasos): Objeto Nativo del Modelo 3D</h3>
-              <ol class="space-y-1 text-slate-300 text-[11px] list-decimal list-inside">
-                <li><strong>1. Objeto existe en el Modelo 3D:</strong> El activo vive en el edificio 3D (<code class="font-mono text-emerald-300">worldPos XYZ</code>) y la Bóveda tiene su packshot aislado <code class="font-mono">1080×1080</code> (<strong>PNG RGBA transparente + Fondo Blanco #FFFFFF + Depth 16-bit</strong>).</li>
-                <li><strong>2. Objeto es creado de manera realista:</strong> Se pasa su Depth 16-bit + <code class="font-mono">object_token_lock</code> por <strong>Flux / ComfyUI</strong> (<code class="font-mono">CN Depth 0.68@0.58</code>) y el render aprobado se bloquea como <code class="font-mono text-amber-300">🔒 Master Still</code>.</li>
-                <li><strong>3. Objeto se inserta en el video:</strong> Se exporta su ficha en <strong>Fondo Blanco (#FFFFFF)</strong> a <strong>Higgsfield Elements / Flux Redux (0.75)</strong> o se anima como B-Roll <code class="font-mono">100mm Macro (≤ 3.5s)</code>.</li>
-              </ol>
-            </div>
-            <div class="p-3.5 bg-pink-950/35 border border-pink-500/40 rounded-xl space-y-1.5">
-              <h3 class="text-xs font-bold text-pink-300 uppercase tracking-wider">🌐 Versión 2 (Ruta B · 4 Pasos): Objeto o Ropa de Internet</h3>
-              <ol class="space-y-1 text-slate-300 text-[11px] list-decimal list-inside">
-                <li><strong>1. Objeto existe en Internet:</strong> Copias cualquier foto o URL de ropa, planta, cuadro o mueble de la web.</li>
-                <li><strong>2. Se pega en la web usando Antigravity y recortándolo con LLM:</strong> Se recorta automáticamente en <strong>PNG transparente (RGBA)</strong> y en <strong>Ficha Fondo Blanco (#FFFFFF)</strong> mientras el LLM extrae su ADN armonizado a la Tríada de Alina + Latón (<code class="font-mono">#d4af37</code>).</li>
-                <li><strong>3. Objeto se inserta en el Modelo 3D:</strong> Si es prenda, se cuelga físicamente en el <strong>Perchero Couture 3D</strong> del piso; si es cuadro/planta/escultura, se instancia en la sala.</li>
-                <li><strong>4. Objeto se inserta en el video de Higgsfield:</strong> Su ficha limpia en <strong>Fondo Blanco (#FFFFFF)</strong> y su <code class="font-mono">@handle</code> entran directo a Higgsfield Cinema Studio 4.0.</li>
-              </ol>
-            </div>
-          </div>
-
-          <div class="p-3.5 bg-black/40 border border-[#c86446]/40 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">1. Ley de Doble Registro (Motor 3D ↔ Imagen Maestra en Bóveda)</h3>
-            <p>
-              En <strong>Alina Studio OS</strong> ningún objeto existe solo como malla 3D o solo como texto. Los <strong>32 activos canónicos</strong> del edificio (botánica en maceteros de basalto/latón, esculturas sobre plinto de museo, librerías clínicas, mobiliario y los 7 looks del Armario Cápsula colgados en Percheros Couture) nacen sincronizados en <code class="text-emerald-400 font-mono">buildingBuilder.js</code> y en la Bóveda (<code class="text-emerald-400 font-mono">alinaLoreData.js</code> / <code class="text-emerald-400 font-mono">shotsStorage.js</code>) con sus <strong>64 renders reales WebGL2 (1080×1080 Beauty PBR + Depth 16-bit)</strong>.
+          <div class="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-2">
+            <h3 class="text-xs font-bold text-[#f29979] uppercase tracking-wider">El Edificio de 5 Niveles (26 × 16 m · 4.90 m por planta)</h3>
+            <p class="text-[11px]">
+              Desde Planta Baja (Speakeasy Nocturne) hasta Piso 4 (Penthouse & Terraza), pasando por Piso 1 (Cafetería), Piso 2 (Residencia, Tocador Vanity y Spa) y Piso 3 (Estudio Podcast y Boudoir). Usa <strong>Click izquierdo</strong> para orbitar, <strong>Click derecho</strong> para desplazar y la <strong>rueda</strong> para hacer zoom.
             </p>
-            <p class="text-slate-400 text-[11px]">
-              🛡️ <strong>Auto-Curación Visual (Self-Healing):</strong> Si alguna imagen de la Bóveda falla al cargar o la caché local queda desactualizada, el sistema la re-renderiza automáticamente en vivo desde la cámara macro 100mm del motor Three.js WebGL2 (o con 1 clic en <code class="text-emerald-300 font-mono">↻ Reparar / Re-Renderizar Fotos 3D</code>).
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3.5 bg-black/40 border border-pink-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-white text-xs">2. Importador Directo 2D Web → Perchero/Sala 3D + Bóveda</h4>
-              <p class="text-slate-400 text-[11px]">
-                Disponible en <strong>👗 Armario Cápsula</strong> y en <strong>🏺 Objetos</strong> mediante el botón <code class="text-pink-300 font-mono">🌐 Importar Foto / URL Web → 3D + Bóveda</code>:
-              </p>
-              <ul class="space-y-1 text-slate-400 text-[11px] list-disc list-inside">
-                <li><strong>Sampler Hexadecimal & Tríada Cromática:</strong> Extrae los 3 colores dominantes de cualquier foto o URL y los armoniza a Negro Obsidiana (<code class="font-mono">#111216</code>), Carbón Seda (<code class="font-mono">#1f232b</code>), Verde Bosque (<code class="font-mono">#0B2B20</code>), Marfil Crudo (<code class="font-mono">#ebe4d5</code>) y Cuero Tabaco (<code class="font-mono">#5c3a24</code>) con herrajes en <strong>Latón Cepillado (<code class="font-mono">#d4af37</code>)</strong> (0% cromo frío).</li>
-                <li><strong>Continuidad Perchero → Cuerpo:</strong> Si es ropa, <code class="text-emerald-300 font-mono">hangCustomGarmentOnRack()</code> cuelga físicamente la prenda en el Perchero Couture 3D del piso elegido y renderiza su ficha <code class="font-mono">@look_*</code>.</li>
-                <li><strong>Cuadros y Props:</strong> Si es obra gráfica, planta o escultura, <code class="text-emerald-300 font-mono">spawnCustomObjectInFloor()</code> la enmarca o emplaza respetando los 12 Conos Ópticos Sagrados.</li>
-              </ul>
-            </div>
-
-            <div class="p-3.5 bg-black/40 border border-emerald-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-white text-xs">3. ADN Material Inmutable (<code class="text-emerald-300 font-mono">object_token_lock</code>)</h4>
-              <p class="text-slate-400 text-[11px]">
-                Prohibido usar términos genéricos (<em>"a potted plant"</em>, <em>"a statue"</em>, <em>"a clothes rack"</em>) que hacen que Flux cambie el objeto en cada capítulo. Todo <code class="text-[#f29979] font-mono">@handle</code> aplica la fórmula invariable:
-              </p>
-              <div class="p-2 bg-black/60 rounded-lg font-mono text-[10px] text-emerald-300">
-                [Especie/Modelo Exacto] + [Material Primario + Textura Anti-Moiré] + [Contenedor/Herraje en Latón #d4af37 o Basalto] + [Respuesta a la Luz Kelvin del Piso]
-              </div>
-              <p class="text-slate-400 text-[11px]">
-                El botón <code class="text-emerald-300 font-mono">🎨 Filtro Tríada</code> del inspector sanea cualquier descripción externa con 1 clic.
-              </p>
-            </div>
-
-            <div class="p-3.5 bg-black/40 border border-cyan-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-white text-xs">4. Frustum Auto-Tagging (Auto-Detección 3D en Encuadre)</h4>
-              <p class="text-slate-400 text-[11px]">
-                Cada uno de los 32 <code class="text-[#f29979] font-mono">@handle</code> almacena su piso, spot y coordenadas métricas 3D <code class="text-cyan-300 font-mono">worldPos (x, y, z)</code>. Al capturar cualquier plano A-Roll o B-Roll, <code class="text-cyan-300 font-mono">detectObjectsInCameraFrustum()</code> proyecta el cono visual 9:16 de la cámara y auto-inyecta en el prompt de Flux los <code class="font-mono">object_token_lock</code> de las plantas, cuadros, percheros y esculturas visibles en el fondo.
-              </p>
-            </div>
-
-            <div class="p-3.5 bg-black/40 border border-amber-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-white text-xs">5. Master Still Lock (Regla 1:2 Zero-Waste)</h4>
-              <p class="text-slate-400 text-[11px]">
-                Cada objeto en la Bóveda soporta dos estados visuales conmutables:
-              </p>
-              <ul class="space-y-1 text-slate-400 text-[11px] list-disc list-inside">
-                <li><strong>Estado 1 (<code class="font-mono">previzRender</code> + <code class="font-mono">previzDepthRender</code>):</strong> Generado automáticamente desde Three.js WebGL2 en Beauty PBR + Depth 16-bit.</li>
-                <li><strong>Estado 2 (<code class="text-amber-300 font-mono">🔒 masterApprovedStill</code>):</strong> Al subir el primer render fotorrealista aprobado en Flux/ComfyUI con su <code class="font-mono">seed</code>, queda bloqueado como ancla para <strong>Flux Redux / IP-Adapter (peso 0.75) + ControlNet Depth (0.68 @ end 0.58)</strong> en todos los capítulos futuros.</li>
-              </ul>
-            </div>
           </div>
         </div>
 
-        <!-- PESTAÑA 7: SECCIÓN EXCLUSIVA — LO QUE NO HAY QUE HACER (ANTI-PATRONES & ZERO-FACE) -->
-        <div id="pane-docs-7" class="docs-pane hidden space-y-4">
-          <div class="p-3.5 bg-rose-950/30 border border-rose-500/40 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-rose-300 uppercase tracking-wider">🚫 Manual de Errores Prohibidos (Qué Destruye Créditos y Tomas en Flux & Higgsfield)</h3>
-            <p class="text-slate-300 text-[11px]">
-              Un Reel de 12 segundos bajo la <strong>Fórmula 1:2</strong> no es 1 solo prompt gigante: son <strong>4 clips independientes</strong> montados al corte sobre la pista continua de voz de ElevenLabs (<code class="text-purple-300 font-mono">Alina-Hypno-v1</code>). Violar cualquiera de las 6 prohibiciones siguientes arruina la anatomía o desperdicia créditos:
-            </p>
+        <!-- PESTAÑA 7: QUÉ NO HACER -->
+        <div id="pane-docs-7" class="docs-pane hidden space-y-3">
+          <div class="p-3.5 bg-rose-950/30 border border-rose-500/40 rounded-xl">
+            <h3 class="text-xs font-bold text-rose-300 uppercase tracking-wider">🚫 5 Reglas de Oro para No Quemar Créditos en Higgsfield</h3>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div class="p-3.5 bg-black/45 border border-rose-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-rose-300 text-xs">❌ 1. JAMÁS mezclar A-Roll y B-Roll en un mismo Sampler</h4>
-              <p class="text-slate-400 text-[11px]">
-                Si conectas el ADN facial de Alina y los tokens de accesorios (<code class="font-mono">@espresso_diario</code>, <code class="font-mono">@cuero_choker</code>) al mismo prompt de imagen/video, Flux intenta ponerle objetos flotando en las manos (rompiendo la <strong>Regla 05 de Manos Libres</strong>) y mezcla óptica <code class="font-mono">85mm retrato</code> con <code class="font-mono">100mm macro</code>.
-              </p>
-              <p class="text-emerald-300 text-[10.5px] font-mono">✔ Solución en Grafo Blueprint: el nodo ADN Alina solo cablea a Beats A-Roll; la Bóveda @Objetos solo cablea a Beats Zero-Face.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+            <div class="p-3 rounded-xl bg-black/45 border border-rose-500/30">
+              <strong class="text-rose-300">1. No subas la captura 3D cruda directo a video:</strong> Pásala siempre primero a Foto Realista con el Prompt del Paso A.
             </div>
-
-            <div class="p-3.5 bg-black/45 border border-amber-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-amber-300 text-xs">❌ 2. JAMÁS dejar a Alina visible en un Plano Zero-Face</h4>
-              <p class="text-slate-400 text-[11px]">
-                Un <strong>Plano Zero-Face (B-Roll)</strong> existe para dar descanso visual, textura sensorial y <strong>0% riesgo de deformación facial</strong> mientras la voz de Alina sigue sonando en <em>voice-over</em>. Si aparece medio brazo o cara desenfocada detrás del objeto macro, Higgsfield intentará animarlo y lo deformará.
-              </p>
-              <p class="text-emerald-300 text-[10.5px] font-mono">✔ Solución del Motor: en todo Beat B-Roll, Three.js fuerza <code>alina.root.visible = false</code> e inyecta <code>zero human presence, no face, no hands</code>.</p>
+            <div class="p-3 rounded-xl bg-black/45 border border-rose-500/30">
+              <strong class="text-rose-300">2. No hagas tomas individuales de más de 4–5s:</strong> Si Alina habla 20 segundos seguidos en el podcast, divídelo en 5 o 6 tomas de 3–4s alternando cámara y objetos.
             </div>
-
-            <div class="p-3.5 bg-black/45 border border-rose-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-rose-300 text-xs">❌ 3. JAMÁS subir el PNG crudo de WebGL directo a Higgsfield</h4>
-              <p class="text-slate-400 text-[11px]">
-                Higgsfield Cinema Studio es un motor de movimiento y óptica, no un re-texturizador de materiales. Si subes el render 3D sin pasar por <strong>Capa 1 (Render-to-Real en Flux.1 Dev)</strong> —o si dejas ControlNet Depth/Normal al 100% hasta el final del muestreo—, el video heredará piel plástica.
-              </p>
-              <p class="text-emerald-300 text-[10.5px] font-mono">✔ Solución: cortar CN Depth al 58% de pasos, anular CN Normal en pelo/piel (0.0–0.2) y bloquear Kelvin en espacio Lab.</p>
+            <div class="p-3 rounded-xl bg-black/45 border border-rose-500/30">
+              <strong class="text-rose-300">3. No escribas «Alina talking» en el prompt de movimiento:</strong> Genera el video con gesto sereno y aplica la sincronización labial con tu audio de ElevenLabs aparte.
             </div>
-
-            <div class="p-3.5 bg-black/45 border border-rose-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-rose-300 text-xs">❌ 4. JAMÁS duplicar movimiento (START+END + MoveSet alto)</h4>
-              <p class="text-slate-400 text-[11px]">
-                Cuando exportas <code>START + END</code> (espejos, <em>rack focus</em>, <em>pull-out</em>), los dos fotogramas ya contienen el desplazamiento métrico 3D. Activar encima un preset agresivo de cámara en Higgsfield duplica la velocidad y deforma las paredes al frenar.
-              </p>
-              <p class="text-emerald-300 text-[10.5px] font-mono">✔ Solución: con <code>START + END</code>, mantener intensidad &le; 32% (Keyframe-Guided). Tampoco escribir flags muertos como <code>--motion 2</code> o <code>--ar 9:16</code>.</p>
-            </div>
-
-            <div class="p-3.5 bg-black/45 border border-rose-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-rose-300 text-xs">❌ 5. JAMÁS pedir «she talks» ni meter End Frame al caminar</h4>
-              <p class="text-slate-400 text-[11px]">
-                Escribir <em>"Alina talking"</em> en I2V inventa dientes y mandíbulas gomosas (siempre generar con <strong>boca cerrada + smirk +0.15</strong> y aplicar lipsync dedicado). En caminatas 24mm (&le; 3.0s), usar <code>START ONLY</code> con 4% overscan y meter el <em>shake</em> 1.7Hz en post para evitar <em>jelly walls</em>.
-              </p>
-            </div>
-
-            <div class="p-3.5 bg-black/45 border border-sky-500/30 rounded-xl space-y-1.5">
-              <h4 class="font-bold text-sky-300 text-xs">⬡ Cómo funciona el Grafo Blueprint (Sequencer × Fusion)</h4>
-              <p class="text-slate-400 text-[11px]">
-                Combina la <strong>escaleta temporal de Unreal Sequencer</strong> (Columna 2: los 4 planos ordenados en el tiempo con control de raccord Kelvin entre cortes) con la <strong>composición nodal de DaVinci Fusion</strong> (Columna 3: tubería limpia de pases 3D &rarr; Flux &rarr; Higgsfield del plano seleccionado sin duplicar 20 cajas).
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- PESTAÑA 8: GUÍA VISUAL ACABADA — UNREAL SEQUENCER × DAVINCI FUSION EN ALINA OS -->
-        <div id="pane-docs-8" class="docs-pane hidden space-y-4">
-          <div class="p-3.5 bg-gradient-to-r from-[#0e1726] to-[#171126] border border-sky-500/35 rounded-xl space-y-2">
-            <h3 class="text-xs font-bold text-sky-300 uppercase tracking-wider">⬡ Arquitectura Visual: Por qué unimos Unreal Sequencer (Tiempo) + DaVinci Fusion (Nodos)</h3>
-            <p class="text-slate-300 text-[11px]">
-              En cine virtual, <strong>contar una historia</strong> es un problema <em>vertical en el tiempo</em> (qué plano sigue a cuál sin romper la luz ni el ritmo de la voz), mientras que <strong>lograr hiperrealismo IA</strong> es un problema <em>horizontal de capas</em> (transformar geometría 3D en foto real y luego en movimiento óptico). Así opera cada mitad en tu pestaña <code class="text-[#f29979] font-mono">⬡ Grafo Blueprint (2D)</code>:
-            </p>
-          </div>
-
-          <!-- Prototipo Visual Interactivo en SVG/HTML de los 2 Motores -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <!-- MITAD 1: UNREAL SEQUENCER -->
-            <div class="p-3.5 bg-[#080c16] border border-emerald-500/35 rounded-xl space-y-2.5">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-emerald-300">1. Mitad «Unreal Sequencer» (Columna 2 · Escaleta 1:2)</span>
-                <span class="text-[9.5px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300">EJE VERTICAL = TIEMPO</span>
-              </div>
-              <p class="text-[11px] text-slate-400">
-                En Unreal Engine, <strong>Sequencer</strong> encadena cámaras sobre una pista maestra de audio. En Alina OS, la pista continua es <code class="text-purple-300 font-mono">ElevenLabs (12.0s)</code> y los 4 Beats cortan la imagen encima sin interrumpir la voz:
-              </p>
-              <div class="space-y-1.5 font-mono text-[10px]">
-                <div class="p-2 rounded-lg bg-[#c86446]/15 border border-[#c86446]/45 flex items-center justify-between">
-                  <span><strong class="text-pink-300">[A-ROLL]</strong> Plano 1 (0.0→3.5s) · Podcast 85mm</span>
-                  <span class="text-slate-300">🩷 Cable ADN Alina</span>
-                </div>
-                <div class="text-center text-[9px] text-emerald-400">│ Raccord Δ0K ✔ (3400K → 3400K)</div>
-                <div class="p-2 rounded-lg bg-amber-500/15 border border-amber-500/45 flex items-center justify-between">
-                  <span><strong class="text-amber-300">[ZERO-FACE]</strong> Plano 2 (3.5→6.0s) · @libros_whisky</span>
-                  <span class="text-amber-200">🏺 Cable Bóveda 100mm</span>
-                </div>
-                <div class="text-center text-[9px] text-amber-300">┆ Salto Δ1200K ⚠ (si cambias a vela 2200K)</div>
-                <div class="p-2 rounded-lg bg-amber-500/15 border border-amber-500/45 flex items-center justify-between">
-                  <span><strong class="text-amber-300">[ZERO-FACE]</strong> Plano 3 (6.0→8.5s) · @mic_sm7b</span>
-                  <span class="text-amber-200">🏺 Rack Focus Macro</span>
-                </div>
-                <div class="text-center text-[9px] text-emerald-400">│ Raccord Δ0K ✔</div>
-                <div class="p-2 rounded-lg bg-[#c86446]/15 border border-[#c86446]/45 flex items-center justify-between">
-                  <span><strong class="text-pink-300">[A-ROLL]</strong> Plano 4 (8.5→12.0s) · ECU Ojos</span>
-                  <span class="text-slate-300">🩷 Cable ADN Alina</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- MITAD 2: DAVINCI FUSION -->
-            <div class="p-3.5 bg-[#080c16] border border-sky-500/35 rounded-xl space-y-2.5">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-sky-300">2. Mitad «DaVinci Fusion» (Columna 3 · Inspector Nodal)</span>
-                <span class="text-[9.5px] font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300">EJE HORIZONTAL = PASES VFX</span>
-              </div>
-              <p class="text-[11px] text-slate-400">
-                En postproducción VFX, <strong>DaVinci Fusion</strong> toma <em>1 plano individual</em> y procesa sus buffers geométricos por cables separados hasta el render final. Al hacer clic en cualquier Beat de la Columna 2, la Columna 3 se re-cablea al instante:
-              </p>
-              <div class="space-y-1.5 font-mono text-[10px]">
-                <div class="p-2 rounded-lg bg-sky-500/10 border border-sky-500/35 space-y-1">
-                  <div class="font-bold text-sky-200">🩵 Nodo Capa 1 · Render-to-Real (Flux.1 Dev)</div>
-                  <div class="text-slate-400 text-[9.5px]">Recibe 4 buffers WebGL2: <code>PBR CoC</code> + <code>Depth 16b</code> (0.68 @ 58%) + <code>Normals</code> (0.42) + <code>Mask 7-ID</code>. Si el Beat es Zero-Face, oculta a Alina (<code>Mask = #000000</code>).</div>
-                </div>
-                <div class="text-center text-[9px] text-fuchsia-300">▼ Fotograma Hiperrealista (Start / End)</div>
-                <div class="p-2 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/35 space-y-1">
-                  <div class="font-bold text-fuchsia-200">🟣 Nodo Capa 2 · Higgsfield Cinema Studio 4.0</div>
-                  <div class="text-slate-400 text-[9.5px]">Asigna cuerpo (<code>ARRI / RED</code>), cristal (<code>Cooke / Panavision / Laowa Macro</code>), decide <code>START ONLY</code> vs <code>START + END</code> y compila los 4 bloques del <em>Delta Prompt</em>.</div>
-                </div>
-                <div class="text-center text-[9px] text-emerald-300">▼ Validación Zero-Waste</div>
-                <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/35">
-                  <div class="font-bold text-emerald-200">🟢 Nodo Pre-Flight Gate → ZIP Episodio (4 Carpetas)</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- GALERÍA VISUAL DE PROTOTIPO CON PANTALLAZOS REALES DE ALINA STUDIO OS -->
-          <div class="space-y-3 pt-1">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-[#f29979]">📸 Ejemplos Reales en Vivo Extraídos de Alina Studio OS</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <figure class="p-2.5 bg-black/55 border border-pink-500/35 rounded-xl space-y-2">
-                <img src="./guide_shots/proto_aroll_fusion.jpg" alt="Ejemplo 1: A-Roll Alina en DaVinci Fusion" class="w-full rounded-lg border border-white/10 object-cover">
-                <figcaption class="text-[10.5px] text-slate-300 leading-snug">
-                  <strong class="text-pink-300">Caso A · Plano 1 (A-Roll Rostro):</strong> El cable rosa de <em>ADN Alina</em> alimenta el Plano 1; a la derecha (<em>DaVinci Fusion</em>) se capturan los 4 pases con la máscara semántica de Alina (rojo/amarillo/azul) y Higgsfield elige <code>START ONLY + Dolly In</code>.
-                </figcaption>
-              </figure>
-
-              <figure class="p-2.5 bg-black/55 border border-amber-500/35 rounded-xl space-y-2">
-                <img src="./guide_shots/proto_broll_zeroface.jpg" alt="Ejemplo 2: B-Roll Zero-Face en DaVinci Fusion" class="w-full rounded-lg border border-white/10 object-cover">
-                <figcaption class="text-[10.5px] text-slate-300 leading-snug">
-                  <strong class="text-amber-300">Caso B · Plano 2 (Zero-Face B-Roll):</strong> Al clicar el Plano 2, el cable cambia a ámbar desde <em>Bóveda @Objetos</em>, el motor oculta a Alina (<code>Mask = negro puro</code>) y Higgsfield cambia a lente <code>Laowa 100mm Macro + START+END</code>.
-                </figcaption>
-              </figure>
-
-              <figure class="p-2.5 bg-black/55 border border-emerald-500/35 rounded-xl space-y-2">
-                <img src="./guide_shots/proto_sequencer_raccord.jpg" alt="Ejemplo 3: Raccord Kelvin en Unreal Sequencer" class="w-full rounded-lg border border-white/10 object-cover">
-                <figcaption class="text-[10.5px] text-slate-300 leading-snug">
-                  <strong class="text-emerald-300">Caso C · Escaleta Unreal Sequencer:</strong> El monólogo de ElevenLabs se divide en 4 tramos sincronizados (<code>0.0→12.0s</code>) y los cables verticales auditan el salto térmico Kelvin entre planos consecutivos.
-                </figcaption>
-              </figure>
+            <div class="p-3 rounded-xl bg-black/45 border border-rose-500/30">
+              <strong class="text-rose-300">4. No dupliques la fuerza de cámara:</strong> Si subes fotograma de Inicio y de Corte a Higgsfield, usa intensidad suave (&le; 30%) porque el recorrido ya va marcado en las dos fotos.
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Modal Footer -->
       <div class="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between text-[11px] text-slate-400">
-        <span class="font-mono text-slate-400">Alina Studio OS v3.3 · Single-Source Three.js 1:1 + Higgsfield 4.0 + 8 HoDs</span>
+        <span class="font-mono">Alina Studio OS v3.4 · Guion (Acto▸Cap▸Ep▸Escena) ➔ Cine & Escenas (16:9 / 9:16)</span>
         <button id="btn-docs-close-footer" class="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#c86446] hover:text-white text-slate-200 font-semibold transition-colors">Entendido</button>
       </div>
     </div>
   </div>
 
-  
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>

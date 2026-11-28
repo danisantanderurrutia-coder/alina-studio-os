@@ -1002,92 +1002,329 @@ export const NARRATIVE_ARC = {
   tagline: 'De la fatiga ejecutiva al descanso mental y el placer consciente',
   route: 'Ámsterdam ➔ Barcelona (Santuario 5 Niveles) ➔ Retiro Sensorial',
   thesis:
-    'Una serie cinematográfica episódica en formato vertical 9:16 donde cada capítulo explora la psicología de soltar el mando: combinando encuadres reales del Santuario 3D, objetos simbólicos recurrentes (B-Roll 1:2) y la voz hipnótica de Alina.'
+    'Una serie cinematográfica y podcast visual (16:9 YouTube y 9:16 Celular) organizada en Actos (Meses), Capítulos (Semanas), Episodios (Días), Escenas y Tomas (Inicio ➔ Corte).'
 };
+
+export const DEFAULT_ACTS = [
+  { id: 'act-1', label: 'Acto I · Mes 1: El Arte de Ceder el Control' },
+  { id: 'act-2', label: 'Acto II · Mes 2: La Arquitectura del Deseo' },
+  { id: 'act-3', label: 'Acto III · Mes 3: El Círculo Íntimo' }
+];
 
 export const SEED_CHAPTERS = [
   {
     id: 'chap-1',
     number: 1,
-    week: 'Acto I · Capítulo 1',
+    actId: 'act-1',
+    actTitle: 'Acto I · Mes 1: El Arte de Ceder el Control',
+    week: 'Semana 1',
     title: 'La Sobrecarga de Decidir',
     subtitle: 'Fascinación intelectual y el descanso de soltar el mando',
     status: '🟢 Listo para Rodaje',
     floor: 3,
     spotId: 'podcast',
     lightingMode: 'night',
-    format: 'Podcast Confesional 9:16',
+    format: 'Podcast Visual 16:9 & Cápsulas 9:16',
     synopsis:
       'Alina abre la serie en su estudio nocturno del Piso 3 («The Mind Sanctuary»). Expone cómo quienes toman miles de decisiones bajo presión durante el día buscan en secreto un espacio seguro donde otra mente firme decida por ellos.',
     hook:
-      '«Hoy tomaste demasiadas decisiones difíciles por otros. Esta noche... decide no decidir nada. Cierra los ojos y deja que mi voz se encargue de todo.»',
-    audioTone: 'Voz pausada, cercana y confesional (Pitch 0.98 | Rate 0.95). Silencio de 1.5s tras la primera frase.',
+      '«Hoy tomaste demasiadas decisiones difíciles por otros. Esta noche... decide no decidir nada. Siéntate frente a mí, suelta el teléfono y deja que mi voz se encargue del resto.»',
+    audioTone: 'Voz pausada de podcast nocturno, cercana y confesional (Pitch 0.98 | Rate 0.95).',
     directorNotes:
-      'Arrancar con plano detalle de @libros_whisky (2.5s), cortar a plano medio 85mm de Alina frente a @mic_sm7b con empuje lento (3.5s) y cerrar con @espresso_diario.',
-    linkedObjectIds: ['obj-libros-whisky', 'obj-shure-sm7b'],
-    linkedShotIds: []
+      'Abrir con Alina hablando al micrófono @mic_sm7b en plano medio horizontal 16:9, intercalar detalle de @libros_whisky mientras continúa su narración y cerrar volviendo a su mirada.',
+    linkedObjectIds: ['obj-shure-sm7b', 'obj-libros-whisky', 'obj-espresso-diario'],
+    linkedShotIds: [],
+    episodes: [
+      {
+        id: 'ep-1-1',
+        number: 1,
+        dayLabel: 'Lunes · Episodio Principal',
+        title: 'Por qué tu mente pide tregua',
+        status: '🟢 Listo para Rodaje',
+        scenes: [
+          {
+            id: 'sc-1-1-1',
+            number: 1,
+            title: 'Escena 1 · Apertura en Estudio Podcast',
+            floor: 3,
+            spotId: 'podcast',
+            lightingMode: 'night',
+            synopsis: 'Alina introduce el concepto de fatiga de decisión desde su escritorio de nogal con el micrófono Shure SM7B y su taza de espresso.',
+            scriptText:
+              'Hoy tomaste demasiadas decisiones difíciles por otros. Revisa cuántas veces fingiste tener el control absoluto desde esta mañana. Esta noche... decide no decidir nada. Respira hondo y deja que mi voz marque el ritmo.',
+            audioTone: 'Podcast íntimo frente a micrófono SM7B (Pitch 0.98 | Rate 0.95)',
+            directorNotes: 'Mantener calidez 3200K en todo el estudio; usar @mic_sm7b acompañando a Alina en A-Roll y @libros_whisky en toma detalle.',
+            linkedObjectIds: ['obj-shure-sm7b', 'obj-libros-whisky', 'obj-espresso-diario']
+          },
+          {
+            id: 'sc-1-1-2',
+            number: 2,
+            title: 'Escena 2 · Epílogo junto al Café Matutino',
+            floor: 1,
+            spotId: 'cafe',
+            lightingMode: 'day',
+            synopsis: 'Breve reflexión final a la mañana siguiente anotando en su cuaderno clínico junto al servicio de porcelana.',
+            scriptText:
+              'Cuando despiertas sin el peso de sostener el mundo entero, hasta el primer café sabe distinto. Guarda esta calma contigo.',
+            audioTone: 'Voz serena matutina con ambiente suave de cafetería',
+            directorNotes: 'Luz natural mediterránea 4600K en Piso 1 Café.',
+            linkedObjectIds: ['obj-espresso-diario']
+          }
+        ]
+      },
+      {
+        id: 'ep-1-2',
+        number: 2,
+        dayLabel: 'Miércoles · Cápsula Confesional',
+        title: 'El mito del líder incansable',
+        status: '🟡 En Pre-Producción',
+        scenes: [
+          {
+            id: 'sc-1-2-1',
+            number: 1,
+            title: 'Escena 1 · Confesión frente al Espejo Vanity',
+            floor: 2,
+            spotId: 'vanity',
+            lightingMode: 'night',
+            synopsis: 'Alina desmonta la coraza ejecutiva desde su vestidor privado antes de salir.',
+            scriptText:
+              'Nadie puede llevar la armadura puesta las veinticuatro horas. El verdadero privilegio es tener un lugar donde quitártela sin dar explicaciones.',
+            audioTone: 'Susurro cercano y cómplice',
+            directorNotes: 'Aprovechar encuadre con el tocador @consola_vanity y el perchero atelier.',
+            linkedObjectIds: ['obj-consola-vanity-barroca', 'obj-perchero-atelier-vanity']
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'chap-2',
     number: 2,
-    week: 'Acto I · Capítulo 2',
+    actId: 'act-1',
+    actTitle: 'Acto I · Mes 1: El Arte de Ceder el Control',
+    week: 'Semana 2',
     title: 'Respira Conmigo: Apaga el Ruido',
     subtitle: 'Desconexión sensorial a través del cuerpo y la respiración',
     status: '🟡 En Pre-Producción',
     floor: 2,
     spotId: 'bath',
     lightingMode: 'day',
-    format: 'Guía Sensorial & B-Roll Táctil',
+    format: 'Guía Sensorial YouTube & Reels',
     synopsis:
-      'El ruido analítico no se apaga pensando más, sino bajando al cuerpo. Desde el Spa privado y la luz cálida de la residencia (Piso 2), Alina guía una secuencia rítmica de respiración mientras el agua y los aceites marcan el tempo visual.',
+      'El ruido analítico no se apaga pensando más, sino bajando al cuerpo. Desde el Spa privado de la residencia (Piso 2), Alina guía una secuencia rítmica de respiración.',
     hook:
       '«Inhala despacio conmigo... uno, dos, tres, cuatro. Suelta el aire. ¿Notas cómo caen tus hombros cuando dejas de pelear contra el reloj? Quédate ahí.»',
-    audioTone: 'Susurro binaural muy próximo al oído, respiración audible, cadencia hipnótica lenta.',
+    audioTone: 'Susurro binaural próximo, cadencia hipnótica lenta.',
     directorNotes:
-      'Usar luz dorada rasante. Alternar plano cenital/lateral suave en el Spa con macros táctiles de @shibari_aceite y reflejos de agua.',
+      'Luz dorada rasante en el Spa del Piso 2 alternando con detalles táctiles de @shibari_aceite.',
     linkedObjectIds: ['obj-shibari-aceite', 'obj-espresso-diario'],
-    linkedShotIds: []
+    linkedShotIds: [],
+    episodes: [
+      {
+        id: 'ep-2-1',
+        number: 1,
+        dayLabel: 'Martes · Sesión Guiada',
+        title: 'Protocolo de 4 tiempos para soltar tensión',
+        status: '🟡 En Pre-Producción',
+        scenes: [
+          {
+            id: 'sc-2-1-1',
+            number: 1,
+            title: 'Escena 1 · Spa Monolítico en Calma',
+            floor: 2,
+            spotId: 'bath',
+            lightingMode: 'day',
+            synopsis: 'Sesión guiada de pausa sensorial junto al agua templada y lino belga.',
+            scriptText:
+              'Inhala despacio conmigo... uno, dos, tres, cuatro. Suelta el aire sin prisa. ¿Notas cómo bajan tus hombros cuando dejas de pelear contra el reloj? Quédate exactamente ahí.',
+            audioTone: 'Susurro pausado con pausas respiratorias reales',
+            directorNotes: 'Alternar plano medio de Alina en el spa con detalle de @shibari_aceite.',
+            linkedObjectIds: ['obj-shibari-aceite']
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'chap-3',
     number: 3,
-    week: 'Acto II · Capítulo 3',
+    actId: 'act-2',
+    actTitle: 'Acto II · Mes 2: La Arquitectura del Deseo',
+    week: 'Semana 3',
     title: 'La Regla del Poder Consensuado',
-    subtitle: 'Tensión chiaroscuro y la arquitectura de la obediencia',
+    subtitle: 'Tensión chiaroscuro y la psicología del acuerdo SSC',
     status: '⚪ En Escritura',
     floor: 3,
     spotId: 'boudoir',
     lightingMode: 'night',
-    format: 'Ficción Psicológica Boudoir',
+    format: 'Podcast & Ensayo Visual Chiaroscuro',
     synopsis:
-      'La narrativa entra en el Boudoir chiaroscuro del Piso 3. Alina revela la paradoja del consentimiento: quien obedece voluntariamente no pierde poder, sino que firma las reglas de su propia liberación.',
+      'La narrativa entra en el Boudoir chiaroscuro del Piso 3. Alina explica la paradoja del consentimiento consciente: quien cede el mando por elección propia firma las reglas de su propio descanso.',
     hook:
-      '«No te intimida obedecerme. Te intimida reconocer la paz que sientes cuando por fin alguien sostiene las riendas sin dudar. Mírame.»',
-    audioTone: 'Voz firme, magnética, autoridad serena con pausas dramáticas de 2 segundos.',
+      '«No te intimida ceder el control. Te intimida reconocer la paz que sientes cuando alguien sostiene el timón con firmeza y cuidado. Escúchame bien.»',
+    audioTone: 'Voz firme, magnética, autoridad serena con pausas de 2 segundos.',
     directorNotes:
-      'Iluminación de vela 2200K de alto contraste. Abrir fuera de foco sobre @cuero_choker en primer plano antes de revelar la mirada esmeralda de Alina.',
-    linkedObjectIds: ['obj-cuero-choker', 'obj-shibari-aceite'],
-    linkedShotIds: []
+      'Iluminación cálida 2200K de velas. Mostrar @vitrina_gotica_boudoir y @cuero_choker como símbolos de estética editorial.',
+    linkedObjectIds: ['obj-cuero-choker', 'obj-vitrina-gotica-boudoir'],
+    linkedShotIds: [],
+    episodes: [
+      {
+        id: 'ep-3-1',
+        number: 1,
+        dayLabel: 'Jueves · Podcast Nocturno',
+        title: 'Límites claros, mente libre',
+        status: '⚪ En Escritura',
+        scenes: [
+          {
+            id: 'sc-3-1-1',
+            number: 1,
+            title: 'Escena 1 · Boudoir Chiaroscuro 2200K',
+            floor: 3,
+            spotId: 'boudoir',
+            lightingMode: 'night',
+            synopsis: 'Alina desglosa las tres reglas de confianza y límites desde el salón Boudoir.',
+            scriptText:
+              'La confianza nunca nace de la improvisación; nace de reglas claras acordadas antes de empezar. No te intimida soltar el timón. Te sorprende la paz que aparece cuando sabes que estás en buenas manos.',
+            audioTone: 'Autoridad serena y cálida',
+            directorNotes: 'Cuidar continuidad de velas 2200K entre todas las tomas.',
+            linkedObjectIds: ['obj-cuero-choker', 'obj-vitrina-gotica-boudoir']
+          }
+        ]
+      }
+    ]
   },
   {
     id: 'chap-4',
     number: 4,
-    week: 'Acto II · Capítulo 4',
-    title: 'El Círculo Íntimo',
+    actId: 'act-3',
+    actTitle: 'Acto III · Mes 3: El Círculo Íntimo',
+    week: 'Semana 4',
+    title: 'El Círculo Íntimo en las Alturas',
     subtitle: 'Cierre nocturno en el Penthouse Rooftop',
-    status: '⚪ Planificado',
+    status: '⚪ En Escritura',
     floor: 4,
     spotId: 'bar',
     lightingMode: 'night',
-    format: 'Editorial Nocturno 9:16',
+    format: 'Especial de Cierre 16:9 YouTube',
     synopsis:
-      'Desenlace del primer arco en la terraza Penthouse del Piso 4 frente al skyline nocturno y la piscina basáltica. Alina brinda con quienes cruzaron el umbral del santuario y deja abierto el cliffhanger hacia la segunda temporada.',
+      'Desenlace del arco en la terraza Penthouse del Piso 4 frente al skyline nocturno y la barra de cobre.',
     hook:
-      '«Desde aquí arriba la ciudad entera parece correr sin rumbo. Quienes entendieron mi lenguaje ya están aquí dentro conmigo. ¿Subes o sigues mirando desde abajo?»',
-    audioTone: 'Complicidad nocturna íntima, brisa suave de fondo, tono cálido de cierre de temporada.',
+      '«Desde aquí arriba la ciudad entera parece correr sin rumbo. Quienes entendieron este lenguaje ya están aquí arriba conversando en calma. Bienvenido.»',
+    audioTone: 'Complicidad nocturna íntima con brisa suave de fondo.',
     directorNotes:
-      'Aprovechar reflejos nocturnos sobre la barra de cobre y la plunge pool del Piso 4. Lente 50mm/85mm con bokeh del skyline.',
-    linkedObjectIds: ['obj-cuero-choker'],
-    linkedShotIds: []
+      'Aprovechar reflejos nocturnos sobre la barra de cobre (@copas_laton) y la terraza del Piso 4.',
+    linkedObjectIds: ['obj-copas-laton-bar'],
+    linkedShotIds: [],
+    episodes: [
+      {
+        id: 'ep-4-1',
+        number: 1,
+        dayLabel: 'Domingo · Especial de Cierre',
+        title: 'Brindis sobre el ruido de la ciudad',
+        status: '⚪ En Escritura',
+        scenes: [
+          {
+            id: 'sc-4-1-1',
+            number: 1,
+            title: 'Escena 1 · Barra Botánica del Penthouse',
+            floor: 4,
+            spotId: 'bar',
+            lightingMode: 'night',
+            synopsis: 'Alina cierra la temporada desde el Piso 4 invitando al oyente al siguiente mes.',
+            scriptText:
+              'Desde aquí arriba la ciudad entera parece correr sin rumbo. Pero tú aprendiste a detener el reloj cuando hace falta. Levanta tu copa conmigo: esto recién empieza.',
+            audioTone: 'Cálido, cercano, cierre de temporada',
+            directorNotes: 'Combinar plano amplio 16:9 de la barra nocturna con detalle de @copas_laton.',
+            linkedObjectIds: ['obj-copas-laton-bar']
+          }
+        ]
+      }
+    ]
   }
 ];
+
+/**
+ * Garantiza que cualquier Capítulo (nuevo o guardado previamente en IndexedDB) posea siempre
+ * la jerarquía completa: Acto -> Capítulo -> Episodios[] -> Escenas[] (con sus Tomas).
+ */
+export function ensureChapterHierarchy(ch) {
+  if (!ch || typeof ch !== 'object') return ch;
+  if (!ch.actId) {
+    ch.actId = ch.number >= 4 ? 'act-3' : ch.number === 3 ? 'act-2' : 'act-1';
+  }
+  if (!ch.actTitle) {
+    const foundAct = DEFAULT_ACTS.find((a) => a.id === ch.actId);
+    ch.actTitle = foundAct ? foundAct.label : DEFAULT_ACTS[0].label;
+  }
+  if (!ch.week) ch.week = `Semana ${ch.number || 1}`;
+
+  if (!Array.isArray(ch.episodes) || ch.episodes.length === 0) {
+    const seedMatch = SEED_CHAPTERS.find((s) => s.id === ch.id);
+    if (seedMatch?.episodes?.length) {
+      ch.episodes = structuredClone(seedMatch.episodes);
+      // Preservar ediciones previas del usuario en el episodio 1 / escena 1
+      const sc0 = ch.episodes[0].scenes[0];
+      if (ch.hook) sc0.scriptText = String(ch.hook).replace(/^[«"']+|[»"']+$/g, '').trim();
+      if (ch.synopsis) sc0.synopsis = ch.synopsis;
+      if (ch.spotId) { sc0.spotId = ch.spotId; sc0.floor = ch.floor ?? 3; }
+      if (Array.isArray(ch.linkedObjectIds) && ch.linkedObjectIds.length) sc0.linkedObjectIds = [...ch.linkedObjectIds];
+      if (Array.isArray(ch.blueprintBeats) && ch.blueprintBeats.length) sc0.shots = structuredClone(ch.blueprintBeats);
+    } else {
+      ch.episodes = [
+        {
+          id: `ep-${ch.id}-1`,
+          number: 1,
+          dayLabel: 'Lunes · Episodio 1',
+          title: ch.title || 'Episodio Principal',
+          status: ch.status || '⚪ En Escritura',
+          scenes: [
+            {
+              id: `sc-${ch.id}-1-1`,
+              number: 1,
+              title: 'Escena 1 · Principal',
+              floor: ch.floor ?? 3,
+              spotId: ch.spotId || 'podcast',
+              lightingMode: ch.lightingMode || 'night',
+              synopsis: ch.synopsis || '',
+              scriptText: String(ch.hook || '').replace(/^[«"']+|[»"']+$/g, '').trim(),
+              audioTone: ch.audioTone || 'ElevenLabs Alina-Hypno-v1 (Pitch 0.98 | Rate 0.95)',
+              directorNotes: ch.directorNotes || '',
+              linkedObjectIds: Array.isArray(ch.linkedObjectIds) ? [...ch.linkedObjectIds] : [],
+              shots: Array.isArray(ch.blueprintBeats) ? structuredClone(ch.blueprintBeats) : undefined
+            }
+          ]
+        }
+      ];
+    }
+  }
+
+  ch.episodes.forEach((ep, epIdx) => {
+    if (!ep.id) ep.id = `ep-${ch.id}-${epIdx + 1}`;
+    if (!ep.number) ep.number = epIdx + 1;
+    if (!ep.dayLabel) ep.dayLabel = `Episodio ${epIdx + 1}`;
+    if (!Array.isArray(ep.scenes) || ep.scenes.length === 0) {
+      ep.scenes = [
+        {
+          id: `sc-${ep.id}-1`,
+          number: 1,
+          title: 'Escena 1 · Principal',
+          floor: ch.floor ?? 3,
+          spotId: ch.spotId || 'podcast',
+          lightingMode: ch.lightingMode || 'night',
+          synopsis: ch.synopsis || '',
+          scriptText: String(ch.hook || '').replace(/^[«"']+|[»"']+$/g, '').trim(),
+          audioTone: ch.audioTone || 'ElevenLabs Alina-Hypno-v1',
+          directorNotes: '',
+          linkedObjectIds: Array.isArray(ch.linkedObjectIds) ? [...ch.linkedObjectIds] : []
+        }
+      ];
+    }
+    ep.scenes.forEach((sc, scIdx) => {
+      if (!sc.id) sc.id = `sc-${ep.id}-${scIdx + 1}`;
+      if (!sc.number) sc.number = scIdx + 1;
+      if (!Array.isArray(sc.linkedObjectIds)) sc.linkedObjectIds = [];
+    });
+  });
+
+  return ch;
+}
